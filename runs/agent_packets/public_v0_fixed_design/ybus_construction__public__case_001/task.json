@@ -1,0 +1,79 @@
+{
+  "task_id": "ybus_construction_public_001",
+  "family": "ybus_construction",
+  "candidate_id": "REL-TASK-047",
+  "substrate": "deterministic_public_surrogate__future_simulator_hidden",
+  "objective": "Build Ybus from network data",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-047 — Build Ybus from network data",
+      "ru": "REL-TASK-047 — Построение Ybus по данным сети"
+    },
+    "objective": {
+      "en": "Build Ybus from network data",
+      "ru": "Построение Ybus по данным сети"
+    },
+    "instructions": {
+      "en": "Use the public inputs to produce the required JSON answer. The evaluator checks feasibility and exact deterministic surrogate consistency.",
+      "ru": "Используйте опубликованные входные данные и сформируйте требуемый JSON-ответ. Оцениватель проверяет допустимость и точное соответствие детерминированному суррогату."
+    }
+  },
+  "subdomain": "power flow, modelling & transmission analysis",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-047",
+    "subdomain": "power flow, modelling & transmission analysis",
+    "surrogate_parameters": {
+      "index": 25,
+      "base": 35,
+      "limit": 125
+    },
+    "calculation_spec": {
+      "type": "two_bus_ybus",
+      "series_admittance_pu": 5.0,
+      "shunt_admittance_per_bus_pu": 5.0,
+      "rule": "For a two-bus line, off-diagonal entries are -series_admittance; diagonal entries are series_admittance + shunt_admittance_per_bus."
+    }
+  },
+  "submission_schema": {
+    "answer": "ybus_matrix",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Submission must contain the expected answer field with the correct JSON type.",
+    "Numerical values must match the deterministic public surrogate within tolerance.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted structured answer satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "answer_type": "ybus_matrix",
+  "numeric_tolerance": 1e-06,
+  "source_evidence": [
+    "literature/metadata/v4_balanced_core_shortlist.md",
+    "literature/task_bank_v4_gap_fill_balanced.md#rel-task-047"
+  ],
+  "source_provenance": [
+    {
+      "title": "V4 balanced core shortlist — REL-TASK-047",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Balanced-core candidate selected from literature-derived power-systems task taxonomy; public v0 artifact is a deterministic executable surrogate pending simulator-backed hidden evaluation."
+    },
+    {
+      "title": "Bilingual executable benchmark slice requirement",
+      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
+      "confidence": "medium",
+      "notes": "Supports maintaining English and Russian task presentation for benchmark artifacts."
+    }
+  ],
+  "agent_task_design": "public executable surrogate: derive answer from calculation_spec; hidden evaluator retains the oracle"
+}

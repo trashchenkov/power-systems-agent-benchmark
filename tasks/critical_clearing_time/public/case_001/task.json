@@ -1,0 +1,108 @@
+{
+  "task_id": "critical_clearing_time_public_001",
+  "family": "critical_clearing_time",
+  "candidate_id": "REL-TASK-048",
+  "substrate": "executable_stability_sweep_cct_case",
+  "objective": "Compute critical clearing time from a transient-stability sweep",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-048 — Compute critical clearing time from a transient-stability sweep",
+      "ru": "REL-TASK-048 — Расчёт критического времени отключения по набору расчётов переходной устойчивости"
+    },
+    "objective": {
+      "en": "Compute critical clearing time from a transient-stability sweep",
+      "ru": "Расчёт критического времени отключения по набору расчётов переходной устойчивости"
+    },
+    "instructions": {
+      "en": "Use the public executable inputs to compute the requested JSON submission. Do not copy an expected answer; derive all reported values from the calculation specification.",
+      "ru": "Используйте опубликованные исполняемые входные данные и вычислите требуемый JSON-ответ. Не копируйте ожидаемый ответ; выведите все значения из спецификации расчёта."
+    }
+  },
+  "subdomain": "stability & dynamics",
+  "public_inputs": {
+    "stability_sweep": {
+      "max_angle_deg": 180.0,
+      "min_voltage_pu": 0.7,
+      "cases": [
+        {
+          "case_id": "tc_080",
+          "clearing_time_s": 0.08,
+          "stable": true,
+          "max_rotor_angle_deg": 92.0,
+          "min_voltage_pu": 0.82
+        },
+        {
+          "case_id": "tc_120",
+          "clearing_time_s": 0.12,
+          "stable": true,
+          "max_rotor_angle_deg": 127.0,
+          "min_voltage_pu": 0.78
+        },
+        {
+          "case_id": "tc_160",
+          "clearing_time_s": 0.16,
+          "stable": true,
+          "max_rotor_angle_deg": 168.0,
+          "min_voltage_pu": 0.72
+        },
+        {
+          "case_id": "tc_180",
+          "clearing_time_s": 0.18,
+          "stable": false,
+          "max_rotor_angle_deg": 204.0,
+          "min_voltage_pu": 0.66
+        },
+        {
+          "case_id": "tc_220",
+          "clearing_time_s": 0.22,
+          "stable": false,
+          "max_rotor_angle_deg": 260.0,
+          "min_voltage_pu": 0.6
+        }
+      ]
+    }
+  },
+  "submission_schema": {
+    "critical_clearing_time_s": "largest clearing time that remains stable and satisfies angle/voltage thresholds",
+    "limiting_case": "case_id of the last stable clearing-time case",
+    "stable_times_s": "list of stable clearing times",
+    "unstable_times_s": "list of unstable clearing times",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "A case is stable only if stable=true, max_rotor_angle_deg <= max_angle_deg, and min_voltage_pu >= min_voltage_pu.",
+    "critical_clearing_time_s is the maximum clearing_time_s among stable cases.",
+    "Unknown extra answer keys are infeasible.",
+    "Optional rationale text is ignored by the deterministic evaluator."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether all hard constraints and computed values are satisfied."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "1.0 if feasible, else 0.0."
+    }
+  ],
+  "source_evidence": [
+    "literature/metadata/v4_balanced_core_shortlist.md",
+    "literature/task_bank_v4_gap_fill_balanced.md#rel-task-048"
+  ],
+  "source_provenance": [
+    {
+      "title": "V4 balanced core shortlist — REL-TASK-048",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Literature-derived power-systems task topic converted into a public executable deterministic instance."
+    },
+    {
+      "title": "Bilingual executable benchmark slice requirement",
+      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
+      "confidence": "medium",
+      "notes": "Supports maintaining English and Russian task presentation for benchmark artifacts."
+    }
+  ]
+}

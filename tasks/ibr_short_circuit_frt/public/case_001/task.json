@@ -1,0 +1,98 @@
+{
+  "task_id": "ibr_short_circuit_frt_public_001",
+  "family": "ibr_short_circuit_frt",
+  "candidate_id": "GAP-TASK-012",
+  "substrate": "executable_ibr_short_circuit_frt_case",
+  "objective": "Compute current-limited IBR short-circuit response under FRT control",
+  "bilingual": {
+    "title": {
+      "en": "GAP-TASK-012 — Compute current-limited IBR short-circuit response under FRT control",
+      "ru": "GAP-TASK-012 — Рассчитать ограниченный по току вклад IBR в КЗ при FRT-управлении"
+    },
+    "objective": {
+      "en": "Compute current-limited IBR short-circuit response under FRT control",
+      "ru": "Рассчитать ограниченный по току вклад IBR в КЗ при FRT-управлении"
+    },
+    "instructions": {
+      "en": "Use the public executable inputs to compute the requested JSON submission. Do not copy an expected answer; derive all reported values from the calculation specification.",
+      "ru": "Используйте опубликованные исполняемые входные данные и вычислите требуемый JSON-ответ. Не копируйте ожидаемый ответ; выведите все значения из спецификации расчёта."
+    }
+  },
+  "subdomain": "grid codes, interconnection & standards compliance",
+  "public_inputs": {
+    "ibr_frt_case": {
+      "current_limit_pu": 1.2,
+      "prefault_active_current_pu": 0.92,
+      "reactive_deadband_pu": 0.9,
+      "k_reactive_current_pu_per_pu": 2.0,
+      "frt_voltage_floor_pu": 0.45,
+      "max_low_voltage_duration_s": 0.2,
+      "samples": [
+        {
+          "sample_id": "t000",
+          "time_s": 0.0,
+          "voltage_pu": 0.88
+        },
+        {
+          "sample_id": "t080",
+          "time_s": 0.08,
+          "voltage_pu": 0.52
+        },
+        {
+          "sample_id": "t160",
+          "time_s": 0.16,
+          "voltage_pu": 0.48
+        },
+        {
+          "sample_id": "t240",
+          "time_s": 0.24,
+          "voltage_pu": 0.74
+        }
+      ]
+    }
+  },
+  "submission_schema": {
+    "current_profile_pu": "object mapping sample_id to id_pu, iq_pu, total_current_pu",
+    "min_reactive_current_pu": "minimum iq_pu over the samples",
+    "max_total_current_pu": "maximum current magnitude over the samples",
+    "frt_compliant": "boolean ride-through/reactive-current compliance result",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "For voltage below reactive_deadband_pu, reactive current requirement is k*(deadband-voltage), clipped by current_limit_pu.",
+    "Active current is limited by remaining apparent-current capability after reactive priority.",
+    "FRT compliance requires ride-through for the given voltage-time samples and meeting reactive-current requirement.",
+    "Unknown extra answer keys are infeasible.",
+    "Optional rationale text is ignored by the deterministic evaluator."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether all hard constraints and computed values are satisfied."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "1.0 if feasible, else 0.0."
+    }
+  ],
+  "source_evidence": [
+    "literature/metadata/v4_balanced_core_shortlist.md",
+    "literature/task_bank_v4_gap_fill_balanced.md#gap-task-012"
+  ],
+  "source_provenance": [
+    {
+      "title": "V4 balanced core shortlist — GAP-TASK-012",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Literature-derived power-systems task topic converted into a public executable deterministic instance."
+    },
+    {
+      "title": "Bilingual executable benchmark slice requirement",
+      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
+      "confidence": "medium",
+      "notes": "Supports maintaining English and Russian task presentation for benchmark artifacts."
+    }
+  ]
+}

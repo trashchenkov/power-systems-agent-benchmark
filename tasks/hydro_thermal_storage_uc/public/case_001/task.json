@@ -1,0 +1,106 @@
+{
+  "task_id": "hydro_thermal_storage_uc_public_001",
+  "family": "hydro_thermal_storage_uc",
+  "candidate_id": "GAP-TASK-013",
+  "substrate": "executable_hydro_thermal_storage_uc_case",
+  "objective": "Solve compact hydro/thermal/storage unit commitment with emissions cap",
+  "bilingual": {
+    "title": {
+      "en": "GAP-TASK-013 — Solve compact hydro/thermal/storage unit commitment with emissions cap",
+      "ru": "GAP-TASK-013 — Решить компактный UC гидро/тепло/накопитель с ограничением выбросов"
+    },
+    "objective": {
+      "en": "Solve compact hydro/thermal/storage unit commitment with emissions cap",
+      "ru": "Решить компактный UC гидро/тепло/накопитель с ограничением выбросов"
+    },
+    "instructions": {
+      "en": "Use the public executable inputs to compute the requested JSON submission. Do not copy an expected answer; derive all reported values from the calculation specification.",
+      "ru": "Используйте опубликованные исполняемые входные данные и вычислите требуемый JSON-ответ. Не копируйте ожидаемый ответ; выведите все значения из спецификации расчёта."
+    }
+  },
+  "subdomain": "generation scheduling: hydro, thermal & storage",
+  "public_inputs": {
+    "uc_case": {
+      "emission_cap_ton": 200,
+      "hours": [
+        {
+          "hour_id": "h1",
+          "load_mw": 120,
+          "hydro_mw": 35,
+          "storage_discharge_mw": 10
+        },
+        {
+          "hour_id": "h2",
+          "load_mw": 150,
+          "hydro_mw": 40,
+          "storage_discharge_mw": 20
+        },
+        {
+          "hour_id": "h3",
+          "load_mw": 130,
+          "hydro_mw": 30,
+          "storage_discharge_mw": 15
+        }
+      ],
+      "thermal_units": [
+        {
+          "unit_id": "coal",
+          "pmin_mw": 40,
+          "pmax_mw": 100,
+          "cost_usd_per_mwh": 22,
+          "emission_ton_per_mwh": 0.75
+        },
+        {
+          "unit_id": "gas",
+          "pmin_mw": 20,
+          "pmax_mw": 80,
+          "cost_usd_per_mwh": 38,
+          "emission_ton_per_mwh": 0.35
+        }
+      ]
+    }
+  },
+  "submission_schema": {
+    "thermal_dispatch_mw": "dispatch by hour and unit",
+    "total_cost_usd": "production cost",
+    "emissions_ton": "total emissions",
+    "emission_cap_satisfied": "boolean",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Dispatch must meet residual load each hour after hydro and storage.",
+    "Thermal dispatch must respect online unit min/max ranges and emission cap.",
+    "Unknown extra answer keys are infeasible.",
+    "Optional rationale text is ignored by the deterministic evaluator."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether all hard constraints and computed values are satisfied."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "1.0 if feasible, else 0.0."
+    }
+  ],
+  "source_evidence": [
+    "literature/metadata/v4_balanced_core_shortlist.md",
+    "literature/task_bank_v4_gap_fill_balanced.md#gap-task-013"
+  ],
+  "source_provenance": [
+    {
+      "title": "V4 balanced core shortlist — GAP-TASK-013",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Literature-derived power-systems task topic converted into a public executable deterministic instance."
+    },
+    {
+      "title": "Bilingual executable benchmark slice requirement",
+      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
+      "confidence": "medium",
+      "notes": "Supports maintaining English and Russian task presentation for benchmark artifacts."
+    }
+  ]
+}

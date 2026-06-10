@@ -1,0 +1,97 @@
+# Local archive relevance candidates
+
+- Total files in archive: 266
+- Keyword-relevant candidates: 266
+
+## By category
+- power/electro: 266
+- petri/simulation: 12
+- benchmark/data/meta: 12
+- DR/microgrid/PV: 6
+- reliability/risk/safety: 4
+
+## Top folders
+- `power_engineering`: 137
+- `__MACOSX`: 129
+
+## Largest relevant candidates
+- 643,989 bytes — power/electro, petri/simulation, DR/microgrid/PV — `power_engineering/quantifying-the-uncertainty-of-solar-photovoltaic-soft-costs-in-the-cost-of-renewable-energy-spreadsheet-tool-crest-model.pdf`
+- 922 bytes — power/electro, petri/simulation, DR/microgrid/PV — `__MACOSX/power_engineering/._quantifying-the-uncertainty-of-solar-photovoltaic-soft-costs-in-the-cost-of-renewable-energy-spreadsheet-tool-crest-model.pdf`
+- 29,512,483 bytes — power/electro, petri/simulation — `power_engineering/(Power Systems) Francisco M. Gonzalez-Longatt, José Luis Rueda Torres - Modelling and Simulation of Power Electronic Converter Dominated Power Systems in PowerFactory-Springer International Publishing.pdf`
+- 2,921,554 bytes — power/electro, benchmark/data/meta — `power_engineering/ElecBench_a_Power_Dispatch_Evaluation_Benchmark_fo.pdf`
+- 1,698,342 bytes — power/electro, petri/simulation — `power_engineering/model-predstavleniya-ontologii-predmetnyh-oblastey-na-osnove-grafovyh-baz-dannyh.pdf`
+- 1,555,329 bytes — power/electro, DR/microgrid/PV — `power_engineering/Верификация_производства_электроэнергии_на_возобновляемых_источниках.pdf`
+- 1,231,119 bytes — power/electro, benchmark/data/meta — `power_engineering/.dedupe_deleted_manifest.json`
+- 924,078 bytes — power/electro, petri/simulation — `power_engineering/Моделирование квартирного энергопотребления методом временных рядов.pdf`
+- 360,576 bytes — power/electro, reliability/risk/safety — `power_engineering/faulted-circuit-indicators-and-system-reliability.pdf`
+- 226,517 bytes — power/electro, benchmark/data/meta — `power_engineering/Отраслевые_агентные_бенчмарки_и_проектирование_benchmark_для_электроэнергетики.pdf`
+- 109,168 bytes — power/electro, petri/simulation — `power_engineering/Modelling_Shares_PMAA21_02.docx`
+- 105,027 bytes — power/electro, petri/simulation — `power_engineering/Modelling_Shares_PMAA21_02 (1).docx`
+- 83,801 bytes — power/electro, benchmark/data/meta — `power_engineering/.power_doc_moved_manifest.json`
+- 58,279 bytes — power/electro, reliability/risk/safety — `power_engineering/Надежн.docx`
+- 22,394 bytes — power/electro, DR/microgrid/PV — `power_engineering/Верификация_производства_электроэнергии_на_возобновляемых_источниках.docx`
+- 2,870 bytes — power/electro, benchmark/data/meta — `power_engineering/.dedupe_manual_deleted_manifest.json`
+- 1,725 bytes — power/electro, petri/simulation — `__MACOSX/power_engineering/._Modelling_Shares_PMAA21_02 (1).docx`
+- 1,324 bytes — power/electro, benchmark/data/meta — `__MACOSX/power_engineering/._ElecBench_a_Power_Dispatch_Evaluation_Benchmark_fo.pdf`
+- 1,252 bytes — power/electro, benchmark/data/meta — `power_engineering/.omx/logs/turns-2026-06-08.jsonl`
+- 819 bytes — power/electro, petri/simulation — `__MACOSX/power_engineering/._(Power Systems) Francisco M. Gonzalez-Longatt, José Luis Rueda Torres - Modelling and Simulation of Power Electronic Converter Dominated Power Systems in PowerFactory-Springer International Publishing.pdf`
+- 730 bytes — power/electro, petri/simulation — `__MACOSX/power_engineering/._Modelling_Shares_PMAA21_02.docx`
+- 730 bytes — power/electro, reliability/risk/safety — `__MACOSX/power_engineering/._Надежн.docx`
+- 697 bytes — power/electro, reliability/risk/safety — `__MACOSX/power_engineering/._faulted-circuit-indicators-and-system-reliability.pdf`
+- 432 bytes — power/electro, DR/microgrid/PV — `__MACOSX/power_engineering/._Верификация_производства_электроэнергии_на_возобновляемых_источниках.docx`
+- 432 bytes — power/electro, DR/microgrid/PV — `__MACOSX/power_engineering/._Верификация_производства_электроэнергии_на_возобновляемых_источниках.pdf`
+- 417 bytes — power/electro, petri/simulation — `__MACOSX/power_engineering/._model-predstavleniya-ontologii-predmetnyh-oblastey-na-osnove-grafovyh-baz-dannyh.pdf`
+- 403 bytes — power/electro, benchmark/data/meta — `power_engineering/.omx/state/notify-fallback-authority-owner.json`
+- 403 bytes — power/electro, benchmark/data/meta — `power_engineering/.omx/state/notify-fallback-authority-state.json`
+- 332 bytes — power/electro, petri/simulation — `__MACOSX/power_engineering/._Моделирование квартирного энергопотребления методом временных рядов.pdf`
+- 179 bytes — power/electro, benchmark/data/meta — `power_engineering/.omx/metrics.json`
+- 178 bytes — power/electro, benchmark/data/meta — `__MACOSX/power_engineering/._Отраслевые_агентные_бенчмарки_и_проектирование_benchmark_для_электроэнергетики.pdf`
+- 84 bytes — power/electro, benchmark/data/meta — `power_engineering/.omx/state/update-check.json`
+- 63,604,702 bytes — power/electro — `power_engineering/J. Duncan Glover, Thomas J. Overbye, Mulukutla S. Sarma - Power System Analysis and Design-Cengage Learning (2017).pdf`
+- 52,727,415 bytes — power/electro — `power_engineering/shneerson-em-cifrovaya-releynaya-zaschita.pdf`
+- 42,101,429 bytes — power/electro — `power_engineering/Агафонов А.И., Бростилова Т.Ю., Джазовский Н.Б. - Современная релейная защита и автоматика электроэнергетических систем. Учебное пос.pdf`
+- 27,114,607 bytes — power/electro — `power_engineering/UserManual_2019_en.pdf`
+- 26,512,673 bytes — power/electro — `power_engineering/2403.09125v1.pdf`
+- 24,850,005 bytes — power/electro — `power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
+- 21,371,839 bytes — power/electro — `power_engineering/situationalawareness.pdf`
+- 15,467,920 bytes — power/electro — `power_engineering/Куксин А.В. - Релейная защита и автоматические системы управления устройствами электроснабжения. Учебное пособие для СПО (2020).pdf`
+- 12,456,927 bytes — power/electro — `power_engineering/78-61-PB.pdf`
+- 12,343,871 bytes — power/electro — `power_engineering/Б1.В.03 РЕЛЕЙНАЯ ЗАЩИТА И АВТОМАТИЗАЦИЯ ЭЛЕКТРОЭНЕРГЕТИЧЕСКИХ СИСТЕМ .pdf`
+- 10,896,164 bytes — power/electro — `power_engineering/Евминов Л. Релейная...pdf`
+- 10,211,970 bytes — power/electro — `power_engineering/monograph_2020_ed_kulagin_v_a.pdf`
+- 9,794,205 bytes — power/electro — `power_engineering/energies-09-00943.pdf`
+- 9,641,776 bytes — power/electro — `power_engineering/РЕЛЕЙНАЯ ЗАЩИТА В ЗАДАЧАХ С РЕШЕНИЯМИ И ПРИМЕРАМИ.pdf`
+- 8,473,277 bytes — power/electro — `power_engineering/Булычев А.В., Наволочный А.А. - Релейная защита распределительных сетей в примерах и задачах с решениями. Учебное пособие-Изд-во Чува.pdf`
+- 8,330,372 bytes — power/electro — `power_engineering/Релейная защита. Томск.pdf`
+- 8,278,352 bytes — power/electro — `power_engineering/energies-14-00102-v2.pdf`
+- 8,229,533 bytes — power/electro — `power_engineering/В•бв≠®™ ИГЭУ 1-2026.pdf`
+- 7,655,247 bytes — power/electro — `power_engineering/4293723929.pdf`
+- 7,306,983 bytes — power/electro — `power_engineering/Andreev[1].pdf`
+- 7,153,594 bytes — power/electro — `power_engineering/4293723925.pdf`
+- 6,629,110 bytes — power/electro — `power_engineering/РЭ1_Алтей-УЗТ.pdf`
+- 5,936,792 bytes — power/electro — `power_engineering/energies-14-03692.pdf`
+- 5,844,545 bytes — power/electro — `power_engineering/Journal_r1_preprint.pdf`
+- 5,356,364 bytes — power/electro — `power_engineering/energies-15-02038-v2.pdf`
+- 4,606,634 bytes — power/electro — `power_engineering/1-s2.0-S096014811630427X-main.pdf`
+- 3,819,979 bytes — power/electro — `power_engineering/442-SUBMISSION - Manuscript File (.pdf_.docx)-3034-1-10-20220203.pdf`
+- 3,604,992 bytes — power/electro — `power_engineering/Презентация_лекция_3_ГоликовАА_ред_23_02_24.pdf`
+- 3,544,841 bytes — power/electro — `power_engineering/Куксин А.В. - Релейная защита и автоматизация электроэнергетических систем. Учебно-методическое пособие по курсовому проектирован.pdf`
+- 3,325,446 bytes — power/electro — `power_engineering/Цифровая трансформация.pdf`
+- 3,301,188 bytes — power/electro — `power_engineering/Мухина Е.М диплом.docx`
+- 3,109,438 bytes — power/electro — `power_engineering/energies-12-03008.pdf`
+- 3,039,535 bytes — power/electro — `power_engineering/РПД Основы интеллектуальных электрических сетей  2021.pdf`
+- 2,711,345 bytes — power/electro — `power_engineering/7426-25523-1-PB.pdf`
+- 2,707,085 bytes — power/electro — `power_engineering/TCC-TatianeS.Machado.pdf`
+- 2,608,888 bytes — power/electro — `power_engineering/МП РЗА.pdf`
+- 2,581,401 bytes — power/electro — `power_engineering/w1eR5Bijj1.pdf`
+- 2,445,437 bytes — power/electro — `power_engineering/sinchronnye-i-asinchronnye-dvigateli6-10kv (1) (1).pdf`
+- 2,429,027 bytes — power/electro — `power_engineering/elibrary_44839637_71146829.pdf`
+- 2,314,849 bytes — power/electro — `power_engineering/getimage.pdf`
+- 2,239,795 bytes — power/electro — `power_engineering/РЗА особенности.pdf`
+- 2,152,945 bytes — power/electro — `power_engineering/electronics-10-00151-v2.pdf`
+- 2,129,111 bytes — power/electro — `power_engineering/Markevich_A_I_Releynaya_zaschita_i_avtomatika_v_sistemakh_elektrosnabzhenia_ispr.pdf`
+- 2,126,942 bytes — power/electro — `power_engineering/glinkin.pdf`
+- 1,992,523 bytes — power/electro — `power_engineering/Соловов Н.А. 17002011.docx`
+- 1,790,344 bytes — power/electro — `power_engineering/Active-Power-Distribution-Networks-with-Decentralized-Multi-Agent-Control-Mode-Part-1.pdf`
+- 1,745,254 bytes — power/electro — `power_engineering/PAPER_VICTOR-OTHfglV6 (1).docx`
+- 1,745,112 bytes — power/electro — `power_engineering/PAPER_VICTOR-OTHfglV6.docx`

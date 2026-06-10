@@ -1,0 +1,60 @@
+{
+  "task_id": "dispatch_uncertainty_public_001",
+  "family": "dispatch_uncertainty",
+  "candidate_id": "REL-TASK-015",
+  "substrate": "executable_scenario_dispatch_uncertainty_case",
+  "objective": "Schedule thermal generation against load and renewable uncertainty while preserving a worst-case reserve margin at minimum variable cost.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-015 — Scenario dispatch under renewable and load uncertainty",
+      "ru": "REL-TASK-015 — Сценарная диспетчеризация при неопределённости нагрузки и ВИЭ"
+    },
+    "objective": {
+      "en": "Find a deterministic schedule that covers the worst net-load scenario plus reserve at every time period.",
+      "ru": "Найти детерминированный график генерации, который покрывает худший сценарий чистой нагрузки с требуемым резервом в каждый момент времени."
+    },
+    "instructions": {
+      "en": "Use dispatch_uncertainty_case. For each time period, compute the maximum net load load_mw - renewable_mw across scenarios. Schedule the listed generators within pmin/pmax so that total thermal generation is at least maximum net load plus reserve_requirement_mw. Minimize variable cost using the listed costs and report dispatch_mw, worst_case_margin_mw, and total_cost.",
+      "ru": "Используйте dispatch_uncertainty_case. Для каждого периода найдите максимальную по сценариям чистую нагрузку load_mw - renewable_mw. Задайте выработку перечисленных генераторов в пределах pmin/pmax так, чтобы суммарная тепловая генерация была не меньше максимальной чистой нагрузки плюс reserve_requirement_mw. Минимизируйте переменные затраты по заданным стоимостям и укажите dispatch_mw, worst_case_margin_mw и total_cost."
+    }
+  },
+  "subdomain": "market/dispatch planning & uncertainty",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-015",
+    "subdomain": "market/dispatch planning & uncertainty",
+    "input_fields": ["dispatch_uncertainty_case.generators", "dispatch_uncertainty_case.scenarios", "dispatch_uncertainty_case.reserve_requirement_mw"]
+  },
+  "dispatch_uncertainty_case": {
+    "time_periods": ["t1", "t2", "t3"],
+    "reserve_requirement_mw": 8.0,
+    "generators": [
+      {"id": "g1", "pmin_mw": 10.0, "pmax_mw": 70.0, "variable_cost_per_mwh": 18.0},
+      {"id": "g2", "pmin_mw": 5.0, "pmax_mw": 45.0, "variable_cost_per_mwh": 36.0}
+    ],
+    "scenarios": [
+      {"id": "normal", "load_mw": {"t1": 78.0, "t2": 85.0, "t3": 75.0}, "renewable_mw": {"t1": 18.0, "t2": 24.0, "t3": 20.0}},
+      {"id": "high_load", "load_mw": {"t1": 84.0, "t2": 92.0, "t3": 82.0}, "renewable_mw": {"t1": 12.0, "t2": 16.0, "t3": 13.0}},
+      {"id": "low_renewable", "load_mw": {"t1": 80.0, "t2": 87.0, "t3": 77.0}, "renewable_mw": {"t1": 8.0, "t2": 10.0, "t3": 9.0}}
+    ]
+  },
+  "submission_schema": {
+    "dispatch_mw": "object mapping generator id to time-period MW values",
+    "worst_case_margin_mw": "object mapping time period to total thermal generation minus maximum scenario net load",
+    "total_cost": "sum of dispatch_mw multiplied by generator variable costs",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Dispatch must respect generator pmin/pmax limits and cover the maximum scenario net load plus reserve in every time period.",
+    "Dispatch, margins, and total cost must match the independent least-cost calculation within 0.01.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {"name": "feasible", "direction": "boolean", "description": "Whether the submitted dispatch satisfies all hard constraints."},
+    {"name": "score", "direction": "maximize", "description": "Normalized [0,1] score: 1 when feasible, else 0."}
+  ],
+  "source_evidence": ["literature/metadata/v4_balanced_core_shortlist.md", "literature/task_bank_v4_gap_fill_balanced.md#rel-task-015"],
+  "source_provenance": [
+    {"title": "V4 balanced core shortlist — REL-TASK-015", "locator": "literature/metadata/v4_balanced_core_shortlist.md", "confidence": "medium", "notes": "Candidate task selected from market and dispatch planning under uncertainty."},
+    {"title": "Scenario robust economic dispatch", "locator": "standard operational model: cover worst-case net load plus reserve while minimizing variable generation cost", "confidence": "medium", "notes": "The public case uses a compact deterministic two-generator instance for executable evaluation."}
+  ]
+}

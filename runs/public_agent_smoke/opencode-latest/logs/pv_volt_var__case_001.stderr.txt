@@ -1,0 +1,80 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+# Problem analysis
+# Three timesteps with base voltages: t_low=0.940, t_nom=1.000, t_high=1.070
+# Limits: [0.95, 1.05]
+# Sensitivity: 0.00070 pu/kVAR for t_low and t_high, 0.00055 for t_nom
+# Inverter kVA=100
+# Capability: sqrt(kVA^2 - kW^2)
+# t_low: kW=60, maxQ=80 kVAR
+# t_nom: kW=80, maxQ=60 kVAR  
+# t_high: kW=60, maxQ=80 kVAR
+# 
+# For t_low: need to raise 0.940 -> 0.950 minimum
+#   deltaV=0.010, Q=0.010/0.00070=14.286 kVAR, q=14.286/100=0.14286
+# For t_high: need to lower 1.070 -> 1.050 maximum
+#   deltaV=-0.020, Q=-0.020/0.00070=-28.571 kVAR, q=-28.571/100=-0.28571
+# For t_nom: at 1.000, keep q=0
+
+# Design curve with margin:
+# [0.90, 0.20], [0.94, 0.15], [1.00, 0.00], [1.07, -0.30], [1.10, -0.30]
+
+def q_from_curve(V, curve):
+    # curve is list of (v, q)
+    if V <= curve[0][0]:
+        return curve[0][1]
+    if V >= curve[-1][0]:
+        return curve[-1][1]
+    for i in range(len(curve)-1):
+        v1, q1 = curve[i]
+        v2, q2 = curve[i+1]
+        if v1 <= V <= v2:
+            t = (V - v1) / (v2 - v1)
+            return q1 + t * (q2 - q1)
+
+curve = [(0.90, 0.20), (0.94, 0.15), (1.00, 0.00), (1.07, -0.30), (1.10, -0.30)]
+
+timesteps = [
+    ('t_low', 0.940, 60.0, 100.0, 0.00070),
+    ('t_nom', 1.000, 80.0, 100.0, 0.00055),
+    ('t_high', 1.070, 60.0, 100.0, 0.00070),
+]
+
+print('Curve check:')
+for v, q in curve:
+    print(f'  V={v}, q={q}')
+
+print()
+for name, Vbase, kW, kVA, sens in timesteps:
+    q = q_from_curve(Vbase, curve)
+    Q = q * kVA
+    maxQ = (kVA**2 - kW**2)**0.5
+    Vcorr = Vbase + Q * sens
+    print(f'{name}: Vbase={Vbase}, q={q:.4f}, Q={Q:.2f} kVAR, |Q|={abs(Q):.2f}, maxQ={maxQ:.2f}, Vcorr={Vcorr:.4f}, feasible={0.95<=Vcorr<=1.05 and abs(Q)<=maxQ+1e-9}')
+
+# Check monotonic
+q_vals = [p[1] for p in curve]
+monotonic = all(q_vals[i] >= q_vals[i+1] - 1e-9 for i in range(len(q_vals)-1))
+print(f'Monotonic non-increasing: {monotonic}')
+"
+
+Curve check:
+  V=0.9, q=0.2
+  V=0.94, q=0.15
+  V=1.0, q=0.0
+  V=1.07, q=-0.3
+  V=1.1, q=-0.3
+
+t_low: Vbase=0.94, q=0.1500, Q=15.00 kVAR, |Q|=15.00, maxQ=80.00, Vcorr=0.9505, feasible=True
+t_nom: Vbase=1.0, q=0.0000, Q=0.00 kVAR, |Q|=0.00, maxQ=60.00, Vcorr=1.0000, feasible=True
+t_high: Vbase=1.07, q=-0.3000, Q=-30.00 kVAR, |Q|=30.00, maxQ=80.00, Vcorr=1.0490, feasible=True
+Monotonic non-increasing: True
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

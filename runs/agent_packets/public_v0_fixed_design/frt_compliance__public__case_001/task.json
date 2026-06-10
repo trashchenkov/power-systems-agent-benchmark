@@ -1,0 +1,186 @@
+{
+  "task_id": "frt_compliance_public_001",
+  "family": "frt_compliance",
+  "substrate": "deterministic_grid_code_fault_ride_through_trace_checker",
+  "objective": "Check whether an inverter-based resource event trace remains connected inside a voltage/time ride-through envelope and provides required reactive current support during a voltage sag.",
+  "public_inputs": {
+    "ride_through_curve": [
+      {
+        "max_duration_s": 0.15,
+        "min_voltage_pu": 0.2
+      },
+      {
+        "max_duration_s": 0.7,
+        "min_voltage_pu": 0.5
+      },
+      {
+        "max_duration_s": 2.0,
+        "min_voltage_pu": 0.85
+      }
+    ],
+    "reactive_current_requirement": {
+      "voltage_below_pu": 0.9,
+      "min_iq_pu": 0.2,
+      "response_deadline_s": 0.1
+    },
+    "event_trace": [
+      {
+        "time_s": 0.0,
+        "voltage_pu": 1.0,
+        "iq_pu": 0.0,
+        "connected": true
+      },
+      {
+        "time_s": 0.05,
+        "voltage_pu": 0.55,
+        "iq_pu": 0.1,
+        "connected": true
+      },
+      {
+        "time_s": 0.12,
+        "voltage_pu": 0.55,
+        "iq_pu": 0.25,
+        "connected": true
+      },
+      {
+        "time_s": 0.55,
+        "voltage_pu": 0.9,
+        "iq_pu": 0.22,
+        "connected": true
+      },
+      {
+        "time_s": 0.8,
+        "voltage_pu": 1.0,
+        "iq_pu": 0.0,
+        "connected": true
+      }
+    ]
+  },
+  "ride_through_curve": [
+    {
+      "max_duration_s": 0.15,
+      "min_voltage_pu": 0.2
+    },
+    {
+      "max_duration_s": 0.7,
+      "min_voltage_pu": 0.5
+    },
+    {
+      "max_duration_s": 2.0,
+      "min_voltage_pu": 0.85
+    }
+  ],
+  "reactive_current_requirement": {
+    "voltage_below_pu": 0.9,
+    "min_iq_pu": 0.2,
+    "response_deadline_s": 0.1
+  },
+  "event_trace": [
+    {
+      "time_s": 0.0,
+      "voltage_pu": 1.0,
+      "iq_pu": 0.0,
+      "connected": true
+    },
+    {
+      "time_s": 0.05,
+      "voltage_pu": 0.55,
+      "iq_pu": 0.1,
+      "connected": true
+    },
+    {
+      "time_s": 0.12,
+      "voltage_pu": 0.55,
+      "iq_pu": 0.25,
+      "connected": true
+    },
+    {
+      "time_s": 0.55,
+      "voltage_pu": 0.9,
+      "iq_pu": 0.22,
+      "connected": true
+    },
+    {
+      "time_s": 0.8,
+      "voltage_pu": 1.0,
+      "iq_pu": 0.0,
+      "connected": true
+    }
+  ],
+  "submission_schema": {
+    "declared_compliant": "Boolean compliance declaration for the supplied event trace.",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "The resource must not disconnect while the voltage/time point remains inside the ride-through envelope.",
+    "Reactive current iq_pu must meet the minimum support requirement after response_deadline_s while voltage is below voltage_below_pu.",
+    "The submission must declare compliance only when all clause-level checks pass."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether ride-through and reactive-current support constraints pass."
+    },
+    {
+      "name": "ride_through_pass",
+      "direction": "boolean",
+      "description": "Whether the trace remains connected inside the ride-through envelope."
+    },
+    {
+      "name": "reactive_current_pass",
+      "direction": "boolean",
+      "description": "Whether reactive current support meets the minimum after the deadline."
+    },
+    {
+      "name": "min_voltage_pu",
+      "direction": "target",
+      "description": "Minimum voltage observed in the event trace."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "1.0 for full compliance, else 0."
+    }
+  ],
+  "source_evidence": [
+    "literature/v0_executable_benchmark_slice.en.md#GAP-TASK-011",
+    "https://arxiv.org/abs/2303.00391v2",
+    "https://arxiv.org/abs/2207.11700v3"
+  ],
+  "source_provenance": [
+    {
+      "title": "Grid-Forming Control Based On Emulated Synchronous Condenser Strategy Compliant With Challenging Grid Code Requirements",
+      "locator": "arXiv:2303.00391v2; selected in literature/v0_executable_benchmark_slice.en.md as GAP-TASK-011",
+      "confidence": "medium-strong",
+      "notes": "Source motivating grid-code-compliance checks for inverter-based resources under challenging voltage/frequency events."
+    },
+    {
+      "title": "A Novel Decentralized Inverter Control Algorithm for Loss Minimization and LVRT Improvement",
+      "locator": "arXiv:2207.11700v3; selected in literature/v0_executable_benchmark_slice.en.md as GAP-TASK-011",
+      "confidence": "medium-strong",
+      "notes": "Source supporting LVRT/FRT-style inverter response evaluation."
+    },
+    {
+      "title": "v0 executable benchmark slice — GAP-TASK-011",
+      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
+      "confidence": "strong",
+      "notes": "Bilingual benchmark planning artifact selecting grid-code FRT compliance for the executable v0 slice."
+    }
+  ],
+  "candidate_id": "GAP-TASK-011",
+  "bilingual": {
+    "title": {
+      "en": "GAP-TASK-011 — Grid-code FRT compliance check for inverter-based resource",
+      "ru": "GAP-TASK-011 — Проверка соответствия IBR требованиям FRT сетевого кодекса"
+    },
+    "objective": {
+      "en": "Check whether an inverter-based resource event trace remains connected inside a voltage/time ride-through envelope and provides required reactive current support during a voltage sag.",
+      "ru": "Проверка соответствия IBR требованиям FRT сетевого кодекса"
+    },
+    "instructions": {
+      "en": "Solve the executable power-systems task and submit JSON matching the published schema.",
+      "ru": "Решите исполняемую задачу по электроэнергетике и отправьте JSON согласно опубликованной схеме."
+    }
+  }
+}

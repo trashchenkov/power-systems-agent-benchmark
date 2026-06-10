@@ -1,0 +1,114 @@
+{
+  "task_id": "dispatch_uncertainty_public_001",
+  "family": "dispatch_uncertainty",
+  "candidate_id": "REL-TASK-015",
+  "substrate": "deterministic_public_surrogate__future_simulator_hidden",
+  "objective": "Robust/scenario dispatch under renewable/load/outage/DLR uncertainty",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-015 — Robust/scenario dispatch under renewable/load/outage/DLR uncertainty",
+      "ru": "REL-TASK-015 — Робастная/сценарная диспетчеризация при неопределенности ВИЭ, нагрузки, отказов и DLR"
+    },
+    "objective": {
+      "en": "Robust/scenario dispatch under renewable/load/outage/DLR uncertainty",
+      "ru": "Робастная/сценарная диспетчеризация при неопределенности ВИЭ, нагрузки, отказов и DLR"
+    },
+    "instructions": {
+      "en": "Use the public inputs to produce the required JSON answer. The evaluator checks feasibility and exact deterministic surrogate consistency.",
+      "ru": "Используйте опубликованные входные данные и сформируйте требуемый JSON-ответ. Оцениватель проверяет допустимость и точное соответствие детерминированному суррогату."
+    }
+  },
+  "subdomain": "market/dispatch planning & uncertainty",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-015",
+    "subdomain": "market/dispatch planning & uncertainty",
+    "surrogate_parameters": {
+      "index": 19,
+      "base": 29,
+      "limit": 119
+    },
+    "calculation_spec": {
+      "type": "choose_min_cost_feasible_schedule",
+      "decision_variables": [
+        "t1",
+        "t2",
+        "t3"
+      ],
+      "candidates": [
+        {
+          "name": "under_supply",
+          "values": {
+            "t1": 13,
+            "t2": 15,
+            "t3": 12
+          },
+          "feasible": false,
+          "cost": 0
+        },
+        {
+          "name": "balanced",
+          "values": {
+            "t1": 15,
+            "t2": 17,
+            "t3": 14
+          },
+          "feasible": true,
+          "cost": 10
+        },
+        {
+          "name": "over_supply",
+          "values": {
+            "t1": 17,
+            "t2": 19,
+            "t3": 16
+          },
+          "feasible": true,
+          "cost": 15
+        }
+      ],
+      "rule": "Select the feasible candidate with minimum cost and return its values as answer."
+    }
+  },
+  "submission_schema": {
+    "answer": "dispatch_mw",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Submission must contain the expected answer field with the correct JSON type.",
+    "Numerical values must match the deterministic public surrogate within tolerance.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted structured answer satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "answer_type": "dispatch_mw",
+  "numeric_tolerance": 1e-06,
+  "source_evidence": [
+    "literature/metadata/v4_balanced_core_shortlist.md",
+    "literature/task_bank_v4_gap_fill_balanced.md#rel-task-015"
+  ],
+  "source_provenance": [
+    {
+      "title": "V4 balanced core shortlist — REL-TASK-015",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Balanced-core candidate selected from literature-derived power-systems task taxonomy; public v0 artifact is a deterministic executable surrogate pending simulator-backed hidden evaluation."
+    },
+    {
+      "title": "Bilingual executable benchmark slice requirement",
+      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
+      "confidence": "medium",
+      "notes": "Supports maintaining English and Russian task presentation for benchmark artifacts."
+    }
+  ],
+  "agent_task_design": "public executable surrogate: derive answer from calculation_spec; hidden evaluator retains the oracle"
+}

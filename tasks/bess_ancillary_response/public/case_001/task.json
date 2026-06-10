@@ -1,0 +1,39 @@
+{
+  "task_id": "bess_ancillary_response_public_001",
+  "family": "bess_ancillary_response",
+  "candidate_id": "REL-TASK-004",
+  "substrate": "executable_bess_ancillary_response_case",
+  "objective": "Compute BESS active and reactive ancillary-service response to frequency and voltage disturbances.",
+  "bilingual": {
+    "title": {"en": "REL-TASK-004 — BESS ancillary-service P/Q response", "ru": "REL-TASK-004 — Реакция BESS по P/Q для вспомогательных услуг"},
+    "objective": {"en": "Apply frequency and voltage droop rules to produce BESS P/Q commands within inverter and SOC constraints.", "ru": "Применить частотные и напряженческие droop-правила для получения команд P/Q BESS с учётом ограничений инвертора и SOC."},
+    "instructions": {"en": "Use bess_response_case. For each measurement timestamp, compute active power from frequency droop and reactive power from voltage droop. Positive P discharges to the grid. Clip P by charge/discharge limits and Q by apparent-power capability after P. Update SOC over the interval and report p_response_mw, q_response_mvar, and final_soc_mwh.", "ru": "Используйте bess_response_case. Для каждого момента вычислите активную мощность по частотному droop и реактивную мощность по напряженческому droop. Положительное P означает разряд в сеть. Ограничьте P по пределам заряда/разряда и Q по полной мощности с учётом P. Обновите SOC за интервал и укажите p_response_mw, q_response_mvar и final_soc_mwh."}
+  },
+  "subdomain": "converter-dominated grids & storage",
+  "public_inputs": {"candidate_id": "REL-TASK-004", "subdomain": "converter-dominated grids & storage", "input_fields": ["bess_response_case.measurements", "bess_response_case.frequency_droop_mw_per_hz", "bess_response_case.voltage_droop_mvar_per_pu", "bess_response_case.s_rating_mva"], "calculation_spec": "For each timestamp, compute p_response_mw = clip((nominal_frequency_hz - frequency_hz) * frequency_droop_mw_per_hz, -p_charge_limit_mw, p_discharge_limit_mw). Then compute q_response_mvar = clip((target_voltage_pu - voltage_pu) * voltage_droop_mvar_per_pu, +/- sqrt(s_rating_mva^2 - p_response_mw^2)). Positive P discharges the battery; update SOC over interval_seconds with the supplied efficiencies."},
+  "bess_response_case": {
+    "nominal_frequency_hz": 50.0,
+    "target_voltage_pu": 1.0,
+    "interval_seconds": 10.0,
+    "initial_soc_mwh": 4.8,
+    "soc_min_mwh": 1.0,
+    "soc_max_mwh": 8.0,
+    "p_discharge_limit_mw": 4.0,
+    "p_charge_limit_mw": 3.0,
+    "s_rating_mva": 5.0,
+    "frequency_droop_mw_per_hz": 18.0,
+    "voltage_droop_mvar_per_pu": 30.0,
+    "charge_efficiency": 0.96,
+    "discharge_efficiency": 0.94,
+    "measurements": {
+      "t0": {"frequency_hz": 49.86, "voltage_pu": 0.965},
+      "t1": {"frequency_hz": 49.92, "voltage_pu": 0.982},
+      "t2": {"frequency_hz": 50.04, "voltage_pu": 1.018}
+    }
+  },
+  "submission_schema": {"p_response_mw": "object mapping timestamp to active-power response", "q_response_mvar": "object mapping timestamp to reactive-power response", "final_soc_mwh": "final state of charge", "rationale": "optional string"},
+  "hard_constraints": ["P response must follow frequency droop with charge/discharge clipping.", "Q response must follow voltage droop clipped by apparent-power capability after P.", "Final SOC must match the independent simulation within tolerance.", "Unknown extra answer keys are infeasible."],
+  "metrics": [{"name": "feasible", "direction": "boolean", "description": "Whether submitted BESS response satisfies all hard constraints."}, {"name": "score", "direction": "maximize", "description": "Normalized [0,1] score: 1 when feasible, else 0."}],
+  "source_evidence": ["literature/metadata/v4_balanced_core_shortlist.md", "literature/task_bank_v4_gap_fill_balanced.md#rel-task-004"],
+  "source_provenance": [{"title": "V4 balanced core shortlist — REL-TASK-004", "locator": "literature/metadata/v4_balanced_core_shortlist.md", "confidence": "medium", "notes": "Candidate task selected from converter-dominated grids and storage taxonomy."}, {"title": "BESS ancillary service droop response practice", "locator": "standard frequency-watt and volt-var droop with inverter capability", "confidence": "medium", "notes": "Public case is a compact deterministic executable instance."}]
+}

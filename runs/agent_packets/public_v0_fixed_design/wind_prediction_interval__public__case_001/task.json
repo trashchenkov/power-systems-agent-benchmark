@@ -1,0 +1,82 @@
+{
+  "task_id": "wind_prediction_interval_public_001",
+  "family": "wind_prediction_interval",
+  "candidate_id": "REL-TASK-012",
+  "substrate": "deterministic_public_surrogate__future_simulator_hidden",
+  "objective": "Prediction intervals for wind generation",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-012 — Prediction intervals for wind generation",
+      "ru": "REL-TASK-012 — Прогнозные интервалы ветровой генерации"
+    },
+    "objective": {
+      "en": "Prediction intervals for wind generation",
+      "ru": "Прогнозные интервалы ветровой генерации"
+    },
+    "instructions": {
+      "en": "Use the public inputs to produce the required JSON answer. The evaluator checks feasibility and exact deterministic surrogate consistency.",
+      "ru": "Используйте опубликованные входные данные и сформируйте требуемый JSON-ответ. Оцениватель проверяет допустимость и точное соответствие детерминированному суррогату."
+    }
+  },
+  "subdomain": "forecasting & uncertainty",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-012",
+    "subdomain": "forecasting & uncertainty",
+    "surrogate_parameters": {
+      "index": 14,
+      "base": 24,
+      "limit": 114
+    },
+    "calculation_spec": {
+      "type": "quantile_interval_formula",
+      "formula": {
+        "p10": "base - 2",
+        "p50": "base + 4",
+        "p90": "base + 11"
+      },
+      "inputs": "public_inputs.surrogate_parameters.base"
+    }
+  },
+  "submission_schema": {
+    "answer": "prediction_interval",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Submission must contain the expected answer field with the correct JSON type.",
+    "Numerical values must match the deterministic public surrogate within tolerance.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted structured answer satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "answer_type": "prediction_interval",
+  "numeric_tolerance": 1e-06,
+  "source_evidence": [
+    "literature/metadata/v4_balanced_core_shortlist.md",
+    "literature/task_bank_v4_gap_fill_balanced.md#rel-task-012"
+  ],
+  "source_provenance": [
+    {
+      "title": "V4 balanced core shortlist — REL-TASK-012",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Balanced-core candidate selected from literature-derived power-systems task taxonomy; public v0 artifact is a deterministic executable surrogate pending simulator-backed hidden evaluation."
+    },
+    {
+      "title": "Bilingual executable benchmark slice requirement",
+      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
+      "confidence": "medium",
+      "notes": "Supports maintaining English and Russian task presentation for benchmark artifacts."
+    }
+  ],
+  "agent_task_design": "public executable surrogate: derive answer from calculation_spec; hidden evaluator retains the oracle"
+}

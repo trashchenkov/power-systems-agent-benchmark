@@ -1,0 +1,210 @@
+# Selected Drive download manifest
+- Total selected: 202
+- 16KL: 109
+- 1BlfnGI: 93
+
+## 16KL
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/04550761.pdf` — 16KL microgrid related papers — `1rgi5kmul5RPAxqUF9Ki5W2crboAznHNE`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/05358218.pdf` — 16KL microgrid related papers — `1z1ZySmFZxdgdx8NizH9iLo_qWbZYVl6c`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/05654404.pdf` — 16KL microgrid related papers — `1pUuhCQa3e2zHMUeSon1N7BAUOzIdpcbm`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/06146412.pdf` — 16KL microgrid related papers — `1MpmRBnTjmt4w056Oo14O3pC7jzdNV51t`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/06202397.pdf` — 16KL microgrid related papers — `1BFVxMNF0s2k9mYsh5kY_RiDscNvfeoso`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/06377246.pdf` — 16KL microgrid related papers — `1kEbEh--GtBWWFAS7oYNnN7pPk5XBXISw`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/06575170.pdf` — 16KL microgrid related papers — `11kScszBqwnG_5EPoON3eU__NHdbibkC3`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/07832211.pdf` — 16KL microgrid related papers — `1jaZPX0aq9BjSnYAYwbLJSQrFzPo_-BsF`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/1-s2.0-S0142061506000548-main.pdf` — 16KL microgrid related papers — `1V31I34J_runBjwYoyxdKMbTQS5NMI-lh`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/1-s2.0-S0360544209002722-main.pdf` — 16KL microgrid related papers — `1FDpsFAIL5a1dcbsHu96pzEgzjWY0ES44`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/1-s2.0-S0951832001000072-main.pdf` — 16KL microgrid related papers — `1XsDZ56-QbEgG46zW95soJRAZ8wpiPpe6`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/1-s2.0-S0951832005002711-main.pdf` — 16KL microgrid related papers — `18UevvdvFL_WrG8QkrGCdyOboxqgUDnP5`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/1-s2.0-S0951832009000210-main.pdf` — 16KL microgrid related papers — `1CBRcaffI24mtF7heNbsksrQs5r4ddhG5`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/15002007.pdf` — 16KL microgrid related papers — `1KJOLTYtQGbdjDXTEbwJqiO12FIGgB_k6`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/3319-14196-1-PB.pdf` — 16KL microgrid related papers — `1-edbUkldIg5HBTQPTZKZVzeZOT-xXda9`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/40.pdf` — 16KL microgrid related papers — `19QNMB6FniHmqEh9Gh-AtEOa3OwlK2c_9`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/canto2008.pdf` — 16KL microgrid related papers — `1V2fG0kyyBiqcHXkAtKjQ4SmhptUp6Kd2`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/chen2011.pdf` — 16KL microgrid related papers — `1b8475U-01nxint78CfGL5nnoCv-7O2zP`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/fulltext.pdf` — 16KL microgrid related papers — `1cx0aYYR669_desH1Ozf1rVZtgjbg1kck`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/Matlab_simulink.pdf` — 16KL microgrid related papers — `1Zp4e-tLm2fhpZW6wgyaLfrvn7pLoXpmq`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/RAMABHOTLA-DISSERTATION-2015.pdf` — 16KL microgrid related papers — `1baWvlUNyShk4J1MUTHUeVxQHiP4tgudZ`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/VOL7N1P5FAFO.pdf` — 16KL microgrid related papers — `1YrhUZZW13SJO7FuYG1N4vcuSnBX2qCbO`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/method/Моделирование работы электрических схем в Simulink (1).pdf` — 16KL microgrid related papers — `1eMksx6dfrxlJDk3z_ZhJQoZ9fXbsbEqc`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/reliability data/10_33_rapport_screen.pdf` — 16KL microgrid related papers — `1y8qJ56ey53Mh4wpxUl2iwuvdA3txGURe`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/reliability data/CIRED2009_0851_Paper.pdf` — 16KL microgrid related papers — `12FNWFj5cHFBFumdVCeeHxwDtSN5ByIdO`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/reliability data/Guenzi_umd_0117E_11768.pdf` — 16KL microgrid related papers — `1UWYpVRgiG2Y990_b4shu2vA1xBQJakgi`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/reliability data/nadezhnost-elektrosnabzheniya-v-razlichnyh-rezhimah-raboty-sudna-prins-der-nederlanden-s-vysokovoltnoy-elektroenergeticheskoy.pdf` — 16KL microgrid related papers — `1hBTvBkkNP_jfYHwvKnWrdSJCqxpgpbmr`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/reliability data/РД 34.20.574. Указания по применению показателей надежности элементов энергосистем....pdf` — 16KL microgrid related papers — `1k7XEhy5sGCbLu5bUQZ3WHDbvEB8u_bcf`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/structure/06237053.pdf` — 16KL microgrid related papers — `1n-D0Ty_IOp9mio5BUZy__R9eJVC4e2P8`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/structure/06256743.pdf` — 16KL microgrid related papers — `1JG853hSuEx5khD-AlLD4T9v8i_Y33OdQ`
+- score 10: `мероприятия/Эстония/стажировка/microgrid/related papers/structure/1-s2.0-S0960148111000589-main.pdf` — 16KL microgrid related papers — `1PrdZvChAzuTBn6LiSZaw8olHdCzdidUv`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/analysis/importance.xlsx` — 16KL microgrid FTA artifacts — `1hE6ASHcS197I4oV4KU_dlJCPX5ghILn6`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/BSS/11.eddx` — 16KL microgrid FTA artifacts — `12LETHxLs9Rxc_4k8P4jgoRDuIf94SS5C`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/BSS/BSS (5).zip` — 16KL microgrid FTA artifacts — `1MfJoqeS5bZ91ohQftmEdGTDUbrps1WWY`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/BSS/BSSALL (3).zip` — 16KL microgrid FTA artifacts — `1KIQc4MTwdKJAMZ2mcfcf8FuivLZasMtB`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/BSS/Events Report (4).html` — 16KL microgrid FTA artifacts — `1jqsb38NK40F8B14vOq_or6MKA1HY7rmz`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/BSS/Events Report (4)all.html` — 16KL microgrid FTA artifacts — `1Uo0yJjgw1mseFW_1CmHQblEyN_K6yVQN`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/BSS/Gates Report (3).html` — 16KL microgrid FTA artifacts — `1s9ba-QROyQccTOcAR35RuQDt-6l_pWfJ`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/BSS/Gates Report (3)all.html` — 16KL microgrid FTA artifacts — `1WOyJuhtOdi92FUtfgvgIevjqoYbQEJJh`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/BSS/Test (7).html` — 16KL microgrid FTA artifacts — `1GqoDQ6flN5_wYGRh9vQMr08-VWdann1t`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/BSS/Test (8).html` — 16KL microgrid FTA artifacts — `1NMALALgV2JY7NVdNwQAPcDQYUL7RZHWd`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/1.eddx` — 16KL microgrid FTA artifacts — `1fj0I0feb5Y2LzgtpnPRqlLTOipfxeA_0`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/11.eddx` — 16KL microgrid FTA artifacts — `168XGMVjdOVXxwf9Ud447kl0WTJytcmdX`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/111.eddx` — 16KL microgrid FTA artifacts — `1-nBE685n3G2JJ5dsGhiwDPc1hzkU-yh2`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/11111.eddx` — 16KL microgrid FTA artifacts — `1T7-gEhmK9YLL8_UFKuHXJFsVT-tGuj0H`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/all.eddx` — 16KL microgrid FTA artifacts — `1BynbMJAIZ_kVk3atwcyQlPFWhXfndMIW`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/DG.eddx` — 16KL microgrid FTA artifacts — `1CbBYbMRuJTVZEFQlchX63Zye8HDyLUs8`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/dg1.eddx` — 16KL microgrid FTA artifacts — `1CfZa0CZYKA25jkGVPV42To1zru3q8b_r`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/Drawing6.eddx` — 16KL microgrid FTA artifacts — `19IOC9jxk5r-EmP9O1B09F1hTIZwu6Y_x`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/Events Report (1).html` — 16KL microgrid FTA artifacts — `1ILe-lQjm5A0QKUO_1fkvi4asdIlDnwUz`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/FAILURE OF DIESELS (10).zip` — 16KL microgrid FTA artifacts — `1HeoQm8-hckFUQwNedgF_h_w9Zqs7g08v`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/Gates Report.html` — 16KL microgrid FTA artifacts — `1hUm6rTC_sDmPie6JS5pgEpzvbNtlNcRc`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/new.eddx` — 16KL microgrid FTA artifacts — `1ZLLL2QsRpKRHjPS2NgVXTQOo0hZpuQsA`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/rrr.eddx` — 16KL microgrid FTA artifacts — `1phNFqO4vQLoz0msukaGWeIcFtetNK940`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/rrr1.eddx` — 16KL microgrid FTA artifacts — `1rKQxAblmgWb_0XJyrF_pj2pqAv5fTpWF`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/saving.eddx` — 16KL microgrid FTA artifacts — `1RJKNCTZtcYiv10lBq4QnsIFgm2EArYJG`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/saving1.eddx` — 16KL microgrid FTA artifacts — `1Qw6hSHYc5r0qIRiVziYHpIz6e4sROkm8`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/Test (1).html` — 16KL microgrid FTA artifacts — `1zGDr--QyLodPVwNMxazWRn3RevOR8UPL`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DG/try.eddx` — 16KL microgrid FTA artifacts — `1AYaGD1Bt402ee2g0tXdbx5b6KT8D3miT`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DISTR/DISTR (9).zip` — 16KL microgrid FTA artifacts — `1M1Q1gO2RSwpj0cyXm9hPOjqbXVIv-HNm`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DISTR/distr.eddx` — 16KL microgrid FTA artifacts — `19vPpdaBHis00gzZsS3JJWVfDt_E4mDLr`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DISTR/Drawing1.docx` — 16KL microgrid FTA artifacts — `1UwSSpG26040g0NNn4q29zC3m-9-Z0_sL`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DISTR/Events Report (2).html` — 16KL microgrid FTA artifacts — `1a38fc9aEiDrrNjXaTr7yJfJPR__CwK2A`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DISTR/Gates Report (1).html` — 16KL microgrid FTA artifacts — `1WJ8iLp0QR83adLg3c77UndIvkWJ6jsjJ`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/DISTR/Test (2).html` — 16KL microgrid FTA artifacts — `1SPpNjuyJb2hxKZWcnW6aDlo45Yi74I4T`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/grid/Events Report (4).html` — 16KL microgrid FTA artifacts — `15g-YcfEKK0rsR_BV2rvITsQchg434cZi`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/grid/Gates Report (4).html` — 16KL microgrid FTA artifacts — `1H4nwc9BzQu7gts8WsxRnbblam2Y4LSCu`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/grid/gr.eddx` — 16KL microgrid FTA artifacts — `1qB3yGD48jcDRlCPyOpOT_YyWeObGiJIR`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/grid/GRID.zip` — 16KL microgrid FTA artifacts — `1vBZXX8GC4pgLCxPse4XYCDv26T7qt3Pm`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/grid/Test (7).html` — 16KL microgrid FTA artifacts — `1FyGEVrz-qNwblwME4g1S7jyFYhDlRomn`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/Events Report (3).html` — 16KL microgrid FTA artifacts — `1sVx3aZCvpVITSkfxLIEw-CPotxfJD-ei`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/Events Report (3)all.html` — 16KL microgrid FTA artifacts — `1SX7rmmC6jw_2H_JGrWRoK702VZWw0GAQ`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/Gates Report (3)all.html` — 16KL microgrid FTA artifacts — `1e-1XlaRHLt4CQfjC1z25kHhRIMnRZUMq`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/PVS (55).zip` — 16KL microgrid FTA artifacts — `160mhCFGs5XDX23e6x1ed5a_XGWCQ8RXT`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/pvs.eddx` — 16KL microgrid FTA artifacts — `12eQ0cH9W0EOSXfuTmPehEuARZ6-gigR5`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/pvs1.eddx` — 16KL microgrid FTA artifacts — `1A_GJeA2tXNtmRCVIRipDXkHUkEOeJUdD`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/PVSALL (2).zip` — 16KL microgrid FTA artifacts — `1ZIr8vD5I8axIpIwl2wr8aZx1vdTA29D5`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/PVSTOP (1).zip` — 16KL microgrid FTA artifacts — `1OJ4Ez9FM09XWCSfs5yR-PEgAcl9uAvej`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/Test (4).html` — 16KL microgrid FTA artifacts — `1_VUA_DxII-Lp3K_AzYYO5jfnvuAeuKMy`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/Test (4)all.html` — 16KL microgrid FTA artifacts — `1bIDBi6iB2SMzBRzZScDTOFSJ_WFPagb0`
+- score 9: `мероприятия/Эстония/стажировка/microgrid/FTA/PVS/Test (6).html` — 16KL microgrid FTA artifacts — `1EyxaNKE6w4UF-aEAIygueyqX9EhSAUa6`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/1 AM.pdf` — 16KL microgrid distribution fitting artifacts — `1DIotumrBd4UI9cD161Xa4xc7SH7ZqbUx`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/12 AM.pdf` — 16KL microgrid distribution fitting artifacts — `1icg4IRa7jr6I8B27rl8lNssW6iK56xRB`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/5 a m.pdf` — 16KL microgrid distribution fitting artifacts — `1SFXg14thIRZypueT_9Cv7_RZgEC8sNKm`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/5 AM.pdf` — 16KL microgrid distribution fitting artifacts — `1mXELv1mX0claA2BksJw5RQ0ArDrpaIME`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/annual.pdf` — 16KL microgrid distribution fitting artifacts — `1LIAB6C3EfScvKfg6fKhwVurTum2Joqtq`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/day Profile.pdf` — 16KL microgrid distribution fitting artifacts — `194RKQmuR-8GSwTw1ChuFxW2aQI2cu0CO`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/fit12am.pdf` — 16KL microgrid distribution fitting artifacts — `1PgIdxje3jGGQle2Op_vUOY5fj7vi4DBI`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/fit12am_2.pdf` — 16KL microgrid distribution fitting artifacts — `1xJFrnRA83TXKQ_XPH5s1OLTckx-bmP2a`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/fit5am.pdf` — 16KL microgrid distribution fitting artifacts — `1IeIFZ6u4CIx2hw4HG2DUi0kSJmk8YgUO`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/flow.eddx` — 16KL microgrid distribution fitting artifacts — `1K6DEelOFw0-gCMwSV8-qKjoUw2m3EsP_`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/kstest12am.pdf` — 16KL microgrid distribution fitting artifacts — `1061Fp9Q8T3HhM4CWPUWin-YH17tzLDPS`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/kstest5am.pdf` — 16KL microgrid distribution fitting artifacts — `1Slq514aPcDA0GSNWehKu3N9O-_wrUXHm`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/MCSvsED5.pdf` — 16KL microgrid distribution fitting artifacts — `1H7ZmHnsAaVfhNh3POqzTmAr7uZ30UV1c`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/paper.docx` — 16KL microgrid distribution fitting artifacts — `16-Pj_zdCP7MhES5ha_LSR7vFANJzmGlJ`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/resannual.pdf` — 16KL microgrid distribution fitting artifacts — `1Eis3jv05GHJNnjNm7FkJuNltR4Qr09zC`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/resannual1.pdf` — 16KL microgrid distribution fitting artifacts — `1bbchwOaQ-BQsbn3xTUWUhiSii_HP4LHl`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/resannual2.pdf` — 16KL microgrid distribution fitting artifacts — `1DB9oxJLK6ndKrl5g1rYZgj3m8JsOFkum`
+- score 8: `мероприятия/Эстония/стажировка/microgrid/fitting  distr/stoch5.pdf` — 16KL microgrid distribution fitting artifacts — `1iAAH5pa2yKHIJ3LqmSeZo_Jx7Ss7BUrY`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.01 ОБОРУДОВАНИЕ ЭЛЕКТРИЧЕСКОЙ ЧАСТИ И ЭКСПЛУАТАЦИЯ ЭЛЕКТРИЧЕСКИХ СЕТЕЙ И СИСТЕМ ЭЛЕКТРОСНАБЖЕНИЯ.pdf` — 16KL power-systems course PDF — `1zbEO8hg_bamV7YPqNWI-o7SAi_VsQA2l`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.02 РЕЖИМЫ РАБОТЫ, ВЫБОР И ПРОВЕРКА ОБОРУДОВАНИЯ СИСТЕМ ЭЛЕКТРОСНАБЖЕНИЯ.pdf` — 16KL power-systems course PDF — `1QA7q_W8e4ZxwdoW_k5yqaml0O2Iv0x8s`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.04 ПЕРЕНАПРЯЖЕНИЯ И ЗАЩИТА .pdf` — 16KL power-systems course PDF — `1UO-VsuNh6AVHboHYX3F4b1jfFs1lDdXO`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.05 ЭЛЕКТРОСЕТЕВАЯ АВТОМАТИКА В СИСТЕМАХ ЭЛЕКТРОСНАБЖЕНИЯ.pdf` — 16KL power-systems course PDF — `1G0ZH8Mh7-XcXtmSzbi_ZOIhnD3BjLiB9`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.06 МАТЕМАТИЧЕСКИЕ ОСНОВЫ УСТОЙЧИВОСТИ, НАДЕЖНОСТИ И ОПТИМИЗАЦИИ СИСТЕМ ЭЛЕКТРОСНАБЖЕНИЯ.pdf` — 16KL power-systems course PDF — `1s0m45BhT4JIDsHl-V8K24PyURTJgClij`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.07 СПОСОБЫ И ТЕХНИЧЕСКИЕ СРЕДСТВА ОБЕСПЕЧЕНИЯ КАЧЕСТВА ЭЛЕКТРИЧЕСКОЙ ЭНЕРГИИ.pdf` — 16KL power-systems course PDF — `1KujxcoDnYqaKAU1k5N1L9xXhutccwups`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.08 АЛЬТЕРНАТИВНЫЕ ИСТОЧНИКИ ЭЛЕКТРИЧЕСКОЙ ЭНЕРГИИ.pdf` — 16KL power-systems course PDF — `19F8-5TL4lI5SIPNQrjHZsYJTFW4J4Quz`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.10 МАТЕМАТИЧЕСКИЕ МОДЕЛИ ЭЛЕМЕНТОВ СИСТЕМ ЭЛЕКТРОСНАБЖЕНИЯ.pdf` — 16KL power-systems course PDF — `1_dPHfvlmNI41xH5_qOA6AAgeZtS6Ix5D`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.ДВ.02.01 ПРЕОБРАЗОВАТЕЛЬНЫЕ УСТАНОВКИ СИСТЕМ ЭЛЕКТРОСНАБЖЕНИЯ.pdf` — 16KL power-systems course PDF — `1JGfIxnzWg3fYABa1O83QWouYkxi_Pdxj`
+- score 7: `Fax/на выкладку от 23.07.2019/ВЫКЛАДКА 29.07.19/ВЫКЛАДКА 29.07.19/аННОТАЦИИ И ПРОЧЕЕ МАГИСТРЫ ОТ 29.07.19/выкладка магистры 29.07.19/Б1.В.М.ДВ.03.01 ЭНЕРГОСБЕРЕЖЕНИЕ И АУДИТ СИСТЕМ ЭЛЕКТРОСНАБЖЕНИЯ.pdf` — 16KL power-systems course PDF — `1v6ZAS7KAE7uiqNz-Kn3MTM1j_9S7qwKJ`
+
+## 1BlfnGI
+- score 8: `Telegram Desktop/2016 openADR_drprogramguide_1_1 - openADR.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1Gq87A2SlfwlALS5LGPAZ4KgkXUE3ObJ2`
+- score 8: `Telegram Desktop/DR_SMART_FACTORY_18_12_09.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1zoYLeC6aOBdEDW7PAyjw6dzPE21a-B7Q`
+- score 8: `Telegram Desktop/Цифровой_переход_в_электроэнергетике.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1kd7CznOJVFfnw-xyBx8cNpCGmWh8XZtp`
+- score 7: `Telegram Desktop/2018_08_09_Профили_потребления_электроэнергии.xlsx` — 1BlfnGI keyword-selected power/DR/reliability material — `1iW67ORCUhOequNtPr3F6GgiSx6ZpI-jE`
+- score 7: `Telegram Desktop/Demand Response _ частники.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1XxLo4OMMcL_TnOyYE4rq7OpesoFuuhb4`
+- score 7: `Telegram Desktop/NetApp demand response.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1bgIaBQyTvAx4Tpgt0fztePXRhnZJms6b`
+- score 6: `Telegram Desktop/DR_SMART_FACTORY_18_10_21.pptx` — 1BlfnGI keyword-selected power/DR/reliability material — `1E-y7NpvXZC4RW9YAasq-BZU-T-0YQIyb`
+- score 6: `Маркевич А.И. Релейная защита и автоматика в системах электроснабжения.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1zzuIVF-Kp70IWTSaLVhi7Lqe0c4vzKF6`
+- score 5: `A_stochastic_model_for_the_hourly_solar_radiation_.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1aF-UiF7cGUUSFNN9ZIKOxP_XBRyMaQi5`
+- score 5: `Méziane Boudellal - Power-to-Gas_ Renewable Hydrogen Economy for the Energy Transition-De Gruyter (2018).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `12zKHetwB7pO_63pc1oX19EwAqmLD_f6D`
+- score 5: `Возобновляемая_энергетика._2-е_доп._издание.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1nfkx6LBcU0dFOe5F7naCAn8qkgvraahl`
+- score 5: `НАДЕЖНОСТЬ ЭЛЕКТРОСНАБЖЕНИЯ.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1sa92bFMsAmaOr7ngu-WgjIMSRvymgbe2`
+- score 5: `УМК_Надежность_электроснабжения.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1QTUInZUJ7IzNWZn_mCnxQ7c0sfaTw-Mg`
+- score 4: `(Solar heating and cooling) Aelenei, Daniel_ Aelenei, Laura_ Ayoub, Joseph_ Garde, François_ Scognamiglio, Alessandra - Solution sets for net zero energy buildings _ feedback from 30 buildings worldwi.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1EVIU_6SXbUQcGqdofGrPYH7IA7Oj-su0`
+- score 4: `2012_ewg_microgrids-Formatted.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1xzwAvWKfu88fMDcPofD5NYqcRrfxY9c_`
+- score 4: `2019_Book_Vehicle-to-Grid.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1IGIZAarfYQsjrABbiq3dQlSAsoDhiHX2`
+- score 4: `[Energy Systems in Electrical Engineering] Vijay H. Makwana, Bhavesh R. Bhalja (auth.) - Transmission Line Protection Using Digital Technology (2016, Springer Singapore).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1fC6nz6a3NjRhbAp_lIhzPtJZWR726DO5`
+- score 4: `[Renewable Energy Sources & Energy Storage] Qiuye Sun - Energy Internet and We-Energy (2019, Springer Singapore).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1HtQOfnRFwcrDhAdUeRlJ9uz6N9gQb6Fs`
+- score 4: `Baranovskaya Ekaterina Vasilievna_The total cost of the transfer of the electric energy.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1F6nJXUlvWFdgsBB0xwLcTxPZMk7MSS81`
+- score 4: `Battery-Energy-Storage-Overview-Report-Update-April-2019.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1WjIUzty7MI1rR1Sivf6X35zBfnh8YMkY`
+- score 4: `FD16-50 wind turbine - FD16 series - Shanghai Ghrepower Green Energy Co., Ltd_.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1ruCWIW1uzTxJcDgfBrLVAbnqh-asZwSA`
+- score 4: `FD21-50 wind turbine - FD21 series - Shanghai Ghrepower Green Energy Co., Ltd_.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1b_nSpTKNWRt4vuhkQWuW58ZUp4lurAxA`
+- score 4: `ModelingandTestingofaDigitalDifferentialRelayUsingMATLABSIMULINK.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1iCJZCE-u8wrAaIRiHlxl6EsfxcoLZCBP`
+- score 4: `Telegram Desktop/2016_Overgrid_A_Fully_Distributed.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `14o1z5uYNY12zQpi2raTFnYaalmdk-6IB`
+- score 4: `UK-Flexibility-Solutions-for-High-Renewable-Energy-Systems-2018-BNEF-Eaton-Statkraft.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1hcvKZlUlQwbCUZCRV1YZ8pcl0Qb_2XG2`
+- score 4: `Аннотация_Б1.В.05 Электроснабжение — копия.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1AD6FQwVHcXIBE5mdmA7HN8QybjYhRjtC`
+- score 4: `курсовой релейная защита (1).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `14Sl6ZxOlb8HmiA-Gcn9Z9DqtpUnAQGSt`
+- score 4: `курсовой релейная защита.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1i3neW4CCqCo-3KC_TH41XlHTCcHNgCaK`
+- score 4: `Микропроцессорные устройства управления и защиты электрических сетей и и систем электроснабжения.docx` — 1BlfnGI keyword-selected power/DR/reliability material — `1DfOABIus6ozHVb6rvizbJIJrlum9QhnL`
+- score 4: `Разработка оптимального метода управления зарядкой электротранспорта.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1nxD33TVw8LwZyIgHtNHAVZhymcp-zeTz`
+- score 4: `релейная защита (1).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1nVX2Te1d96FN0XqjMKhzeXChdKFghgxd`
+- score 4: `Релейная защита.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1fBAPpvY410JAw11o7tXvX3CkCLmaTKZK`
+- score 4: `ТращенковСВ_ЭксплуатацияСЭС_13.03.02 Электроэнергетика и электротехника.xls` — 1BlfnGI keyword-selected power/DR/reliability material — `17T22sbPMc_2V23EgkuIETfYnWU5_4TJD`
+- score 3: `0024-05_Эксплуатация систем электроснабжения.doc` — 1BlfnGI keyword-selected power/DR/reliability material — `1NBwGahOePKe4_bTTzndo7wzUT6xMrYS-`
+- score 3: `1025-05_Эксплуатация систем электроснабжения.doc` — 1BlfnGI keyword-selected power/DR/reliability material — `15HD38rhp-TObwUg3G_umXBC59J1NPOAB`
+- score 3: `13.03.02 Электроэнергетика и электротехника.xls` — 1BlfnGI keyword-selected power/DR/reliability material — `1mIiSSZWZKuIaMjYTGlpw0sIbCZCuJoOZ`
+- score 3: `170612-FES-Windenergie-rus-print.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1aIK4d1W2nVBiEkii4AeSnTt6rpsyMGlQ`
+- score 3: `[Учебное пособие] Солонина А.И. - Цифровая обработка сигналов. Моделирование в Simulink (2012, БХВ-Петербург).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `19GefImHTkV4O5HwftlIhenrnAxRHjO5i`
+- score 3: `_о_ММП_Глобальная_энергия_2019.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1VDsjkYH-0Zy-LFfTyUj_kkpd7FxVnIbg`
+- score 3: `Analysis_of_Hybrid_Energy_System_for_Sup.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1exfvgMRO2wVqrQGd4pGNB7WFJJbfxQak`
+- score 3: `Bahman Zohuri - Hydrogen Energy_ Challenges and Solutions for a Cleaner Future (2019, Springer International Publishing).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1QpA33u8gxGCSYwhMsaibR8WC0ml98ZQ4`
+- score 3: `Dipak K. Sarkar - Thermal Power Plant_ Pre-Operational Activities (2016, Elsevier).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1iLJewfKF3E9edMTO8HxrZskw5R3ddWID`
+- score 3: `ElectricVehicleUserBehaviorPredictionUsingHybridKernelDensityEstimator.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1mbjouqpZucRonl7yS8Fq1X8g81MFj0Hw`
+- score 3: `Energy.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1ZVH5v7FVreYbLDFgv8FrVsh4ZEUjgjpm`
+- score 3: `IEC61400part12_1_WindMeasurement.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `16aWy3_2v5S13JL7CAnKg8rR37x-j5gK8`
+- score 3: `Indirect_emissions_from_electric_vehicles_Emission.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1Y6RNrmOoPpl7S3GXszHdl2M8UJTUCFDS`
+- score 3: `Investigating-the-Economic-Value-of-Flexible-Solar-Power-Plant-Operation.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1YNjvnRIFXGoi20PdkG-5yODM41FdARBz`
+- score 3: `ONDER_DR__.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `15xKGRgD04vVuHDOrwnz_3Tu9qqD8OE_p`
+- score 3: `Prof. Dr. Jörg Eberspächer (auth.), Arnold Picot, Karl-Heinz Neumann (eds.) - E-Energy_ Wandel und Chance durch das Internet der Energie  (2009, Springer-Verlag Berlin Heidelberg).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1oJjPCYrdjp5Fm8Yz0Uzuu1T61p_XYDhs`
+- score 3: `Sergey N. Makarov, Reinhold Ludwig, Stephen J. Bitar - Practical Electrical Engineering-Springer International Publishing (2019).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1xJ5VnNW1nS21JVorVBElFDRH0MUTCFs8`
+- score 3: `Swapan Basu, Ajay Debnath-Power Plant Instrumentation and Control Handbook_ A Guide to Thermal Power Plants-Academic Press (2014) (1).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1_hGJ1CoTErMDQOW0_pIW7A8yu8KQgRTm`
+- score 3: `Swapan Basu, Ajay Debnath-Power Plant Instrumentation and Control Handbook_ A Guide to Thermal Power Plants-Academic Press (2014).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `10j-7rH-9FfAThRKRu5WbW0ggZ_ImQeYb`
+- score 3: `Telegram Desktop/10.1016@j.apenergy.2015.04.105.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `18l_ErfzQmOh2uFI9Zl0X25Yap6OP-fz6`
+- score 3: `Telegram Desktop/2011 - Automated DR using open Open ADR - siemens.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1oIA-ZJIqQthiL9Ru3lfsia9ujmCy-Kjp`
+- score 3: `Telegram Desktop/20170830_energymarket_posypanko.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1O8IhqrbKgueW0O32r09WOi48AyyXWx03`
+- score 3: `Telegram Desktop/2018_Arup_DR_integtation_of_flex.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1dz2Fc1o7B2fwHIVfCB6CsfOmb0tXs9FL`
+- score 3: `Telegram Desktop/573Ihl2inhPvJ295qijLLmBWkLAQVzhB.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `19SEb0W9GKAUUD28lOSWeAZDsGfcubZpc`
+- score 3: `Telegram Desktop/emarket-4-18_dr_poved.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1mMRDoXibjZYsoQpGpXHYk4FUz8XpBmSV`
+- score 3: `Telegram Desktop/vygon_consulting_dr_v0.3.1_2018.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1io-bMT0HXjv9ZXZNZD2ELSzEAy4WL6uZ`
+- score 3: `Telegram Desktop/Автоматика_управления_режимом_параллельной.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1upmHLMhrljXPgF7WCYSgyZuBa7RH5ZjM`
+- score 3: `Telegram Desktop/Конспект_лекции_1_Общее_представление.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `16pkV3ofDPx0S601NDs8Q6d0BOy2q0kZ0`
+- score 3: `Telegram Desktop/Лекция_12_Методы_и_задачи_управления.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1DxeJoX6R_YzFvAtkpqqBypMJSyZN89MX`
+- score 3: `Telegram Desktop/Цифровая_энергетика__видение,_практики.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1WjFhPA1MYFfa4_DzMe5_e-4TpNmUiovk`
+- score 3: `Telegram Desktop/Цифровой_переход_в_энергетике_Холкин.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1d_OJKY2bcByUj9JFjePN6HUXsPenSQQ1`
+- score 3: `Telegram Desktop/Цифровой_переход_в_энергетике_России.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `16swXZxPfiBWL-oDmwSB5TmEnSI_WWhg4`
+- score 3: `The Effectiveness of China’s Plug-In Electric Vehicle Subsidy.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1mJ8lVeNl3NsOx2m9h9MZZtpq8PWpw-hT`
+- score 3: `Аннотации дисциплин, практик, ГИА Электромеханические и электронные системы автоматизации процессов и производств.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1r4c1PuuWG1phZf0zlTNKbpDThTkFIFeN`
+- score 3: `Дорожная карта цифровизации энергетики КРОК.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1H2X2OW2u-8shIcItUW6gAYNlnLan75_F`
+- score 3: `Каталог ЭнергияЛаб.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1aYmDhBwAyEeueJExMchM2_WIi8XNv08z`
+- score 3: `ключевые направления НТИ (1).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1YWMpydPxzChrg1-6qaGgTKbsvQngF0-Z`
+- score 3: `ключевые направления НТИ.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1SpBUs4c1jx81GCAQ2eeKFekpJfzZB35S`
+- score 3: `лист обновления РПД.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `10Gn-oct-Xx9ACTTcKPhaDpoOUVe7YoSz`
+- score 3: `надежность_электроснабжения.doc` — 1BlfnGI keyword-selected power/DR/reliability material — `1MVlF3jVBtuTmFO-YBpWZymk3cXqmRF4X`
+- score 3: `О_Б_13.03.02 Электроэнергетика и электротехника_37.8.xls` — 1BlfnGI keyword-selected power/DR/reliability material — `1A87m7vt1fTJ6ciNWLiqt6jCBQt2E07Dg`
+- score 3: `О_Б_13.04.02 Электроэнергетика и электротехника_М13.7.xls` — 1BlfnGI keyword-selected power/DR/reliability material — `1n4wsQSdU39kO7LR4ZMedYhSZhEhLHlG6`
+- score 3: `Платформа DR INSYTE 16.03.2020.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1Pu-9U8xpBJ9vb-jclX_-_YMsS-9YEONW`
+- score 3: `Положение об управлении стратегического развития.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1CjGGJzcEoZl-fzJ7FBuTXQY9gLcbNU89`
+- score 3: `Приоритетные тематические направления производства контента  в 2020 годy.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1567drJBStG8-tNtNLMMFuWqI4mppHVof`
+- score 3: `Просеки под ВЛ (расчет).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `14hT8HgMVSZzgF2_h5aEiGqBZjgcooo04`
+- score 3: `Релейная 17_2020.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1EIMGsXyG15nwaQE9Jcd416vH-oURkdIL`
+- score 3: `Релейная Захаров.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1vPJ1KH9SJtqAcu8O5kKvE0Td-KiBPZti`
+- score 3: `сопоставление.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1AaH3cNSw699SHFDS87xzl2nx3wHxkhhK`
+- score 3: `Статья Энергоэксперт.Ахмадеев.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1RLwLVHbsa81zY4LERcAhM_zwKDqk0mV5`
+- score 3: `ТращенковСВ_МонтажНаладкаиЭксплуатация_13.03.02 Электроэнергетика и электротехника.xls` — 1BlfnGI keyword-selected power/DR/reliability material — `1WUmIg_vb1xmpSIpFLFjECgW5XZAErOiz`
+- score 3: `Управление проектами must have (1).pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1hEpMpw0wRoknhk_LzS7eLFa2NXKzUAPs`
+- score 3: `Управление проектами must have.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1kXwDCN0IqHqs1ot6kaNRvFybyFWmfNlj`
+- score 3: `Управление проектами как инструмент развития инноваций и цифровизации компании.PDF` — 1BlfnGI keyword-selected power/DR/reliability material — `1YlFBifvv5n6VPEeccF9YN0krX2NkYzyV`
+- score 3: `Управление рисками в высокотехнологичных проектах.pdf` — 1BlfnGI keyword-selected power/DR/reliability material — `1HPXEo8vySBNe2dXLh9Elrvat0SCXGqq4`
+- score 3: `Цифровые системы управления электроснабжением.doc` — 1BlfnGI keyword-selected power/DR/reliability material — `1sJqUxorko8nENKeX72xRQhf_LOoD363x`
+- score 3: `эксплуатация систем электроснабжения 2.docx` — 1BlfnGI keyword-selected power/DR/reliability material — `1gKbUxeLvc90XhWRX92PVCXjreY0Jp6sw`
+- score 3: `эксплуатация систем электроснабжения.docx` — 1BlfnGI keyword-selected power/DR/reliability material — `1UdkVeCCcdVlH_12JySCf7zSUTY6sa3xJ`
+- score 3: `Эксплуатация систем электроснабжения.ppt` — 1BlfnGI keyword-selected power/DR/reliability material — `1DoEqy3WwimwDGAS_xl0m-GHqrIgly5HA`
+- score 3: `ЭЛЕКТРОМАГНИТНЫЕ ПЕРЕХОДНЫЕ ПРОЦЕССЫ В ЭЛЕКТРОЭНЕРГЕТИЧЕСКИХ СИСТЕМАХ .xlsx` — 1BlfnGI keyword-selected power/DR/reliability material — `1TFQHpSjy36YCYAOrLzwl0qN4gnDhB6za`
