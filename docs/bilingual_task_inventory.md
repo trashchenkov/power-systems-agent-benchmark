@@ -21,7 +21,7 @@ This file records the 41 balanced-core candidate tasks now represented as public
 5. `corrective_transmission_switching` — GAP-TASK-002 — Corrective transmission switching after contingency
    - task_id: `corrective_transmission_switching_public_001`
    - path: `tasks/corrective_transmission_switching/public/case_001/task.json`
-6. `critical_clearing_time` — REL-TASK-048 — Transient stability and critical clearing time
+6. `critical_clearing_time` — REL-TASK-048 — Critical clearing angle and time via the equal-area criterion (SMIB)
    - task_id: `critical_clearing_time_public_001`
    - path: `tasks/critical_clearing_time/public/case_001/task.json`
 7. `dispatch_uncertainty` — REL-TASK-015 — Robust/scenario dispatch under renewable/load/outage/DLR uncertainty
@@ -60,7 +60,7 @@ This file records the 41 balanced-core candidate tasks now represented as public
 18. `fci_saidi_caidi` — REL-TASK-053 — SAIDI/CAIDI impact of FCI deployment
    - task_id: `fci_saidi_caidi_public_001`
    - path: `tasks/fci_saidi_caidi/public/case_001/task.json`
-19. `fdi_state_estimation` — GAP-TASK-006 — False-data injection attack detection in state estimation
+19. `fdi_state_estimation` — GAP-TASK-006 — Non-stealthy false-data injection identification via DC-WLS largest-normalized-residual analysis
    - task_id: `fdi_state_estimation_public_001`
    - path: `tasks/fdi_state_estimation/public/case_001/task.json`
 20. `flisr_restoration` — REL-TASK-003 — Decentralized network restoration after short circuit
@@ -111,9 +111,9 @@ This file records the 41 balanced-core candidate tasks now represented as public
 35. `rolling_microgrid_dispatch` — REL-TASK-026 — Rolling 5-minute renewable microgrid dispatch with capability curves
    - task_id: `rolling_microgrid_dispatch_public_001`
    - path: `tasks/rolling_microgrid_dispatch/public/case_001/task.json`
-36. `scuc_n1` — GAP-TASK-001 — Security-constrained unit commitment with N-1 constraints
-   - task_id: `scuc_n1_public_001`
-   - path: `tasks/scuc_n1/public/case_001/task.json`
+36. `n1_generation_commitment` — GAP-TASK-001 — Least-cost single-period commitment with N-1 loss-of-largest-unit security (compact SCUC-inspired surrogate)
+   - task_id: `n1_generation_commitment_public_001`
+   - path: `tasks/n1_generation_commitment/public/case_001/task.json`
 37. `three_phase_short_circuit` — REL-TASK-033 — Three-phase short-circuit current calculation
    - task_id: `three_phase_short_circuit_public_001`
    - path: `tasks/three_phase_short_circuit/public/case_001/task.json`
@@ -237,9 +237,9 @@ This file records the 41 balanced-core candidate tasks now represented as public
 35. `rolling_microgrid_dispatch` — REL-TASK-026 — Скользящая 5-минутная диспетчеризация ВИЭ-микросети с capability curves
    - task_id: `rolling_microgrid_dispatch_public_001`
    - путь: `tasks/rolling_microgrid_dispatch/public/case_001/task.json`
-36. `scuc_n1` — GAP-TASK-001 — Security-constrained unit commitment с ограничениями N-1
-   - task_id: `scuc_n1_public_001`
-   - путь: `tasks/scuc_n1/public/case_001/task.json`
+36. `n1_generation_commitment` — GAP-TASK-001 — Least-cost single-period commitment with N-1 loss-of-largest-unit security (compact SCUC-inspired surrogate)
+   - task_id: `n1_generation_commitment_public_001`
+   - путь: `tasks/n1_generation_commitment/public/case_001/task.json`
 37. `three_phase_short_circuit` — REL-TASK-033 — Расчет тока трехфазного короткого замыкания
    - task_id: `three_phase_short_circuit_public_001`
    - путь: `tasks/three_phase_short_circuit/public/case_001/task.json`

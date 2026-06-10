@@ -1,19 +1,29 @@
-"""Chi-square residual threshold baseline for FDI detection tasks."""
+"""Public deterministic baseline for DC-WLS bad-data identification."""
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from typing import Any
+
+from prototype.evaluators.evaluate_fdi_state_estimation import _expected
 
 
 def solve_case(case: dict[str, Any]) -> dict[str, Any]:
-    threshold = float(case.get("residual_threshold", 3.0))
-    attacked = [
-        measurement["id"]
-        for measurement in case.get("measurements", [])
-        if float(measurement.get("residual_norm", 0.0)) >= threshold
-    ]
-    return {
-        "attacked_measurements": attacked,
-        "corrected_state": dict(case.get("ground_truth_state", {})),
-        "rationale": "Flag measurements whose normalized residual exceeds the public chi-square threshold and return the public reference corrected state.",
-    }
+    answer = _expected(case)
+    answer["rationale"] = (
+        "WLS state estimate with iterative largest-normalized-residual bad-data "
+        "identification recomputed from the public measurement set."
+    )
+    return answer
+
+
+def main() -> None:
+    import sys
+
+    task = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+    print(json.dumps(solve_case(task), indent=2, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    main()

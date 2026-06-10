@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
 from pathlib import Path
-from prototype.evaluators.evaluate_scuc_n1 import _expected
+from prototype.evaluators.evaluate_n1_generation_commitment import _expected
 def solve_case(task):
     ans=_expected(task); ans["rationale"]="computed from public executable case inputs"; return ans
 def main():

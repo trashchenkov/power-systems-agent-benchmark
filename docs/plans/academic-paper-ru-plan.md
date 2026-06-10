@@ -308,7 +308,7 @@ formula/graph surrogate → deterministic engineering model → simulator-backed
    - `islanded_microgrid_pq_dispatch`
    - `dispatch_uncertainty`
    - `hydro_thermal_storage_uc`
-   - `scuc_n1`
+   - `n1_generation_commitment`
 
 6. **Надёжность и восстановление**
    - `flisr_restoration`

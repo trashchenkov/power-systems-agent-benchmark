@@ -128,7 +128,7 @@ RU_FAMILY_TITLES = {
     "pv_soft_cost_sobol": "Чувствительность мягких затрат СЭС методом Соболя",
     "pv_volt_var": "Volt–var регулирование фотоэлектрической установки",
     "rolling_microgrid_dispatch": "Скользящая диспетчеризация микросети",
-    "scuc_n1": "Включение агрегатов с учётом критерия N−1",
+    "n1_generation_commitment": "Включение агрегатов с учётом критерия N−1",
     "three_phase_short_circuit": "Расчёт трёхфазного короткого замыкания",
     "transient_stability_prediction": "Прогноз переходной устойчивости",
     "wind_power_forecast": "Прогноз мощности ветровой генерации",

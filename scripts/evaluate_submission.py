@@ -50,7 +50,7 @@ EVALUATOR_MODULE_BY_FAMILY = {
     "pv_soft_cost_sobol": "prototype.evaluators.evaluate_pv_soft_cost_sobol",
     "pv_volt_var": "prototype.evaluators.evaluate_pv_volt_var",
     "rolling_microgrid_dispatch": "prototype.evaluators.evaluate_rolling_microgrid_dispatch",
-    "scuc_n1": "prototype.evaluators.evaluate_scuc_n1",
+    "n1_generation_commitment": "prototype.evaluators.evaluate_n1_generation_commitment",
     "three_phase_short_circuit": "prototype.evaluators.evaluate_three_phase_short_circuit",
     "transient_stability_prediction": "prototype.evaluators.evaluate_transient_stability_prediction",
     "wind_power_forecast": "prototype.evaluators.evaluate_wind_power_forecast",

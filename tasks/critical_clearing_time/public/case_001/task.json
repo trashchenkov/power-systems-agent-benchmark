@@ -2,76 +2,52 @@
   "task_id": "critical_clearing_time_public_001",
   "family": "critical_clearing_time",
   "candidate_id": "REL-TASK-048",
-  "substrate": "executable_stability_sweep_cct_case",
-  "objective": "Compute critical clearing time from a transient-stability sweep",
+  "substrate": "executable_smib_equal_area_criterion_case",
+  "objective": "Compute the critical clearing angle and critical clearing time for a single-machine-infinite-bus fault using the equal-area criterion.",
   "bilingual": {
     "title": {
-      "en": "REL-TASK-048 — Compute critical clearing time from a transient-stability sweep",
-      "ru": "REL-TASK-048 — Расчёт критического времени отключения по набору расчётов переходной устойчивости"
+      "en": "REL-TASK-048 — Critical clearing time via the equal-area criterion",
+      "ru": "REL-TASK-048 — Критическое время отключения по критерию равных площадей"
     },
     "objective": {
-      "en": "Compute critical clearing time from a transient-stability sweep",
-      "ru": "Расчёт критического времени отключения по набору расчётов переходной устойчивости"
+      "en": "Compute the critical clearing angle and critical clearing time for a single-machine-infinite-bus fault using the equal-area criterion.",
+      "ru": "Рассчитать критический угол и критическое время отключения КЗ для схемы машина — шины бесконечной мощности по критерию равных площадей."
     },
     "instructions": {
-      "en": "Use the public executable inputs to compute the requested JSON submission. Do not copy an expected answer; derive all reported values from the calculation specification.",
-      "ru": "Используйте опубликованные исполняемые входные данные и вычислите требуемый JSON-ответ. Не копируйте ожидаемый ответ; выведите все значения из спецификации расчёта."
+      "en": "Use smib_cct_case. Power transfer is zero during the fault. Compute delta0 = asin(Pm/prefault_pmax), delta_max = pi - asin(Pm/postfault_pmax), the critical clearing angle from the equal-area criterion cos(delta_cr) = (Pm*(delta_max - delta0) + postfault_pmax*cos(delta_max)) / postfault_pmax, and the critical clearing time t_cr = sqrt(4*H*(delta_cr - delta0) / (2*pi*f0*Pm)). Report angles in degrees and time in seconds. Do not copy an expected answer; derive all values from the case data.",
+      "ru": "Используйте smib_cct_case. Во время КЗ передача мощности равна нулю. Вычислите delta0 = asin(Pm/prefault_pmax), delta_max = pi - asin(Pm/postfault_pmax), критический угол отключения из критерия равных площадей cos(delta_cr) = (Pm*(delta_max - delta0) + postfault_pmax*cos(delta_max)) / postfault_pmax и критическое время отключения t_cr = sqrt(4*H*(delta_cr - delta0) / (2*pi*f0*Pm)). Укажите углы в градусах, время в секундах. Не копируйте ожидаемый ответ; выведите все значения из данных кейса."
     }
   },
   "subdomain": "stability & dynamics",
   "public_inputs": {
-    "stability_sweep": {
-      "max_angle_deg": 180.0,
-      "min_voltage_pu": 0.7,
-      "cases": [
-        {
-          "case_id": "tc_080",
-          "clearing_time_s": 0.08,
-          "stable": true,
-          "max_rotor_angle_deg": 92.0,
-          "min_voltage_pu": 0.82
-        },
-        {
-          "case_id": "tc_120",
-          "clearing_time_s": 0.12,
-          "stable": true,
-          "max_rotor_angle_deg": 127.0,
-          "min_voltage_pu": 0.78
-        },
-        {
-          "case_id": "tc_160",
-          "clearing_time_s": 0.16,
-          "stable": true,
-          "max_rotor_angle_deg": 168.0,
-          "min_voltage_pu": 0.72
-        },
-        {
-          "case_id": "tc_180",
-          "clearing_time_s": 0.18,
-          "stable": false,
-          "max_rotor_angle_deg": 204.0,
-          "min_voltage_pu": 0.66
-        },
-        {
-          "case_id": "tc_220",
-          "clearing_time_s": 0.22,
-          "stable": false,
-          "max_rotor_angle_deg": 260.0,
-          "min_voltage_pu": 0.6
-        }
-      ]
+    "smib_cct_case": {
+      "nominal_frequency_hz": 50.0,
+      "inertia_h_s": 4.0,
+      "mechanical_power_pu": 0.9,
+      "prefault_pmax_pu": 2.0,
+      "during_fault_pmax_pu": 0.0,
+      "postfault_pmax_pu": 1.5,
+      "fault_description": "Bolted three-phase fault at the generator HV terminals; cleared by tripping one of two parallel tie lines, which lowers the post-fault transfer capability."
     }
   },
+  "smib_cct_case": {
+    "nominal_frequency_hz": 50.0,
+    "inertia_h_s": 4.0,
+    "mechanical_power_pu": 0.9,
+    "prefault_pmax_pu": 2.0,
+    "during_fault_pmax_pu": 0.0,
+    "postfault_pmax_pu": 1.5,
+    "fault_description": "Bolted three-phase fault at the generator HV terminals; cleared by tripping one of two parallel tie lines, which lowers the post-fault transfer capability."
+  },
   "submission_schema": {
-    "critical_clearing_time_s": "largest clearing time that remains stable and satisfies angle/voltage thresholds",
-    "limiting_case": "case_id of the last stable clearing-time case",
-    "stable_times_s": "list of stable clearing times",
-    "unstable_times_s": "list of unstable clearing times",
+    "delta0_deg": "pre-fault rotor angle in degrees",
+    "delta_max_deg": "maximum post-fault angle preserving stability, in degrees",
+    "delta_critical_deg": "critical clearing angle from the equal-area criterion, in degrees",
+    "critical_clearing_time_s": "critical clearing time in seconds",
     "rationale": "optional string"
   },
   "hard_constraints": [
-    "A case is stable only if stable=true, max_rotor_angle_deg <= max_angle_deg, and min_voltage_pu >= min_voltage_pu.",
-    "critical_clearing_time_s is the maximum clearing_time_s among stable cases.",
+    "All four numeric fields must be present and match the recomputed equal-area study (angles within 0.01 deg, time within 0.001 s).",
     "Unknown extra answer keys are infeasible.",
     "Optional rationale text is ignored by the deterministic evaluator."
   ],
@@ -79,7 +55,7 @@
     {
       "name": "feasible",
       "direction": "boolean",
-      "description": "Whether all hard constraints and computed values are satisfied."
+      "description": "Whether all recomputed equal-area values are matched."
     },
     {
       "name": "score",
@@ -89,20 +65,21 @@
   ],
   "source_evidence": [
     "literature/metadata/v4_balanced_core_shortlist.md",
-    "literature/task_bank_v4_gap_fill_balanced.md#rel-task-048"
+    "literature/task_bank_v4_gap_fill_balanced.md#rel-task-048",
+    "docs/source_cards/critical_clearing_time.md"
   ],
   "source_provenance": [
     {
       "title": "V4 balanced core shortlist — REL-TASK-048",
       "locator": "literature/metadata/v4_balanced_core_shortlist.md",
       "confidence": "medium",
-      "notes": "Literature-derived power-systems task topic converted into a public executable deterministic instance."
+      "notes": "Literature-derived transient-stability task converted into an executable equal-area-criterion instance."
     },
     {
-      "title": "Bilingual executable benchmark slice requirement",
-      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
-      "confidence": "medium",
-      "notes": "Supports maintaining English and Russian task presentation for benchmark artifacts."
+      "title": "Equal-area criterion for first-swing transient stability (standard textbook method, e.g. Kundur, Power System Stability and Control)",
+      "locator": "standard practice: delta_cr from equal-area balance; closed-form t_cr valid for zero during-fault power transfer",
+      "confidence": "medium-strong",
+      "notes": "Replaces the earlier sweep-table surrogate that published precomputed stable/unstable labels; the agent now performs the stability computation itself."
     }
   ]
 }

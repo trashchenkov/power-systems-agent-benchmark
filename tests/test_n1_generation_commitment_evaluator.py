@@ -1,10 +1,10 @@
 import json
 import unittest
 from pathlib import Path
-from baselines.scuc_n1.baseline import solve_case
-from prototype.evaluators.evaluate_scuc_n1 import evaluate_case
+from baselines.n1_generation_commitment.baseline import solve_case
+from prototype.evaluators.evaluate_n1_generation_commitment import evaluate_case
 ROOT=Path(__file__).resolve().parents[1]
-TASK_PATH=ROOT/"tasks/scuc_n1/public/case_001/task.json"
+TASK_PATH=ROOT/"tasks/n1_generation_commitment/public/case_001/task.json"
 class SCUCN1Tests(unittest.TestCase):
     def setUp(self): self.task=json.loads(TASK_PATH.read_text(encoding="utf-8"))
     def test_baseline_submission_is_feasible(self):

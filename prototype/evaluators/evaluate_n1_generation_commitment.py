@@ -3,7 +3,7 @@ import itertools, json, math
 from pathlib import Path
 
 def _expected(task):
-    spec=task["public_inputs"]["scuc_case"]
+    spec=task["public_inputs"]["commitment_case"]
     units=spec["units"]; demand=spec["demand_mw"]
     import itertools
     best=None

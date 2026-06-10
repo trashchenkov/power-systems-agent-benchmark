@@ -51,7 +51,7 @@ BASELINE_MODULE_BY_FAMILY = {
     "pv_soft_cost_sobol": "baselines.pv_soft_cost_sobol.baseline",
     "pv_volt_var": "baselines.pv_volt_var.baseline",
     "rolling_microgrid_dispatch": "baselines.rolling_microgrid_dispatch.baseline",
-    "scuc_n1": "baselines.scuc_n1.baseline",
+    "n1_generation_commitment": "baselines.n1_generation_commitment.baseline",
     "three_phase_short_circuit": "baselines.three_phase_short_circuit.baseline",
     "transient_stability_prediction": "baselines.transient_stability_prediction.baseline",
     "wind_power_forecast": "baselines.wind_power_forecast.baseline",
