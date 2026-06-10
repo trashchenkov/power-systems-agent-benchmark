@@ -1,4 +1,13 @@
-"""Evaluator for three-phase short-circuit current from per-unit impedances."""
+"""Evaluator for IEC 60909-style three-phase short-circuit currents.
+
+Computes the canonical max/min pair from positive-sequence per-unit impedances:
+
+- maximum initial symmetrical current Ik_max: equivalent voltage source with
+  voltage factor c_max and a bolted (metallic) fault — fault resistance is
+  neglected, per IEC 60909 practice for equipment-rating currents;
+- minimum current Ik_min: voltage factor c_min with the published fault/contact
+  resistance included — the protection-sensitivity current.
+"""
 
 from __future__ import annotations
 
@@ -23,33 +32,40 @@ def compute_three_phase_fault(task: dict[str, Any]) -> dict[str, Any]:
     case = task["short_circuit_case"]
     base_mva = float(case["base_mva"])
     voltage_kv = float(case["voltage_kv"])
+    c_max = float(case["voltage_factor_cmax"])
+    c_min = float(case["voltage_factor_cmin"])
     base_current_ka = base_mva / (SQRT3 * voltage_kv)
     components = case["positive_sequence_impedances_pu"]
-    z_total = sum((_zpu(component) for component in components), complex(0.0, 0.0))
+    z_network = sum((_zpu(component) for component in components), complex(0.0, 0.0))
+    if abs(z_network) <= 0:
+        raise ValueError("network impedance must be non-zero")
     rf = float(case.get("fault_resistance_pu", 0.0))
-    z_fault = z_total + complex(rf, 0.0)
-    if abs(z_fault) <= 0:
-        raise ValueError("total fault impedance must be non-zero")
-    i_pu = 1.0 / abs(z_fault)
-    fault_current_ka = i_pu * base_current_ka
-    fault_mva = SQRT3 * voltage_kv * fault_current_ka
+    z_min_path = z_network + complex(rf, 0.0)
+    ik_max_ka = c_max / abs(z_network) * base_current_ka
+    sk_max_mva = SQRT3 * voltage_kv * ik_max_ka
+    ik_min_ka = c_min / abs(z_min_path) * base_current_ka
     return {
-        "z_total_r_pu": round(z_fault.real, 6),
-        "z_total_x_pu": round(z_fault.imag, 6),
-        "z_total_mag_pu": round(abs(z_fault), 6),
+        "z_bolted_mag_pu": round(abs(z_network), 6),
+        "z_min_mag_pu": round(abs(z_min_path), 6),
         "base_current_ka": round(base_current_ka, 6),
-        "fault_current_ka": round(fault_current_ka, 6),
-        "fault_mva": round(fault_mva, 6),
+        "ik_max_ka": round(ik_max_ka, 6),
+        "sk_max_mva": round(sk_max_mva, 6),
+        "ik_min_ka": round(ik_min_ka, 6),
     }
 
 
 def solve_case(task: dict[str, Any]) -> dict[str, Any]:
     study = compute_three_phase_fault(task)
     return {
-        "fault_current_ka": study["fault_current_ka"],
-        "fault_mva": study["fault_mva"],
-        "z_total_mag_pu": study["z_total_mag_pu"],
-        "rationale": "Computed the bolted three-phase fault current from the sum of positive-sequence source, transformer, and line impedances on the given per-unit base."
+        "ik_max_ka": study["ik_max_ka"],
+        "sk_max_mva": study["sk_max_mva"],
+        "ik_min_ka": study["ik_min_ka"],
+        "z_bolted_mag_pu": study["z_bolted_mag_pu"],
+        "z_min_mag_pu": study["z_min_mag_pu"],
+        "rationale": (
+            "Maximum initial symmetrical current from c_max over the bolted positive-sequence "
+            "impedance; minimum current from c_min over the impedance including fault resistance."
+        ),
     }
 
 
@@ -78,7 +94,7 @@ def _close(name: str, actual: float | None, expected: float, abs_tol: float, rel
 
 def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str, Any]:
     violations: list[str] = []
-    allowed = {"fault_current_ka", "fault_mva", "z_total_mag_pu", "rationale"}
+    allowed = {"ik_max_ka", "sk_max_mva", "ik_min_ka", "z_bolted_mag_pu", "z_min_mag_pu", "rationale"}
     extra = sorted(set(submission) - allowed)
     if extra:
         violations.append(f"unknown answer fields: {extra}")
@@ -86,12 +102,8 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     tol = task.get("tolerances", {})
     abs_tol = float(tol.get("absolute", 1e-3))
     rel_tol = float(tol.get("relative", 1e-4))
-    fault_current = _num(submission, "fault_current_ka", violations)
-    fault_mva = _num(submission, "fault_mva", violations)
-    zmag = _num(submission, "z_total_mag_pu", violations)
-    _close("fault_current_ka", fault_current, expected["fault_current_ka"], abs_tol, rel_tol, violations)
-    _close("fault_mva", fault_mva, expected["fault_mva"], abs_tol, rel_tol, violations)
-    _close("z_total_mag_pu", zmag, expected["z_total_mag_pu"], abs_tol, rel_tol, violations)
+    for key in ("ik_max_ka", "sk_max_mva", "ik_min_ka", "z_bolted_mag_pu", "z_min_mag_pu"):
+        _close(key, _num(submission, key, violations), expected[key], abs_tol, rel_tol, violations)
     feasible = not violations
     return {"task_id": task["task_id"], "feasible": feasible, "score": 1.0 if feasible else 0.0, "study": expected, "violations": violations}
 

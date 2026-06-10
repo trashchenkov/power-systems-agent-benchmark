@@ -3,19 +3,19 @@
   "family": "three_phase_short_circuit",
   "candidate_id": "REL-TASK-033",
   "substrate": "executable_positive_sequence_short_circuit_case",
-  "objective": "Calculate the initial symmetrical three-phase short-circuit current at a 10.5 kV bus from positive-sequence per-unit impedances.",
+  "objective": "Compute the IEC 60909-style maximum and minimum three-phase short-circuit currents at a 10.5 kV bus from positive-sequence per-unit impedances.",
   "bilingual": {
     "title": {
-      "en": "REL-TASK-033 — Three-phase short-circuit current calculation",
-      "ru": "REL-TASK-033 — Расчёт тока трёхфазного короткого замыкания"
+      "en": "REL-TASK-033 — IEC 60909-style maximum and minimum three-phase short-circuit currents",
+      "ru": "REL-TASK-033 — Максимальный и минимальный токи трёхфазного КЗ в духе МЭК 60909"
     },
     "objective": {
-      "en": "Calculate the initial symmetrical three-phase short-circuit current at a 10.5 kV bus from positive-sequence per-unit impedances.",
-      "ru": "Рассчитать начальный симметричный ток трёхфазного короткого замыкания на шинах 10,5 кВ по сопротивлениям прямой последовательности в относительных единицах."
+      "en": "Compute the IEC 60909-style maximum and minimum three-phase short-circuit currents at a 10.5 kV bus from positive-sequence per-unit impedances.",
+      "ru": "Рассчитать максимальный и минимальный токи трёхфазного КЗ на шинах 10,5 кВ по сопротивлениям прямой последовательности в относительных единицах в духе МЭК 60909."
     },
     "instructions": {
-      "en": "Use the public base values and positive-sequence impedances. Sum the impedances, include the listed fault resistance, compute Ibase = Sbase/(sqrt(3)*Vbase), Ifault_pu = 1/|Ztotal|, and write submission.json with fault_current_ka, fault_mva, and z_total_mag_pu.",
-      "ru": "Используйте открытые базисные величины и сопротивления прямой последовательности. Сложите сопротивления, учтите указанное сопротивление дуги/повреждения, вычислите Iб = Sб/(sqrt(3)*Uб), Iкз_о.е. = 1/|Zсум| и запишите submission.json с полями fault_current_ka, fault_mva и z_total_mag_pu."
+      "en": "Use short_circuit_case. Sum the positive-sequence impedances to get the network impedance. Maximum current (equipment rating): Ik_max = voltage_factor_cmax / |Z_network| * I_base with a bolted fault (no fault resistance), I_base = base_mva / (sqrt(3) * voltage_kv); Sk_max = sqrt(3) * voltage_kv * Ik_max. Minimum current (protection sensitivity): Ik_min = voltage_factor_cmin / |Z_network + fault_resistance_pu| * I_base. Report ik_max_ka, sk_max_mva, ik_min_ka, z_bolted_mag_pu, z_min_mag_pu.",
+      "ru": "Используйте short_circuit_case. Сложите сопротивления прямой последовательности и получите сопротивление сети. Максимальный ток (выбор аппаратов): Ik_max = voltage_factor_cmax / |Z_сети| * I_база при металлическом КЗ (без сопротивления в месте КЗ), I_база = base_mva / (sqrt(3) * voltage_kv); Sk_max = sqrt(3) * voltage_kv * Ik_max. Минимальный ток (чувствительность защиты): Ik_min = voltage_factor_cmin / |Z_сети + fault_resistance_pu| * I_база. Укажите ik_max_ka, sk_max_mva, ik_min_ka, z_bolted_mag_pu, z_min_mag_pu."
     }
   },
   "subdomain": "protection, faults & relay engineering",
@@ -25,6 +25,8 @@
     "input_fields": [
       "short_circuit_case.base_mva",
       "short_circuit_case.voltage_kv",
+      "short_circuit_case.voltage_factor_cmax",
+      "short_circuit_case.voltage_factor_cmin",
       "short_circuit_case.positive_sequence_impedances_pu",
       "short_circuit_case.fault_resistance_pu"
     ]
@@ -53,16 +55,22 @@
         "r_pu": 0.002,
         "x_pu": 0.011
       }
-    ]
+    ],
+    "voltage_factor_cmax": 1.1,
+    "voltage_factor_cmin": 1.0,
+    "fault_resistance_note": "fault/contact resistance applies to the minimum-current case only; the maximum current is computed for a bolted fault per IEC 60909"
   },
   "submission_schema": {
-    "fault_current_ka": "initial symmetrical three-phase RMS short-circuit current in kA",
-    "fault_mva": "short-circuit apparent power in MVA, sqrt(3)*V_kV*I_kA",
-    "z_total_mag_pu": "magnitude of the total positive-sequence fault impedance in per unit",
+    "ik_max_ka": "maximum initial symmetrical three-phase RMS short-circuit current in kA (c_max, bolted fault)",
+    "sk_max_mva": "maximum short-circuit apparent power in MVA, sqrt(3)*V_kV*Ik_max",
+    "ik_min_ka": "minimum three-phase RMS short-circuit current in kA (c_min, fault resistance included)",
+    "z_bolted_mag_pu": "magnitude of the positive-sequence network impedance without fault resistance, per unit",
+    "z_min_mag_pu": "magnitude of the impedance including fault resistance, per unit",
     "rationale": "optional string"
   },
   "hard_constraints": [
-    "Submission must contain numeric fault_current_ka, fault_mva, and z_total_mag_pu fields.",
+    "Submission must contain numeric ik_max_ka, sk_max_mva, ik_min_ka, z_bolted_mag_pu, and z_min_mag_pu fields.",
+    "The maximum current must be computed with voltage_factor_cmax and a bolted fault; the minimum current with voltage_factor_cmin and the published fault resistance.",
     "The values must match the independent positive-sequence calculation within tolerance.",
     "Unknown extra answer keys are infeasible."
   ],
@@ -94,10 +102,10 @@
       "notes": "Candidate task selected from the literature-derived protection and fault-analysis taxonomy. The public artifact is now an executable positive-sequence short-circuit calculation."
     },
     {
-      "title": "IEC 60909-style short-circuit calculation practice",
-      "locator": "standard engineering formula: initial symmetrical 3-phase current from Thevenin/positive-sequence impedance",
-      "confidence": "medium",
-      "notes": "The executable case uses the common I_k = U/(sqrt(3)*|Z|) relation in per-unit form for a compact benchmark instance."
+      "title": "IEC 60909 equivalent-voltage-source short-circuit calculation",
+      "locator": "standard practice: Ik\" = c*Un/(sqrt(3)*Zk); c_max=1.10 / c_min=1.00 for MV; fault resistance neglected for maximum currents and included for minimum currents",
+      "confidence": "medium-strong",
+      "notes": "The executable case computes the canonical IEC 60909 max/min pair: c_max with bolted fault for equipment rating and c_min with fault resistance for protection sensitivity."
     }
   ]
 }

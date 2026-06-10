@@ -114,7 +114,7 @@ This file records the 41 balanced-core candidate tasks now represented as public
 36. `n1_generation_commitment` — GAP-TASK-001 — Least-cost single-period commitment with N-1 loss-of-largest-unit security (compact SCUC-inspired surrogate)
    - task_id: `n1_generation_commitment_public_001`
    - path: `tasks/n1_generation_commitment/public/case_001/task.json`
-37. `three_phase_short_circuit` — REL-TASK-033 — Three-phase short-circuit current calculation
+37. `three_phase_short_circuit` — REL-TASK-033 — IEC 60909-style maximum/minimum three-phase short-circuit currents
    - task_id: `three_phase_short_circuit_public_001`
    - path: `tasks/three_phase_short_circuit/public/case_001/task.json`
 38. `transient_stability_prediction` — REL-TASK-008 — Transient stability prediction with high wind penetration
