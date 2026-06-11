@@ -300,7 +300,7 @@ formula/graph surrogate → deterministic engineering model → simulator-backed
    - `ev_v2g_voltage_support`
    - `bess_ancillary_response`
    - `commercial_pv_lcoe_uncertainty`
-   - `pv_soft_cost_sobol`
+   - `harmonic_ieee519_compliance`
 
 5. **Микросети и диспетчеризация**
    - `microgrid_economic_dispatch`

@@ -92,6 +92,17 @@ def gen_breaker_relay_short_circuit(task, rng):
     c["max_load_current_a"] = _pick(rng, 250.0, 450.0, 0)
 
 
+def gen_cable_ampacity_sizing(task, rng):
+    c = _case(task, "cable_sizing_case")
+    c["design_current_a"] = _pick(rng, 150.0, 280.0, 0)
+    c["length_m"] = _pick(rng, 120.0, 420.0, 0)
+    c["power_factor"] = _pick(rng, 0.85, 0.95, 2)
+    c["derating"]["ambient_factor"] = _pick(rng, 0.87, 1.0, 2)
+    c["derating"]["grouping_factor"] = _pick(rng, 0.7, 1.0, 2)
+    c["fault"]["fault_current_ka"] = _pick(rng, 8.0, 18.0, 1)
+    c["fault"]["clearing_time_s"] = _pick(rng, 0.2, 0.6, 2)
+
+
 def gen_commercial_pv_lcoe_uncertainty(task, rng):
     c = _case(task, "pv_lcoe_case")
     c["system_size_kw_dc"] = int(rng.randrange(1000, 4001, 100))
@@ -183,24 +194,6 @@ def gen_earth_fault_calculation(task, rng):
     for seq in c["sequence_impedances_pu"].values():
         seq["r_pu"] = _scale(rng, seq["r_pu"], 0.8, 1.3)
         seq["x_pu"] = _scale(rng, seq["x_pu"], 0.8, 1.3)
-
-
-def gen_electric_boiler_capacity_sizing(task, rng):
-    c = _case(task, "boiler_capacity_case")
-    c["feeder_boiler_capacity_limit_kw"] = int(_pick(rng, 70, 110, 0))
-    for h in c["design_hours"].values():
-        h["heat_load_kw_th"] = int(_pick(rng, 80, 130, 0))
-        h["heat_pump_heat_kw_th"] = int(_pick(rng, 45, 65, 0))
-        h["waste_heat_kw_th"] = int(_pick(rng, 3, 12, 0))
-        h["heat_pump_electric_kw"] = int(_pick(rng, 15, 22, 0))
-        h["non_boiler_electric_kw"] = int(_pick(rng, 30, 45, 0))
-
-
-def gen_electric_boiler_step_control(task, rng):
-    c = _case(task, "boiler_step_control_case")
-    c["heat_deficit_kw_per_deg_c"] = int(_pick(rng, 15, 30, 0))
-    for m in c["measurements"].values():
-        m["return_temp_c"] = _pick(rng, 49.0, 56.5, 1)
 
 
 def gen_en50160_voltage_compliance(task, rng):
@@ -361,6 +354,18 @@ def gen_frt_compliance(task, rng):
     ]
 
 
+def gen_harmonic_ieee519_compliance(task, rng):
+    c = _case(task, "harmonic_case")
+    c["pcc"]["max_demand_current_a"] = _pick(rng, 350.0, 650.0, 0)
+    c["pcc"]["short_circuit_current_ka"] = _pick(rng, 5.0, 40.0, 1)
+    il = c["pcc"]["max_demand_current_a"]
+    c["measured"]["fundamental_current_a"] = round(il * rng.uniform(0.85, 1.0), 0)
+    for h in c["measured"]["harmonic_currents_a"]:
+        c["measured"]["harmonic_currents_a"][h] = round(il * rng.uniform(0.001, 0.075), 1)
+    for h in c["measured"]["harmonic_voltages_pct"]:
+        c["measured"]["harmonic_voltages_pct"][h] = _pick(rng, 0.3, 3.6, 2)
+
+
 def gen_hydro_thermal_storage_uc(task, rng):
     c = _case(task, "uc_case")
     c["emission_cap_ton"] = int(_pick(rng, 150, 260, 0))
@@ -510,15 +515,6 @@ def gen_protected_meter_placement(task, rng):
         attack["detectable_by"] = sorted(rng.sample(meters, count))
 
 
-def gen_pv_soft_cost_sobol(task, rng):
-    c = _case(task, "pv_soft_cost_sobol_case")
-    c["base_soft_cost_usd_per_kw"] = int(_pick(rng, 200, 400, 0))
-    for k in c["linear_effect_usd_per_kw"]:
-        c["linear_effect_usd_per_kw"][k] = int(_pick(rng, 20, 120, 0))
-    for k in c["interaction_effect_usd_per_kw"]:
-        c["interaction_effect_usd_per_kw"][k] = int(_pick(rng, 8, 40, 0))
-
-
 def gen_pv_volt_var(task, rng):
     timesteps = _case(task, "timesteps")
     for step in timesteps:
@@ -534,6 +530,15 @@ def gen_three_phase_short_circuit(task, rng):
     for comp in c["positive_sequence_impedances_pu"]:
         comp["r_pu"] = _scale(rng, comp["r_pu"], 0.8, 1.3)
         comp["x_pu"] = _scale(rng, comp["x_pu"], 0.8, 1.3)
+
+
+def gen_transformer_thermal_loading(task, rng):
+    c = _case(task, "transformer_thermal_case")
+    c["initial_top_oil_rise_k"] = _pick(rng, 32.0, 50.0, 1)
+    for step in c["load_steps"]:
+        step["duration_h"] = _pick(rng, 0.5, 3.0, 1)
+        step["ambient_c"] = _pick(rng, 12.0, 36.0, 1)
+        step["load_factor_pu"] = _pick(rng, 0.6, 1.3, 2)
 
 
 def gen_transient_stability_prediction(task, rng):
@@ -580,6 +585,7 @@ def gen_ybus_construction(task, rng):
 GENERATORS: dict[str, Callable[[dict[str, Any], random.Random], None]] = {
     "bess_ancillary_response": gen_bess_ancillary_response,
     "breaker_relay_short_circuit": gen_breaker_relay_short_circuit,
+    "cable_ampacity_sizing": gen_cable_ampacity_sizing,
     "commercial_pv_lcoe_uncertainty": gen_commercial_pv_lcoe_uncertainty,
     "contingency_screening": gen_contingency_screening,
     "corrective_transmission_switching": gen_corrective_transmission_switching,
@@ -588,8 +594,6 @@ GENERATORS: dict[str, Callable[[dict[str, Any], random.Random], None]] = {
     "distance_protection_settings": gen_distance_protection_settings,
     "dynamic_thermal_rating": gen_dynamic_thermal_rating,
     "earth_fault_calculation": gen_earth_fault_calculation,
-    "electric_boiler_capacity_sizing": gen_electric_boiler_capacity_sizing,
-    "electric_boiler_step_control": gen_electric_boiler_step_control,
     "en50160_voltage_compliance": gen_en50160_voltage_compliance,
     "ev_v2g_outage_schedule": gen_ev_v2g_outage_schedule,
     "ev_v2g_voltage_support": gen_ev_v2g_voltage_support,
@@ -599,6 +603,7 @@ GENERATORS: dict[str, Callable[[dict[str, Any], random.Random], None]] = {
     "fdi_state_estimation": gen_fdi_state_estimation,
     "flisr_restoration": gen_flisr_restoration,
     "frt_compliance": gen_frt_compliance,
+    "harmonic_ieee519_compliance": gen_harmonic_ieee519_compliance,
     "hydro_thermal_storage_uc": gen_hydro_thermal_storage_uc,
     "ibr_short_circuit_frt": gen_ibr_short_circuit_frt,
     "islanded_microgrid_pq_dispatch": gen_islanded_microgrid_pq_dispatch,
@@ -611,10 +616,10 @@ GENERATORS: dict[str, Callable[[dict[str, Any], random.Random], None]] = {
     "pf_voltage_repair": gen_pf_voltage_repair,
     "power_quality_event_classification": gen_power_quality_event_classification,
     "protected_meter_placement": gen_protected_meter_placement,
-    "pv_soft_cost_sobol": gen_pv_soft_cost_sobol,
     "pv_volt_var": gen_pv_volt_var,
     "rolling_microgrid_dispatch": gen_rolling_microgrid_dispatch,
     "three_phase_short_circuit": gen_three_phase_short_circuit,
+    "transformer_thermal_loading": gen_transformer_thermal_loading,
     "transient_stability_prediction": gen_transient_stability_prediction,
     "wind_power_forecast": gen_wind_power_forecast,
     "wind_prediction_interval": gen_wind_prediction_interval,
