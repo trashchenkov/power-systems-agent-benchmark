@@ -1,5 +1,39 @@
 # Public agent runs — full 41-task core (2026-06-11)
 
+## Update: merged results after the spec-ambiguity fixes
+
+The seven group-B ambiguities (below) were fixed and the eight affected
+families were re-run with the same agents/models; packets:
+`runs/agent_packets/public_v2_rerun8/`, runs: `runs/public_agent_smoke/
+{codex,opencode,cursor}-rerun8-spec-fixes/`. On the re-run codex and cursor
+went 8/8 with score 1.0 and opencode 7/8 — its one remaining hydro failure is
+now a genuine merit-order error (gas committed at nonzero output where coal
+alone is cheaper), not a contract artifact.
+
+Merged leaderboard (33 untouched families from the original run + 8 re-run):
+
+| agent (model) | feasible | perfect (score = 1.0) | mean_score |
+|---|---|---|---|
+| cursor (composer-2.5 / -fast) | 41/41 | 37/41 | 0.995 |
+| codex (gpt-5.5 medium) | 39/41 | 35/41 | 0.947 |
+| opencode (deepseek-v4-flash) | 37/41 | 35/41 | 0.900 |
+
+Remaining infeasible cases are all group-A capability failures: codex —
+`ev_v2g_outage_schedule` (sign convention), `transient_stability_prediction`;
+opencode — `hydro_thermal_storage_uc` (merit order),
+`ibr_short_circuit_frt`, `pv_volt_var`, `transient_stability_prediction`.
+Cursor cleared every hard constraint; partial-credit quality penalties and the
+hidden set now carry the discrimination at the top
+(`transient_stability_prediction` fails two agents in different ways and may
+deserve a risk-score spec review, though cursor solved it as written).
+
+The sections below document the original pre-fix run that motivated the spec
+changes.
+
+---
+
+# Original run (pre spec fixes)
+
 Three CLI agents ran the complete 41-task public core after the domain-content
 fixes (RoCoF, FDI/WLS redesign, equal-area CCT, IEC 60909 max/min pair) and the
 family swap (transformer / cable / harmonics in; boilers / Sobol out).

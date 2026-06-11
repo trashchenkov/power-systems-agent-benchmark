@@ -1,0 +1,77 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m→ [0mRead .omx
+[0m
+[0m$ [0mpython3 << 'EOF'
+demand = 1000.0
+ibr_capacity = 720.0
+nom_freq = 50.0
+largest_loss = 180.0
+max_rocof = 2.0
+min_scr = 2.25
+grid_sc_base = 1180.0
+
+units = {
+    "g1": {"p": 120.0, "h": 4.5, "sc": 280.0},
+    "g2": {"p": 180.0, "h": 5.0, "sc": 360.0},
+    "g3": {"p": 240.0, "h": 3.8, "sc": 440.0},
+    "g4": {"p": 90.0, "h": 6.0, "sc": 190.0},
+}
+
+import itertools
+
+feasible = []
+for r in range(1, len(units)+1):
+    for combo in itertools.combinations(units.keys(), r):
+        total_p = sum(units[u]["p"] for u in combo)
+        total_hp = sum(units[u]["h"] * units[u]["p"] for u in combo)
+        inertia_gws = total_hp / 1000.0
+        rocof = largest_loss * nom_freq / (2 * inertia_gws * 1000)
+        total_sc = sum(units[u]["sc"] for u in combo)
+        scr = (grid_sc_base + total_sc) / ibr_capacity
+        share_pct = total_p / demand * 100
+        
+        ok = rocof <= max_rocof and scr >= min_scr
+        if ok:
+            feasible.append((share_pct, combo, inertia_gws, rocof, scr))
+            print(f"FEASIBLE: {combo} -> share={share_pct:.1f}%, inertia={inertia_gws:.3f} GWs, RoCoF={rocof:.3f} Hz/s, SCR={scr:.3f}")
+        else:
+            print(f"INFEASIBLE: {combo} -> share={share_pct:.1f}%, inertia={inertia_gws:.3f} GWs, RoCoF={rocof:.3f} Hz/s, SCR={scr:.3f}")
+
+feasible.sort(key=lambda x: x[0])
+print(f"\nBest (min share): {feasible[0][1]} -> share={feasible[0][0]:.1f}%")
+print(f"  inertia={feasible[0][2]:.3f} GWs")
+print(f"  rocof={feasible[0][3]:.3f} Hz/s")
+print(f"  scr={feasible[0][4]:.3f}")
+EOF
+INFEASIBLE: ('g1',) -> share=12.0%, inertia=0.540 GWs, RoCoF=8.333 Hz/s, SCR=2.028
+INFEASIBLE: ('g2',) -> share=18.0%, inertia=0.900 GWs, RoCoF=5.000 Hz/s, SCR=2.139
+INFEASIBLE: ('g3',) -> share=24.0%, inertia=0.912 GWs, RoCoF=4.934 Hz/s, SCR=2.250
+INFEASIBLE: ('g4',) -> share=9.0%, inertia=0.540 GWs, RoCoF=8.333 Hz/s, SCR=1.903
+INFEASIBLE: ('g1', 'g2') -> share=30.0%, inertia=1.440 GWs, RoCoF=3.125 Hz/s, SCR=2.528
+INFEASIBLE: ('g1', 'g3') -> share=36.0%, inertia=1.452 GWs, RoCoF=3.099 Hz/s, SCR=2.639
+INFEASIBLE: ('g1', 'g4') -> share=21.0%, inertia=1.080 GWs, RoCoF=4.167 Hz/s, SCR=2.292
+INFEASIBLE: ('g2', 'g3') -> share=42.0%, inertia=1.812 GWs, RoCoF=2.483 Hz/s, SCR=2.750
+INFEASIBLE: ('g2', 'g4') -> share=27.0%, inertia=1.440 GWs, RoCoF=3.125 Hz/s, SCR=2.403
+INFEASIBLE: ('g3', 'g4') -> share=33.0%, inertia=1.452 GWs, RoCoF=3.099 Hz/s, SCR=2.514
+FEASIBLE: ('g1', 'g2', 'g3') -> share=54.0%, inertia=2.352 GWs, RoCoF=1.913 Hz/s, SCR=3.139
+INFEASIBLE: ('g1', 'g2', 'g4') -> share=39.0%, inertia=1.980 GWs, RoCoF=2.273 Hz/s, SCR=2.792
+INFEASIBLE: ('g1', 'g3', 'g4') -> share=45.0%, inertia=1.992 GWs, RoCoF=2.259 Hz/s, SCR=2.903
+FEASIBLE: ('g2', 'g3', 'g4') -> share=51.0%, inertia=2.352 GWs, RoCoF=1.913 Hz/s, SCR=3.014
+FEASIBLE: ('g1', 'g2', 'g3', 'g4') -> share=63.0%, inertia=2.892 GWs, RoCoF=1.556 Hz/s, SCR=3.403
+
+Best (min share): ('g2', 'g3', 'g4') -> share=51.0%
+  inertia=2.352 GWs
+  rocof=1.913 Hz/s
+  scr=3.014
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "import json; json.load(open('submission.json')); print('Valid JSON')"
+Valid JSON
+[0m

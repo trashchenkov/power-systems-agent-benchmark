@@ -87,6 +87,7 @@ def run_agent_command(
                 env=env,
                 text=True,
                 capture_output=True,
+                stdin=subprocess.DEVNULL,
                 timeout=timeout_s,
                 check=False,
             )

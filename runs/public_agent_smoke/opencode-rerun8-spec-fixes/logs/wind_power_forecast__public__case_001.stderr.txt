@@ -1,0 +1,105 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import json, math
+
+# Parameters
+count = 8
+rated_mw_each = 2.5
+farm_capacity = count * rated_mw_each  # 20
+ref_density = 1.225
+cut_in = 3.0
+rated_m_s = 12.0
+cut_out = 25.0
+
+history = [
+    {"timestamp": "h-4", "wind_speed_m_s": 6.2, "air_density_kg_m3": 1.21, "actual_power_mw": 0.98},
+    {"timestamp": "h-3", "wind_speed_m_s": 7.4, "air_density_kg_m3": 1.20, "actual_power_mw": 2.35},
+    {"timestamp": "h-2", "wind_speed_m_s": 8.6, "air_density_kg_m3": 1.19, "actual_power_mw": 4.55},
+    {"timestamp": "h-1", "wind_speed_m_s": 9.1, "air_density_kg_m3": 1.18, "actual_power_mw": 5.85},
+]
+
+def power_curve(wind_speed, air_density):
+    v_c = wind_speed * (air_density / ref_density) ** (1/3)
+    if v_c < cut_in or v_c >= cut_out:
+        return 0.0
+    if v_c >= rated_m_s:
+        return farm_capacity
+    return farm_capacity * ((v_c - cut_in) / (rated_m_s - cut_in)) ** 3
+
+# Calculate residuals for history
+residuals = []
+for h in history:
+    est = power_curve(h["wind_speed_m_s"], h["air_density_kg_m3"])
+    residual = h["actual_power_mw"] - est
+    residuals.append(residual)
+    print(f"{h['timestamp']}: v_c={h['wind_speed_m_s']*(h['air_density_kg_m3']/ref_density)**(1/3):.6f}, est={est:.6f}, actual={h['actual_power_mw']}, residual={residual:.6f}")
+
+bias = sum(residuals) / len(residuals)
+print(f"\nBias = {bias:.6f}")
+
+# Weather forecast
+weather = [
+    ("t01", 8.0, 1.19),
+    ("t02", 9.5, 1.18),
+    ("t03", 11.0, 1.17),
+    ("t04", 13.2, 1.16),
+]
+
+forecast_mw_by_timestamp = {}
+forecast_values = []
+for ts, ws, ad in weather:
+    est = power_curve(ws, ad)
+    fc = max(0.0, min(est + bias, farm_capacity))
+    forecast_mw_by_timestamp[ts] = round(fc, 6)
+    forecast_values.append((ts, fc))
+    print(f"{ts}: v_c={ws*(ad/ref_density)**(1/3):.6f}, est={est:.6f}, forecast={fc:.6f}")
+
+total_mwh = sum(fc for _, fc in forecast_values) * 1.0  # forecast_step_hours = 1
+peak_ts = max(forecast_values, key=lambda x: x[1])[0]
+
+print(f"\nTotal forecast MWh: {total_mwh:.6f}")
+print(f"Peak timestamp: {peak_ts}")
+
+result = {
+    "forecast_mw_by_timestamp": {ts: round(v, 6) for ts, v in forecast_values},
+    "total_forecast_mwh": round(total_mwh, 6),
+    "peak_timestamp": peak_ts,
+    "rationale": "Power curve with density correction and historical bias correction applied per instructions."
+}
+print(f"\nResult: {json.dumps(result, indent=2)}")
+PYEOF
+h-4: v_c=6.174590, est=0.877739, actual=0.98, residual=0.102261
+h-3: v_c=7.349313, est=2.257172, actual=2.35, residual=0.092828
+h-2: v_c=8.517303, est=4.607686, actual=4.55, residual=-0.057686
+h-1: v_c=8.987178, est=5.888017, actual=5.85, residual=-0.038017
+
+Bias = 0.024847
+t01: v_c=7.923072, est=3.273490, forecast=3.298337
+t02: v_c=9.382219, est=7.132103, forecast=7.156950
+t03: v_c=10.832847, est=13.184431, forecast=13.209278
+t04: v_c=12.962275, est=20.000000, forecast=20.000000
+
+Total forecast MWh: 43.664565
+Peak timestamp: t04
+
+Result: {
+  "forecast_mw_by_timestamp": {
+    "t01": 3.298337,
+    "t02": 7.15695,
+    "t03": 13.209278,
+    "t04": 20.0
+  },
+  "total_forecast_mwh": 43.664565,
+  "peak_timestamp": "t04",
+  "rationale": "Power curve with density correction and historical bias correction applied per instructions."
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

@@ -1,0 +1,112 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m→ [0mRead instructions.md
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import json
+
+dt = 0.0833333333  # 5 minutes in hours
+load = {"t00": 38.0, "t05": 42.0, "t10": 48.0, "t15": 44.0}
+pv   = {"t00": 18.0, "t05": 15.0, "t10": 11.0, "t15": 9.0}
+gen  = {"pmin": 12.0, "pmax": 55.0, "cost": 92.0}
+bat  = {"init_soc": 5.0, "soc_min": 2.5, "soc_max": 8.0,
+        "ch_max": 6.0, "disch_max": 10.0, "ch_eff": 0.94, "disch_eff": 0.9, "step": 2.0}
+
+times = ["t00", "t05", "t10", "t15"]
+
+# Try schedule: battery discharge (8,10,8,0) -> sum=26, diesel (12,17,29,35)
+bat_mw = {"t00": 8, "t05": 10, "t10": 8, "t15": 0}
+soc = bat["init_soc"]
+
+print("Verifying schedule (8,10,8,0):")
+print(f"{'Period':<6} {'Load':>6} {'PV':>6} {'Net':>6} {'Bat':>6} {'Dsl':>6} {'SOC':>8}")
+for t in times:
+    net = load[t] - pv[t]
+    dsl = net - bat_mw[t]
+    soc_change = -bat_mw[t] * dt / bat["disch_eff"] if bat_mw[t] > 0 else -bat_mw[t] * dt * bat["ch_eff"]
+    soc = soc + soc_change
+    constraint_ok = gen["pmin"] <= dsl <= gen["pmax"] and bat["soc_min"] <= soc <= bat["soc_max"]
+    print(f"{t:<6} {load[t]:>6.1f} {pv[t]:>6.1f} {net:>6.1f} {bat_mw[t]:>6.1f} {dsl:>6.1f} {soc:>8.4f} {'OK' if constraint_ok else 'FAIL'}")
+
+total_dsl_mw = sum(load[t] - pv[t] - bat_mw[t] for t in times)
+total_cost = total_dsl_mw * dt * gen["cost"]
+print(f"\nTotal diesel MW (sum): {total_dsl_mw}")
+print(f"Total diesel MWh: {total_dsl_mw * dt:.6f}")
+print(f"Total cost: ${total_cost:.2f}")
+
+# Verify SOC stays in bounds
+# Check all possible schedules with step constraint
+print("\n--- Enumerating feasible (optimal) schedules ---")
+best_cost = float('inf')
+best_schedules = []
+from itertools import product
+
+bat_opts = [i for i in range(0, 11, 2)]  # 0,2,4,6,8,10
+# Also allow charging negative values: -6,-4,-2
+bat_opts = [-6, -4, -2] + bat_opts
+
+for b0, b1, b2, b3 in product(bat_opts, repeat=4):
+    bats = [b0, b1, b2, b3]
+    soc = bat["init_soc"]
+    feasible = True
+    for i, t in enumerate(times):
+        net = load[t] - pv[t]
+        b = bats[i]
+        # power balance: diesel = net - battery + curtailment (curtailment=0 for optimal)
+        dsl = net - b
+        if dsl < gen["pmin"] or dsl > gen["pmax"]:
+            feasible = False
+            break
+        # SOC update
+        if b > 0:  # discharge
+            soc -= b * dt / bat["disch_eff"]
+        else:      # charge (b < 0) or idle (b == 0)
+            soc += (-b) * dt * bat["ch_eff"]
+        if soc < bat["soc_min"] - 1e-9 or soc > bat["soc_max"] + 1e-9:
+            feasible = False
+            break
+    if feasible:
+        cost = sum(load[t] - pv[t] - bats[i] for i, t in enumerate(times)) * dt * gen["cost"]
+        if cost < best_cost - 1e-9:
+            best_cost = cost
+            best_schedules = [(bats, cost, soc)]
+        elif abs(cost - best_cost) < 1e-9:
+            best_schedules.append((bats, cost, soc))
+
+print(f"Optimal cost: ${best_cost:.2f}")
+print(f"Number of optimal schedules: {len(best_schedules)}")
+for bats, cost, soc in best_schedules[:10]:
+    print(f"  {bats} -> cost=${cost:.2f}, final_SOC={soc:.4f}")
+PYEOF
+Verifying schedule (8,10,8,0):
+Period   Load     PV    Net    Bat    Dsl      SOC
+t00      38.0   18.0   20.0    8.0   12.0   4.2593 OK
+t05      42.0   15.0   27.0   10.0   17.0   3.3333 OK
+t10      48.0   11.0   37.0    8.0   29.0   2.5926 OK
+t15      44.0    9.0   35.0    0.0   35.0   2.5926 OK
+
+Total diesel MW (sum): 93.0
+Total diesel MWh: 7.750000
+Total cost: $713.00
+
+--- Enumerating feasible (optimal) schedules ---
+Optimal cost: $713.00
+Number of optimal schedules: 83
+  [-4, 10, 10, 10] -> cost=$713.00, final_SOC=2.5356
+  [-2, 8, 10, 10] -> cost=$713.00, final_SOC=2.5641
+  [-2, 10, 8, 10] -> cost=$713.00, final_SOC=2.5641
+  [-2, 10, 10, 8] -> cost=$713.00, final_SOC=2.5641
+  [0, 6, 10, 10] -> cost=$713.00, final_SOC=2.5926
+  [0, 8, 8, 10] -> cost=$713.00, final_SOC=2.5926
+  [0, 8, 10, 8] -> cost=$713.00, final_SOC=2.5926
+  [0, 10, 6, 10] -> cost=$713.00, final_SOC=2.5926
+  [0, 10, 8, 8] -> cost=$713.00, final_SOC=2.5926
+  [0, 10, 10, 6] -> cost=$713.00, final_SOC=2.5926
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

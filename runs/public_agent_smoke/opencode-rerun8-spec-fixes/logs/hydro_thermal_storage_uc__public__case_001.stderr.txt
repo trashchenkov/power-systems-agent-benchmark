@@ -1,0 +1,50 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+# Given data
+load = [120, 150, 130]
+hydro = [35, 40, 30]
+storage = [10, 20, 15]
+residual = [l - h - s for l, h, s in zip(load, hydro, storage)]
+print('Residual loads:', residual, 'sum:', sum(residual))
+
+# Coal: pmin=40, pmax=100, cost=22, emission=0.75
+# Gas:  pmin=20, pmax=80,  cost=38, emission=0.35
+# Emission cap: 200
+
+# Economic dispatch: maximize coal (cheaper) subject to min/max
+# Each hour: coal + gas = residual
+# gas_min=20, so coal_max = residual - 20 (if feasible)
+# coal_min=40
+
+for i, r in enumerate(residual):
+    coal_max = min(100, r - 20)
+    coal_min = max(40, r - 80)
+    print(f'h{i+1}: residual={r}, coal=[{coal_min},{coal_max}], gas=[{r-coal_max},{r-coal_min}]')
+
+# Optimal: max coal each hour
+coal = [min(100, r - 20) for r in residual]  # 55, 70, 65
+gas  = [r - c for r, c in zip(residual, coal)]  # 20, 20, 20
+print(f'coal: {coal}, total={sum(coal)}')
+print(f'gas:  {gas}, total={sum(gas)}')
+
+cost = sum(c * 22 + g * 38 for c, g in zip(coal, gas))
+emissions = sum(c * 0.75 + g * 0.35 for c, g in zip(coal, gas))
+print(f'cost={cost}, emissions={emissions}, cap_satisfied={emissions <= 200}')
+"
+
+Residual loads: [75, 90, 85] sum: 250
+h1: residual=75, coal=[40,55], gas=[20,35]
+h2: residual=90, coal=[40,70], gas=[20,50]
+h3: residual=85, coal=[40,65], gas=[20,45]
+coal: [55, 70, 65], total=190
+gas:  [20, 20, 20], total=60
+cost=6460, emissions=163.5, cap_satisfied=True
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

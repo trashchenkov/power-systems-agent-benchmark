@@ -1,0 +1,99 @@
+{
+  "task_id": "islanded_microgrid_pq_dispatch_public_001",
+  "family": "islanded_microgrid_pq_dispatch",
+  "candidate_id": "REL-TASK-022",
+  "substrate": "executable_islanded_microgrid_pq_dispatch_case",
+  "objective": "Compute a joint active/reactive dispatch for an islanded microgrid with a diesel unit and grid-forming inverter.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-022 — Joint active/reactive dispatch in an islanded microgrid",
+      "ru": "REL-TASK-022 — Совместная диспетчеризация P/Q в изолированной микросети"
+    },
+    "objective": {
+      "en": "Balance active and reactive demand while respecting inverter apparent-power capability and maintaining voltage limits.",
+      "ru": "Сбалансировать активную и реактивную нагрузку с учётом полной мощности инвертора и допустимых напряжений."
+    },
+    "instructions": {
+      "en": "Use islanded_pq_case. Dispatch diesel and inverter P/Q so that active and reactive demand are balanced. Use the inverter active availability first, keep inverter P/Q within its apparent-power circle, compute voltage from the supplied linear model, and report dispatch, voltage_pu, and total_cost.",
+      "ru": "Используйте islanded_pq_case. Задайте P/Q дизеля и инвертора так, чтобы балансировать активную и реактивную нагрузку. Сначала используйте доступную активную мощность инвертора, соблюдайте круг полной мощности инвертора, вычислите напряжение по заданной линейной модели и укажите dispatch, voltage_pu и total_cost."
+    }
+  },
+  "subdomain": "microgrids & DER dispatch",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-022",
+    "subdomain": "microgrids & DER dispatch",
+    "input_fields": [
+      "islanded_pq_case.load",
+      "islanded_pq_case.diesel",
+      "islanded_pq_case.inverter",
+      "islanded_pq_case.voltage_model"
+    ]
+  },
+  "islanded_pq_case": {
+    "load": {
+      "p_mw": 34.0,
+      "q_mvar": 12.0
+    },
+    "diesel": {
+      "pmin_mw": 8.0,
+      "pmax_mw": 45.0,
+      "qmin_mvar": -10.0,
+      "qmax_mvar": 18.0,
+      "q_preferred_mvar": 4.0,
+      "variable_cost_per_h": 76.0,
+      "q_deviation_penalty_per_mvar_h": 3.0
+    },
+    "inverter": {
+      "p_available_mw": 20.0,
+      "s_rating_mva": 24.0
+    },
+    "voltage_model": {
+      "base_voltage_pu": 0.965,
+      "sensitivity_pu_per_mvar": 0.0025,
+      "vmin_pu": 0.95,
+      "vmax_pu": 1.05
+    }
+  },
+  "submission_schema": {
+    "dispatch": "object with diesel and inverter P/Q values",
+    "voltage_pu": "computed island voltage",
+    "total_cost": "diesel active cost plus reactive deviation penalty",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Active and reactive balances must be satisfied.",
+    "Inverter P/Q must respect apparent-power capability; diesel P/Q must respect limits.",
+    "Voltage and total cost must match the independent calculation within tolerance.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted P/Q dispatch satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "literature/metadata/v4_balanced_core_shortlist.md",
+    "literature/task_bank_v4_gap_fill_balanced.md#rel-task-022"
+  ],
+  "source_provenance": [
+    {
+      "title": "V4 balanced core shortlist — REL-TASK-022",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Candidate task selected from islanded microgrid P/Q dispatch taxonomy."
+    },
+    {
+      "title": "Islanded microgrid P/Q dispatch practice",
+      "locator": "standard active/reactive balance with inverter capability and voltage sensitivity",
+      "confidence": "medium",
+      "notes": "Public case is a compact deterministic executable instance."
+    }
+  ]
+}

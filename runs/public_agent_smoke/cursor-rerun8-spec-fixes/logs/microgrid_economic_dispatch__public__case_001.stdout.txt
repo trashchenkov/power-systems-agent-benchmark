@@ -1,0 +1,23 @@
+I solved the microgrid economic dispatch by enumerating all battery schedules on 2 MW steps (allowed range: −8 to +12 MW) and picking the least-cost feasible dispatch.
+
+**Optimal schedule**
+
+| Period | Load | PV | Battery | Diesel | SOC (end) |
+|--------|------|-----|---------|--------|-----------|
+| t1 | 45 MW | 10 MW | −4 MW (charge) | 39 MW | 21.8 MWh |
+| t2 | 62 MW | 8 MW | +2 MW (discharge) | 52 MW | 19.58 MWh |
+| t3 | 50 MW | 18 MW | +12 MW (discharge) | 20 MW | 6.24 MWh |
+
+**Verification**
+- Power balance: diesel + PV + battery = load each period
+- Diesel within [15, 70] MW; no load shedding
+- SOC stays within [6, 30] MWh with charge/discharge efficiencies
+- **Total cost**: (39 + 52 + 20) × 85 = **$9,435**
+
+`submission.json` has been written in the current directory with the dispatch, `total_cost`, and rationale.The microgrid economic dispatch task is complete.
+
+**Result:** `submission.json` contains the least-cost feasible dispatch with **total diesel cost of $9,435**.
+
+**Strategy:** Charge 4 MW in t1, discharge 2 MW in t2 and 12 MW in t3 — using the battery to shift energy and keep diesel at its 15 MW minimum in the final period.
+
+All constraints are satisfied: power balance, diesel limits, battery SOC/power bounds, and no load shedding.

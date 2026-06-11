@@ -1,0 +1,130 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import math, json
+
+# Conductor parameters
+diameter_mm = 22.4
+R20_per_km = 0.118  # ohm/km at 20C
+alpha = 0.00403     # resistance temp coeff per C
+emissivity = 0.7
+solar_absorptivity = 0.7
+
+# Thermal limits
+T_max = 75.0       # max conductor temp, C
+
+# Model constants
+conv_coeff = 0.72  # convective_w_per_m_c_at_1ms
+
+# Scheduled current
+sched_a = 520.0
+
+# Weather series
+weather = [
+    {"timestamp": "t00", "ambient_temperature_c": 18.0, "wind_speed_m_s": 2.8, "solar_w_per_m2": 150.0},
+    {"timestamp": "t01", "ambient_temperature_c": 31.0, "wind_speed_m_s": 0.7, "solar_w_per_m2": 850.0},
+    {"timestamp": "t02", "ambient_temperature_c": 27.0, "wind_speed_m_s": 1.4, "solar_w_per_m2": 600.0},
+    {"timestamp": "t03", "ambient_temperature_c": 22.0, "wind_speed_m_s": 3.2, "solar_w_per_m2": 100.0},
+]
+
+# Compute R_hot (ohm per metre)
+R_hot = (R20_per_km / 1000.0) * (1.0 + alpha * (T_max - 20.0))
+print(f"R_hot = {R_hot:.10f} ohm/m")
+
+sigma = 5.670374419e-8  # Stefan-Boltzmann
+pi = math.pi
+D = diameter_mm / 1000.0  # m
+T_max_K = T_max + 273.15
+
+ampacities = {}
+min_amp = float('inf')
+min_ts = None
+
+for w in weather:
+    Ta = w["ambient_temperature_c"]
+    ws = max(w["wind_speed_m_s"], 0.05)
+    solar = w["solar_w_per_m2"]
+
+    # Convection
+    convection = conv_coeff * (ws ** 0.6) * (T_max - Ta)
+
+    # Radiation: emissivity * sigma * (pi * D) * (T_max_K^4 - Ta_K^4)
+    Ta_K = Ta + 273.15
+    radiation = emissivity * sigma * (pi * D) * (T_max_K**4 - Ta_K**4)
+
+    # Solar gain: solar_absorptivity * solar_w_per_m2 * D
+    solar_gain = solar_absorptivity * solar * D
+
+    # Net cooling
+    net = max(convection + radiation - solar_gain, 0.0)
+
+    # Ampacity
+    I = math.sqrt(net / R_hot)
+    ampacities[w["timestamp"]] = round(I, 4)
+    print(f"{w['timestamp']}: convection={convection:.6f}, radiation={radiation:.6f}, solar_gain={solar_gain:.6f}, net={net:.6f}, ampacity={I:.4f} A")
+
+    if I < min_amp:
+        min_amp = I
+        min_ts = w["timestamp"]
+
+# Overload timestamps: sched > ampacity
+overloads = [ts for ts in sorted(ampacities.keys()) if sched_a > ampacities[ts]]
+
+print(f"\nMinimum ampacity: {min_amp:.4f} A at {min_ts}")
+print(f"Overload timestamps: {overloads}")
+
+result = {
+    "ampacity_by_timestamp_a": {k: round(v, 4) for k, v in ampacities.items()},
+    "minimum_ampacity_a": round(min_amp, 4),
+    "limiting_timestamp": min_ts,
+    "overload_timestamps": overloads
+}
+print("\n--- RESULT ---")
+print(json.dumps(result, indent=2))
+PYEOF
+R_hot = 0.0001441547 ohm/m
+t00: convection=76.120594, radiation=20.965509, solar_gain=2.352000, net=94.734104, ampacity=810.6601 A
+t01: convection=25.576670, radiation=17.133419, solar_gain=13.328000, net=29.382089, ampacity=451.4680 A
+t02: convection=42.291253, radiation=18.366281, solar_gain=9.408000, net=51.249534, ampacity=596.2530 A
+t03: convection=76.682869, radiation=19.839563, solar_gain=1.568000, net=94.954432, ampacity=811.6022 A
+
+Minimum ampacity: 451.4680 A at t01
+Overload timestamps: ['t01']
+
+--- RESULT ---
+{
+  "ampacity_by_timestamp_a": {
+    "t00": 810.6601,
+    "t01": 451.468,
+    "t02": 596.253,
+    "t03": 811.6022
+  },
+  "minimum_ampacity_a": 451.468,
+  "limiting_timestamp": "t01",
+  "overload_timestamps": [
+    "t01"
+  ]
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -m json.tool "submission.json"
+{
+    "ampacity_by_timestamp_a": {
+        "t00": 810.6601,
+        "t01": 451.468,
+        "t02": 596.253,
+        "t03": 811.6022
+    },
+    "minimum_ampacity_a": 451.468,
+    "limiting_timestamp": "t01",
+    "overload_timestamps": [
+        "t01"
+    ]
+}
+[0m
