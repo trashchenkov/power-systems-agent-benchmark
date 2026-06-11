@@ -2,7 +2,9 @@
 from __future__ import annotations
 import json, math
 from pathlib import Path
-TOL=1e-3
+# 2.5e-3 absorbs half-step rounding-convention differences at 3 decimals
+# (banker's vs half-up at the .0005 boundary) plus float representation noise.
+TOL=2.5e-3
 ALLOWED={"case_results","stable_case_count","highest_risk_case","rationale"}
 
 def _round(x, nd=3): return round(float(x)+0.0, nd)

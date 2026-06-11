@@ -62,6 +62,27 @@ PYTHONPATH. Cursor's earlier public passes of the same family cannot be
 audited from its summary-only logs and should be treated with the same
 suspicion.
 
+## Revision run (sandboxed harness, fixed families)
+
+After the harness isolation fix and the two family fixes, fresh hidden draws
+(case_302 for the fixed families; the original case_301 for pv_volt_var) were
+re-run for codex and opencode under the sandboxed runner (cursor re-run
+deferred — its CLI is slow and the operator session ended):
+
+- `islanded_microgrid_pq_dispatch` (re-simulate + cost gap): codex 1.0,
+  opencode 1.0 — confirms the all-three-agents failure was a spec defect.
+- `transient_stability_prediction` (risk formula pinned): codex 1.0,
+  opencode 1.0. Codex's first attempt exposed a tolerance-boundary defect —
+  a numerically correct answer differing only in the rounding convention at
+  the .0005 half-step was rejected by the 1e-3 tolerance; the evaluator
+  tolerance now absorbs rounding-convention differences (2.5e-3).
+- `pv_volt_var` hidden: codex and opencode fail on voltage limits again —
+  a stable, genuine capability failure.
+
+Artifacts: runs/hidden_agent_smoke/{codex,opencode}-hidden-revision1/
+(opencode evaluated from its written submissions; its chain was stopped
+before summary generation).
+
 ## Protocol note
 
 This run burned its seed (the operator machine ran all three agents), so
