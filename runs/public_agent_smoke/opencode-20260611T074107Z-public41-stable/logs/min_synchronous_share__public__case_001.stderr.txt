@@ -1,0 +1,72 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import itertools
+
+demand = 1000.0
+ibr_mva = 720.0
+fnom = 50.0
+loss = 180.0
+max_rocof = 2.0
+min_scr = 2.25
+grid_sc = 1180.0
+
+units = [
+    ('g1', 120.0, 4.5, 280.0),
+    ('g2', 180.0, 5.0, 360.0),
+    ('g3', 240.0, 3.8, 440.0),
+    ('g4', 90.0, 6.0, 190.0),
+]
+
+feasible = []
+for r in range(1, 5):
+    for combo in itertools.combinations(units, r):
+        ids = [u[0] for u in combo]
+        p_total = sum(u[1] for u in combo)
+        inertia = sum(u[1] * u[2] for u in combo) / 1000.0
+        rocof = loss * fnom / (2 * inertia * 1000)
+        sc_total = sum(u[3] for u in combo)
+        scr = (grid_sc + sc_total) / ibr_mva
+        share = p_total / demand * 100
+        
+        rocof_ok = rocof <= max_rocof
+        scr_ok = scr >= min_scr
+        feasible.append((p_total, share, ids, inertia, rocof, scr, rocof_ok and scr_ok))
+        
+        print(f'{ids}: P={p_total:.0f} share={share:.2f}% inertia={inertia:.4f} rocof={rocof:.4f} scr={scr:.4f} {\"FEASIBLE\" if rocof_ok and scr_ok else \"\"}')
+
+print()
+feasible_pass = [f for f in feasible if f[6]]
+feasible_pass.sort(key=lambda x: x[0])
+print('Minimum feasible combination:')
+for f in feasible_pass[:1]:
+    print(f)
+"
+
+['g1']: P=120 share=12.00% inertia=0.5400 rocof=8.3333 scr=2.0278 
+['g2']: P=180 share=18.00% inertia=0.9000 rocof=5.0000 scr=2.1389 
+['g3']: P=240 share=24.00% inertia=0.9120 rocof=4.9342 scr=2.2500 
+['g4']: P=90 share=9.00% inertia=0.5400 rocof=8.3333 scr=1.9028 
+['g1', 'g2']: P=300 share=30.00% inertia=1.4400 rocof=3.1250 scr=2.5278 
+['g1', 'g3']: P=360 share=36.00% inertia=1.4520 rocof=3.0992 scr=2.6389 
+['g1', 'g4']: P=210 share=21.00% inertia=1.0800 rocof=4.1667 scr=2.2917 
+['g2', 'g3']: P=420 share=42.00% inertia=1.8120 rocof=2.4834 scr=2.7500 
+['g2', 'g4']: P=270 share=27.00% inertia=1.4400 rocof=3.1250 scr=2.4028 
+['g3', 'g4']: P=330 share=33.00% inertia=1.4520 rocof=3.0992 scr=2.5139 
+['g1', 'g2', 'g3']: P=540 share=54.00% inertia=2.3520 rocof=1.9133 scr=3.1389 FEASIBLE
+['g1', 'g2', 'g4']: P=390 share=39.00% inertia=1.9800 rocof=2.2727 scr=2.7917 
+['g1', 'g3', 'g4']: P=450 share=45.00% inertia=1.9920 rocof=2.2590 scr=2.9028 
+['g2', 'g3', 'g4']: P=510 share=51.00% inertia=2.3520 rocof=1.9133 scr=3.0139 FEASIBLE
+['g1', 'g2', 'g3', 'g4']: P=630 share=63.00% inertia=2.8920 rocof=1.5560 scr=3.4028 FEASIBLE
+
+Minimum feasible combination:
+(510.0, 51.0, ['g2', 'g3', 'g4'], 2.352, 1.913265306122449, 3.013888888888889, True)
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

@@ -133,13 +133,14 @@ def run_agent_command(
             f.write(json.dumps(row, ensure_ascii=False) + "\n")
     summary = {
         "agent": agent_name,
+        "command": command,
         "case_count": len(rows),
         "feasible_count": sum(1 for row in rows if row["result"].get("feasible")),
         "mean_score": round(
             sum(float(row["result"].get("score", 0.0)) for row in rows) / len(rows), 6
-            if rows
-            else 0.0,
-        ),
+        )
+        if rows
+        else 0.0,
         "results_path": str(results_path),
         "submissions_dir": str(submissions_dir),
         "logs_dir": str(logs_dir),

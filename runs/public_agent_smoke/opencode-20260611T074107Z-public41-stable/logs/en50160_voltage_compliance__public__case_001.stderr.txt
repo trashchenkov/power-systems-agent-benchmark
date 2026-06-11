@@ -1,0 +1,49 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+voltages = [0.928, 0.914, 0.902, 0.889, 0.895, 0.936, 0.971, 1.012, 1.043, 1.066]
+timestamps = ['t00','t01','t02','t03','t04','t05','t06','t07','t08','t09']
+normal_low, normal_high = 0.90, 1.10
+abs_low, abs_high = 0.85, 1.10
+
+in_normal = [i for i,v in enumerate(voltages) if normal_low <= v <= normal_high]
+pct = len(in_normal) / len(voltages) * 100
+below = [timestamps[i] for i,v in enumerate(voltages) if v < normal_low]
+above = [timestamps[i] for i,v in enumerate(voltages) if v > normal_high]
+
+print(f'pct={pct}, min={min(voltages)}, max={max(voltages)}')
+print(f'below={below}, above={above}')
+print(f'compliant={pct >= 95.0}')
+
+# Evaluate tap changes
+taps = [-0.025, 0.0, 0.025, 0.05]
+best_tap = None
+best_count = -1
+for tap in taps:
+    adj = [v + tap for v in voltages]
+    in_n = sum(1 for v in adj if normal_low <= v <= normal_high)
+    abs_ok = all(abs_low <= v <= abs_high for v in adj)
+    print(f'tap={tap}: in_normal={in_n}/{len(voltages)}, abs_ok={abs_ok}')
+    if abs_ok and in_n > best_count:
+        best_count = in_n
+        best_tap = tap
+print(f'best_tap={best_tap}')
+"
+
+pct=80.0, min=0.889, max=1.066
+below=['t03', 't04'], above=[]
+compliant=False
+tap=-0.025: in_normal=6/10, abs_ok=True
+tap=0.0: in_normal=8/10, abs_ok=True
+tap=0.025: in_normal=10/10, abs_ok=True
+tap=0.05: in_normal=9/10, abs_ok=False
+best_tap=0.025
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

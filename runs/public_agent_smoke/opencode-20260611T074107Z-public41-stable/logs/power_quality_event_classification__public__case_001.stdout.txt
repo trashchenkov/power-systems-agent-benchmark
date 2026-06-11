@@ -1,0 +1,29 @@
+Now I have the data. Let me classify the RMS trace using the thresholds.
+
+**Classification logic:**
+- `interruption`: voltage ≤ 0.1 pu
+- `sag`: 0.1 < voltage < 0.9 pu
+- `swell`: voltage ≥ 1.1 pu
+- `normal`: otherwise (0.9 ≤ voltage < 1.1)
+
+**Trace analysis:**
+| ms | V_pu | Class |
+|---|---|---|
+| 0   | 1.01 | normal |
+| 20  | 1.00 | normal |
+| 40  | 0.86 | **sag** |
+| 60  | 0.62 | **sag** |
+| 80  | 0.58 | **sag** |
+| 100 | 0.74 | **sag** |
+| 120 | 0.91 | normal |
+| 140 | 0.99 | normal |
+
+Contiguous non-normal interval: 40ms – 100ms. Event = voltage_sag.
+- min_voltage = 0.58, max_current = 1.44
+- duration inclusive of one sample interval: (100 - 40 + 20) / 1000 = 0.080 s
+Done. `submission.json` written with:
+- **event_class**: `voltage_sag`
+- **start/end**: 40 – 100 ms
+- **duration**: 0.080 s (inclusive of one sample interval)
+- **min_voltage**: 0.58 pu
+- **max_current**: 1.44 pu

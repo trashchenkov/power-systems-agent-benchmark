@@ -1,0 +1,55 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+
+base_mva = 100.0
+voltage_kv = 10.5
+cmax = 1.1
+cmin = 1.0
+R_fault = 0.005
+
+impedances = [
+    (0.018, 0.155),
+    (0.012, 0.095),
+    (0.002, 0.011)
+]
+
+R_total = sum(r for r, x in impedances)
+X_total = sum(x for r, x in impedances)
+
+Z_bolted_mag = math.hypot(R_total, X_total)
+Z_min = math.hypot(R_total + R_fault, X_total)
+
+I_base = base_mva / (math.sqrt(3) * voltage_kv)
+
+Ik_max = cmax / Z_bolted_mag * I_base
+Sk_max = math.sqrt(3) * voltage_kv * Ik_max
+Ik_min = cmin / Z_min * I_base
+
+print(f'R_total = {R_total}')
+print(f'X_total = {X_total}')
+print(f'Z_bolted_mag_pu = {Z_bolted_mag}')
+print(f'Z_min_mag_pu = {Z_min}')
+print(f'I_base = {I_base}')
+print(f'Ik_max_ka = {Ik_max}')
+print(f'Sk_max_mva = {Sk_max}')
+print(f'Ik_min_ka = {Ik_min}')
+"
+
+R_total = 0.032
+X_total = 0.261
+Z_bolted_mag_pu = 0.2629543686649834
+Z_min_mag_pu = 0.26360955976595385
+I_base = 5.49857399228215
+Ik_max_ka = 23.001828880874616
+Sk_max_mva = 418.32353103114
+Ik_min_ka = 20.858780679896693
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

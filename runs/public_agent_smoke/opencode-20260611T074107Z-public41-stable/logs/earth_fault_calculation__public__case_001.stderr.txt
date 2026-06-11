@@ -1,0 +1,92 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m# [0mTodos
+[•] Calculate sequence currents and fault current using sequence-network formulas
+[ ] Write submission.json with correct values
+[0m
+[0m$ [0mpython3 << 'EOF'
+import cmath, math
+
+# Given values
+base_mva = 50.0
+voltage_kv = 13.8
+v_pre = 1.0 + 0j  # 1.0 pu at 0 degrees
+zf = 0.04  # pu
+
+# Sequence impedances in pu
+z1 = 0.042 + 0.31j
+z2 = 0.045 + 0.29j
+z0 = 0.12 + 0.82j
+
+# Total impedance
+z_total = z1 + z2 + z0 + 3 * zf
+print(f"Z_total = {z_total:.6f}")
+print(f"|Z_total| = {abs(z_total):.6f}")
+print(f"Z_total angle = {math.degrees(cmath.phase(z_total)):.6f} deg")
+
+# Sequence currents in pu
+i_pu = v_pre / z_total
+print(f"\nI (pu) = {i_pu:.6f}")
+print(f"|I| (pu) = {abs(i_pu):.6f}")
+print(f"I angle = {math.degrees(cmath.phase(i_pu)):.6f} deg")
+
+# Base current
+Ibase = base_mva * 1000 / (math.sqrt(3) * voltage_kv)
+print(f"\nIbase = {Ibase:.6f} A = {Ibase/1000:.6f} kA")
+
+# Sequence currents in kA
+i_mag_ka = abs(i_pu) * Ibase / 1000
+i_angle_deg = math.degrees(cmath.phase(i_pu))
+
+print(f"\nSequence currents (each I1=I2=I0):")
+print(f"  mag = {i_mag_ka:.6f} kA")
+print(f"  angle = {i_angle_deg:.6f} deg")
+
+# Fault current = 3 * I0
+fault_3i0 = 3 * i_pu
+fault_mag_ka = abs(fault_3i0) * Ibase / 1000
+fault_angle_deg = math.degrees(cmath.phase(fault_3i0))
+
+print(f"\nFault current 3*I0:")
+print(f"  mag = {fault_mag_ka:.6f} kA")
+print(f"  angle = {fault_angle_deg:.6f} deg")
+
+# Residual current = 3 * I0 magnitude in kA
+residual_mag_ka = fault_mag_ka
+print(f"\nResidual current magnitude = {residual_mag_ka:.6f} kA")
+EOF
+Z_total = 0.327000+1.420000j
+|Z_total| = 1.457165
+Z_total angle = 77.031908 deg
+
+I (pu) = 0.154003-0.668761j
+|I| (pu) = 0.686264
+I angle = -77.031908 deg
+
+Ibase = 2091.848801 A = 2.091849 kA
+
+Sequence currents (each I1=I2=I0):
+  mag = 1.435561 kA
+  angle = -77.031908 deg
+
+Fault current 3*I0:
+  mag = 4.306683 kA
+  angle = -77.031908 deg
+
+Residual current magnitude = 4.306683 kA
+[0m
+[0m# [0mTodos
+[✓] Calculate sequence currents and fault current using sequence-network formulas
+[•] Write submission.json with correct values
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m# [0mTodos
+[✓] Calculate sequence currents and fault current using sequence-network formulas
+[✓] Write submission.json with correct values
+[0m

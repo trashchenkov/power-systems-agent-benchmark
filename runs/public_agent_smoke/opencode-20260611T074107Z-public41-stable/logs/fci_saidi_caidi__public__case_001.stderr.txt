@@ -1,0 +1,71 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+case = {
+    'total_customers': 320,
+    'minimum_restoration_minutes': 25,
+    'deployed_fci_locations': ['n2', 'n4'],
+    'fault_sections': {
+        's12': {'annual_fault_rate': 0.18, 'customers_interrupted': 120, 'base_restoration_minutes': 95},
+        's23': {'annual_fault_rate': 0.14, 'customers_interrupted': 70, 'base_restoration_minutes': 80},
+        's24': {'annual_fault_rate': 0.12, 'customers_interrupted': 90, 'base_restoration_minutes': 85},
+        's45': {'annual_fault_rate': 0.09, 'customers_interrupted': 40, 'base_restoration_minutes': 75}
+    },
+    'fci_locations': {
+        'n2': {'restoration_time_reduction_min': {'s12': 6, 's23': 28, 's24': 26, 's45': 23}},
+        'n4': {'restoration_time_reduction_min': {'s12': 0, 's23': 4, 's24': 18, 's45': 34}}
+    }
+}
+
+N = case['total_customers']
+floor = case['minimum_restoration_minutes']
+deployed = case['deployed_fci_locations']
+sections = case['fault_sections']
+fcis = case['fci_locations']
+
+# Baseline
+base_cust_min = 0
+base_cust_int = 0
+for sid, s in sections.items():
+    cm = s['annual_fault_rate'] * s['customers_interrupted'] * s['base_restoration_minutes']
+    ci = s['annual_fault_rate'] * s['customers_interrupted']
+    base_cust_min += cm
+    base_cust_int += ci
+
+saidi_base = base_cust_min / N
+saifi_base = base_cust_int / N
+caidi_base = base_cust_min / base_cust_int
+
+# With FCI
+fci_cust_min = 0
+fci_cust_int = 0
+for sid, s in sections.items():
+    best_reduction = max(fcis[loc]['restoration_time_reduction_min'][sid] for loc in deployed)
+    new_time = max(s['base_restoration_minutes'] - best_reduction, floor)
+    cm = s['annual_fault_rate'] * s['customers_interrupted'] * new_time
+    ci = s['annual_fault_rate'] * s['customers_interrupted']
+    fci_cust_min += cm
+    fci_cust_int += ci
+
+saidi_fci = fci_cust_min / N
+saifi_fci = fci_cust_int / N
+caidi_fci = fci_cust_min / fci_cust_int
+
+print(f'baseline: SAIDI={saidi_base}, SAIFI={saifi_base}, CAIDI={caidi_base}')
+print(f'with_fci: SAIDI={saidi_fci}, SAIFI={saifi_fci}, CAIDI={caidi_fci}')
+print(f'saidi_improvement={saidi_base - saidi_fci}')
+print(f'caidi_improvement={caidi_base - caidi_fci}')
+"
+
+baseline: SAIDI=12.575, SAIFI=0.143125, CAIDI=87.86026200873363
+with_fci: SAIDI=10.052499999999998, SAIFI=0.143125, CAIDI=70.23580786026201
+saidi_improvement=2.522500000000001
+caidi_improvement=17.624454148471614
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

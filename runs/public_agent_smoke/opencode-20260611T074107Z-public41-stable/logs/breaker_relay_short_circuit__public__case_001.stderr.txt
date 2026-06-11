@@ -1,0 +1,84 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+
+V_ll = 10.5e3  # V
+V_ph = V_ll / math.sqrt(3)
+
+# Impedances
+Z_src = complex(0.045, 0.42)
+Z_tr = complex(0.018, 0.16)
+
+r_per_km = 0.18
+x_per_km = 0.32
+
+faults = [
+    ('near_bus_fault', 0.2),
+    ('mid_feeder_fault', 4.0),
+    ('remote_end_fault', 8.0),
+]
+
+print('=== Fault currents ===')
+i3ph_vals = []
+i2ph_vals = []
+
+for name, dist in faults:
+    Z_fdr = complex(r_per_km * dist, x_per_km * dist)
+    Z_total = Z_src + Z_tr + Z_fdr
+    Z_mag = abs(Z_total)
+    I3ph = V_ll / (math.sqrt(3) * Z_mag)
+    I2ph = math.sqrt(3) / 2 * I3ph
+    i3ph_vals.append(I3ph)
+    i2ph_vals.append(I2ph)
+    print(f'{name}: dist={dist}km, |Z|={Z_mag:.4f} ohm, I3ph={I3ph:.1f}A ({I3ph/1000:.3f}kA), I2ph={I2ph:.1f}A ({I2ph/1000:.3f}kA)')
+
+max_3ph = max(i3ph_vals)
+min_2ph = min(i2ph_vals)
+print(f'\nmax_3ph_fault_ka = {max_3ph/1000:.3f}')
+print(f'min_2ph_fault_ka = {min_2ph/1000:.3f}')
+
+# Breaker
+safety = 1.1
+required = max_3ph * safety
+ratings = [8.0, 12.5, 16.0, 20.0, 25.0, 31.5]
+print(f'\nRequired breaker rating: {max_3ph/1000:.3f} * {safety} = {required/1000:.3f} kA')
+for r in ratings:
+    if r >= required/1000:
+        print(f'Selected: {r} kA')
+        breaker = r
+        break
+
+# Relay pickup
+load_margin = 1.25
+fault_sens = 2.0
+I_load_max = 360.0
+pickup_min = I_load_max * load_margin
+pickup_max = min_2ph / fault_sens
+print(f'\nRelay pickup: min={pickup_min:.1f}A, max={pickup_max:.1f}A')
+pickup = round((pickup_min + pickup_max) / 2)
+print(f'Selected pickup: {pickup}A')
+"
+
+=== Fault currents ===
+near_bus_fault: dist=0.2km, |Z|=0.6516 ohm, I3ph=9304.0A (9.304kA), I2ph=8057.5A (8.058kA)
+mid_feeder_fault: dist=4.0km, |Z|=2.0181 ohm, I3ph=3003.9A (3.004kA), I2ph=2601.5A (2.601kA)
+remote_end_fault: dist=8.0km, |Z|=3.4812 ohm, I3ph=1741.4A (1.741kA), I2ph=1508.1A (1.508kA)
+
+max_3ph_fault_ka = 9.304
+min_2ph_fault_ka = 1.508
+
+Required breaker rating: 9.304 * 1.1 = 10.234 kA
+Selected: 12.5 kA
+
+Relay pickup: min=450.0A, max=754.1A
+Selected pickup: 602A
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

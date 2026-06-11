@@ -1,0 +1,159 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import json, math
+
+# === Inputs ===
+Isc = 12000.0  # A (12.0 kA)
+IL = 480.0     # A max demand current
+
+h_currents = {5:28.0, 7:19.0, 11:9.0, 13:7.0, 17:4.0, 19:3.0, 23:1.5}
+h_voltages = {5:2.1, 7:1.6, 11:0.9}
+
+limit_table = [
+    {"isc_il_below":20,"tdd_pct":5.0,"h_below_11":4.0,"h_11_to_17":2.0,"h_17_to_23":1.5,"h_23_to_35":0.6,"h_35_up":0.3},
+    {"isc_il_below":50,"tdd_pct":8.0,"h_below_11":7.0,"h_11_to_17":3.5,"h_17_to_23":2.5,"h_23_to_35":1.0,"h_35_up":0.5},
+    {"isc_il_below":100,"tdd_pct":12.0,"h_below_11":10.0,"h_11_to_17":4.5,"h_17_to_23":4.0,"h_23_to_35":1.5,"h_35_up":0.7},
+    {"isc_il_below":1000,"tdd_pct":15.0,"h_below_11":12.0,"h_11_to_17":5.5,"h_17_to_23":5.0,"h_23_to_35":2.0,"h_35_up":1.0},
+    {"isc_il_below":1e9,"tdd_pct":20.0,"h_below_11":15.0,"h_11_to_17":7.0,"h_17_to_23":6.0,"h_23_to_35":2.5,"h_35_up":1.4},
+]
+
+voltage_limits = {"individual_pct": 3.0, "thd_pct": 5.0}
+
+# === Step 1: Isc/IL ===
+ratio = Isc / IL
+print(f"Isc/IL = {ratio}")
+
+# === Step 2: Select limit row ===
+selected = None
+for row in limit_table:
+    if row["isc_il_below"] > ratio:
+        selected = row
+        break
+print(f"Selected row: isc_il_below > {ratio} → {selected}")
+
+if selected is None:
+    selected = limit_table[-1]
+    print(f"Fell through to last row")
+
+# === Step 3: TDD ===
+sum_sq = sum(v * v for v in h_currents.values())
+tdd = math.sqrt(sum_sq) / IL * 100
+print(f"Sum of squares = {sum_sq}, sqrt = {math.sqrt(sum_sq)}")
+print(f"TDD = {tdd} %")
+print(f"TDD limit = {selected['tdd_pct']} %")
+
+# === Step 4: Individual current harmonics as % of IL ===
+print("\n--- Individual current harmonics % of IL ---")
+current_violations = []
+for h_ord in sorted(h_currents.keys(), key=int):
+    pct = h_currents[h_ord] / IL * 100
+    if int(h_ord) < 11:
+        lim = selected['h_below_11']
+        bucket = "<11"
+    elif int(h_ord) < 17:
+        lim = selected['h_11_to_17']
+        bucket = "11-17"
+    elif int(h_ord) < 23:
+        lim = selected['h_17_to_23']
+        bucket = "17-23"
+    elif int(h_ord) < 35:
+        lim = selected['h_23_to_35']
+        bucket = "23-35"
+    else:
+        lim = selected['h_35_up']
+        bucket = "35+"
+    viol = pct > lim
+    print(f"h{h_ord}: {pct:.4f}% vs limit {lim}% ({bucket}) {'VIOLATION' if viol else 'ok'}")
+    if viol:
+        current_violations.append(str(h_ord))
+
+# Check TDD violation
+tdd_viol = tdd > selected['tdd_pct']
+print(f"TDD {tdd:.4f}% vs limit {selected['tdd_pct']}% {'VIOLATION' if tdd_viol else 'ok'}")
+if tdd_viol:
+    current_violations.insert(0, 'tdd')
+
+print(f"Current violations: {current_violations}")
+
+# === Step 5: Voltage THD ===
+sum_sq_v = sum(v * v for v in h_voltages.values())
+vthd = math.sqrt(sum_sq_v)
+print(f"\nVoltage THD = {vthd} %")
+print(f"Voltage THD limit = {voltage_limits['thd_pct']} %")
+
+voltage_violations = []
+for h_ord in sorted(h_voltages.keys(), key=int):
+    pct = h_voltages[h_ord]
+    lim = voltage_limits['individual_pct']
+    viol = pct > lim
+    print(f"Vh{h_ord}: {pct}% vs limit {lim}% {'VIOLATION' if viol else 'ok'}")
+    if viol:
+        voltage_violations.append(str(h_ord))
+
+vthd_viol = vthd > voltage_limits['thd_pct']
+print(f"VTHD {vthd:.4f}% vs limit {voltage_limits['thd_pct']}% {'VIOLATION' if vthd_viol else 'ok'}")
+if vthd_viol:
+    voltage_violations.insert(0, 'thd')
+
+print(f"Voltage violations: {voltage_violations}")
+
+# === Verdict ===
+compliant = len(current_violations) == 0 and len(voltage_violations) == 0
+print(f"\nCompliant: {compliant}")
+
+print(f"\n=== SUBMISSION ===")
+print(json.dumps({
+    "isc_over_il": round(ratio, 2),
+    "tdd_pct": round(tdd, 4),
+    "current_violations": current_violations,
+    "voltage_thd_pct": round(vthd, 4),
+    "voltage_violations": voltage_violations,
+    "compliant": compliant
+}, indent=2))
+PYEOF
+Isc/IL = 25.0
+Selected row: isc_il_below > 25.0 → {'isc_il_below': 50, 'tdd_pct': 8.0, 'h_below_11': 7.0, 'h_11_to_17': 3.5, 'h_17_to_23': 2.5, 'h_23_to_35': 1.0, 'h_35_up': 0.5}
+Sum of squares = 1302.25, sqrt = 36.08670115153226
+TDD = 7.518062739902555 %
+TDD limit = 8.0 %
+
+--- Individual current harmonics % of IL ---
+h5: 5.8333% vs limit 7.0% (<11) ok
+h7: 3.9583% vs limit 7.0% (<11) ok
+h11: 1.8750% vs limit 3.5% (11-17) ok
+h13: 1.4583% vs limit 3.5% (11-17) ok
+h17: 0.8333% vs limit 2.5% (17-23) ok
+h19: 0.6250% vs limit 2.5% (17-23) ok
+h23: 0.3125% vs limit 1.0% (23-35) ok
+TDD 7.5181% vs limit 8.0% ok
+Current violations: []
+
+Voltage THD = 2.7892651361962706 %
+Voltage THD limit = 5.0 %
+Vh5: 2.1% vs limit 3.0% ok
+Vh7: 1.6% vs limit 3.0% ok
+Vh11: 0.9% vs limit 3.0% ok
+VTHD 2.7893% vs limit 5.0% ok
+Voltage violations: []
+
+Compliant: True
+
+=== SUBMISSION ===
+{
+  "isc_over_il": 25.0,
+  "tdd_pct": 7.5181,
+  "current_violations": [],
+  "voltage_thd_pct": 2.7893,
+  "voltage_violations": [],
+  "compliant": true
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

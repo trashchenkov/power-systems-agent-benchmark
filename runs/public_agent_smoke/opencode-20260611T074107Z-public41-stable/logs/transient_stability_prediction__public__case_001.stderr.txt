@@ -1,0 +1,78 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+cases = {
+    'fault_a': {'fct': 0.1, 'cct': 0.17, 'angle': 142.0, 'vmin': 0.76, 'damp': 5.0},
+    'fault_b': {'fct': 0.16, 'cct': 0.14, 'angle': 188.0, 'vmin': 0.68, 'damp': 2.2},
+    'fault_c': {'fct': 0.08, 'cct': 0.11, 'angle': 171.0, 'vmin': 0.72, 'damp': 3.4},
+}
+angle_lim = 180.0
+vfloor = 0.7
+damp_min = 3.0
+
+results = {}
+for cid, v in cases.items():
+    margin = round(v['cct'] - v['fct'], 4)
+    r_angle = v['angle'] / angle_lim
+    r_volt = vfloor / v['vmin']
+    r_damp = damp_min / v['damp']
+    r_cct = v['fct'] / v['cct']
+    risk = round(max(r_angle, r_volt, r_damp, r_cct), 4)
+    
+    stable = (v['angle'] <= angle_lim and v['vmin'] >= vfloor and v['damp'] >= damp_min and margin >= 0)
+    label = 'stable' if stable else 'unstable'
+    
+    results[cid] = {'label': label, 'risk_score': risk, 'clearing_margin_s': margin}
+    print(f'{cid}: label={label}, risk={risk}, margin={margin}')
+    print(f'  ratios: angle={r_angle:.4f} volt={r_volt:.4f} damp={r_damp:.4f} cct={r_cct:.4f}')
+
+stable_count = sum(1 for r in results.values() if r['label'] == 'stable')
+highest_risk = max(results.items(), key=lambda x: x[1]['risk_score'])[0]
+print(f'stable_count={stable_count}, highest_risk={highest_risk}')
+
+import json
+sub = {
+    'case_results': results,
+    'stable_case_count': stable_count,
+    'highest_risk_case': highest_risk,
+}
+print(json.dumps(sub, indent=2))
+"
+
+fault_a: label=stable, risk=0.9211, margin=0.07
+  ratios: angle=0.7889 volt=0.9211 damp=0.6000 cct=0.5882
+fault_b: label=unstable, risk=1.3636, margin=-0.02
+  ratios: angle=1.0444 volt=1.0294 damp=1.3636 cct=1.1429
+fault_c: label=stable, risk=0.9722, margin=0.03
+  ratios: angle=0.9500 volt=0.9722 damp=0.8824 cct=0.7273
+stable_count=2, highest_risk=fault_b
+{
+  "case_results": {
+    "fault_a": {
+      "label": "stable",
+      "risk_score": 0.9211,
+      "clearing_margin_s": 0.07
+    },
+    "fault_b": {
+      "label": "unstable",
+      "risk_score": 1.3636,
+      "clearing_margin_s": -0.02
+    },
+    "fault_c": {
+      "label": "stable",
+      "risk_score": 0.9722,
+      "clearing_margin_s": 0.03
+    }
+  },
+  "stable_case_count": 2,
+  "highest_risk_case": "fault_b"
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

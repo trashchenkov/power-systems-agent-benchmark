@@ -1,0 +1,226 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m# [0mTodos
+[✓] Understand microgrid dispatch problem from task.json
+[•] Write brute-force optimization script to find least-cost dispatch
+[ ] Write submission.json
+[0m
+[0m← [0mWrite solve.py
+Wrote file successfully.
+[0m
+[0m$ [0mpython solve.py
+zsh:1: command not found: python
+[0m
+[0m$ [0mpython3 solve.py
+{
+  "dispatch": {
+    "t1": {
+      "diesel_mw": 39.0,
+      "battery_mw": -4.0,
+      "pv_curtailment_mw": 0.0,
+      "soc_mwh": 21.8,
+      "shed_mw": 0.0
+    },
+    "t2": {
+      "diesel_mw": 52.0,
+      "battery_mw": 2.0,
+      "pv_curtailment_mw": 0.0,
+      "soc_mwh": 19.5778,
+      "shed_mw": 0.0
+    },
+    "t3": {
+      "diesel_mw": 20.0,
+      "battery_mw": 12.0,
+      "pv_curtailment_mw": 0.0,
+      "soc_mwh": 6.2444,
+      "shed_mw": 0.0
+    }
+  },
+  "total_cost": 9435.0
+}
+[0m
+[0m$ [0mpython3 -c "
+import json, itertools
+
+load = {'t1': 45.0, 't2': 62.0, 't3': 50.0}
+pv = {'t1': 10.0, 't2': 8.0, 't3': 18.0}
+periods = ['t1', 't2', 't3']
+pmin, pmax, cost_per = 15.0, 70.0, 85.0
+init_soc, soc_min, soc_max = 18.0, 6.0, 30.0
+ch_pmax, disch_pmax = 8.0, 12.0
+ch_eff, disch_eff = 0.95, 0.9
+step = 2.0
+
+b_vals = [round(i*step,1) for i in range(int(-ch_pmax/step), int(disch_pmax/step)+1)]
+
+best_cost = float('inf')
+best = None
+
+for b1,b2,b3 in itertools.product(b_vals, repeat=3):
+    batt = {'t1':b1,'t2':b2,'t3':b3}
+    prev_soc = init_soc
+    feas = True
+    dies = {}
+    curt = {}
+    socs = {}
+    for t in periods:
+        d = load[t] - pv[t] - batt[t]
+        if d < pmin:
+            nc = pmin - d
+            if nc <= pv[t]:
+                curt[t] = nc
+                d = pmin
+            else:
+                feas = False; break
+        elif d > pmax:
+            feas = False; break
+        else:
+            curt[t] = 0.0
+        dies[t] = d
+        if batt[t] > 0:
+            socs[t] = prev_soc - batt[t] / disch_eff
+        elif batt[t] < 0:
+            socs[t] = prev_soc + (-batt[t]) * ch_eff
+        else:
+            socs[t] = prev_soc
+        if socs[t] < soc_min - 1e-9 or socs[t] > soc_max + 1e-9:
+            feas = False; break
+        prev_soc = socs[t]
+    if not feas:
+        continue
+    total_d = sum(dies[t] for t in periods)
+    cost = total_d * cost_per
+    if cost < best_cost - 1e-9:
+        best_cost = cost
+        best = {
+            'dispatch': {
+                t: {
+                    'diesel_mw': round(dies[t],2),
+                    'battery_mw': round(batt[t],2),
+                    'pv_curtailment_mw': round(curt[t],2),
+                    'soc_mwh': round(socs[t],4),
+                    'shed_mw': 0.0
+                } for t in periods
+            },
+            'total_cost': round(cost,2)
+        }
+
+# Also find alternative optimal solutions
+alt_solutions = []
+for b1,b2,b3 in itertools.product(b_vals, repeat=3):
+    batt = {'t1':b1,'t2':b2,'t3':b3}
+    prev_soc = init_soc
+    feas = True
+    dies = {}
+    curt = {}
+    socs = {}
+    for t in periods:
+        d = load[t] - pv[t] - batt[t]
+        if d < pmin:
+            nc = pmin - d
+            if nc <= pv[t]:
+                curt[t] = nc
+                d = pmin
+            else:
+                feas = False; break
+        elif d > pmax:
+            feas = False; break
+        else:
+            curt[t] = 0.0
+        dies[t] = d
+        if batt[t] > 0:
+            socs[t] = prev_soc - batt[t] / disch_eff
+        elif batt[t] < 0:
+            socs[t] = prev_soc + (-batt[t]) * ch_eff
+        else:
+            socs[t] = prev_soc
+        if socs[t] < soc_min - 1e-9 or socs[t] > soc_max + 1e-9:
+            feas = False; break
+        prev_soc = socs[t]
+    if not feas:
+        continue
+    total_d = sum(dies[t] for t in periods)
+    cost = total_d * cost_per
+    if abs(cost - best_cost) < 1e-6:
+        alt_solutions.append((b1,b2,b3))
+
+print('Best cost:', best_cost)
+print('Best dispatch:', json.dumps(best, indent=2))
+print()
+print('All optimal battery combos:', alt_solutions)
+"
+
+Best cost: 9435.0
+Best dispatch: {
+  "dispatch": {
+    "t1": {
+      "diesel_mw": 39.0,
+      "battery_mw": -4.0,
+      "pv_curtailment_mw": 0.0,
+      "soc_mwh": 21.8,
+      "shed_mw": 0.0
+    },
+    "t2": {
+      "diesel_mw": 52.0,
+      "battery_mw": 2.0,
+      "pv_curtailment_mw": 0.0,
+      "soc_mwh": 19.5778,
+      "shed_mw": 0.0
+    },
+    "t3": {
+      "diesel_mw": 20.0,
+      "battery_mw": 12.0,
+      "pv_curtailment_mw": 0.0,
+      "soc_mwh": 6.2444,
+      "shed_mw": 0.0
+    }
+  },
+  "total_cost": 9435.0
+}
+
+All optimal battery combos: [(-4.0, 2.0, 12.0), (-4.0, 4.0, 10.0), (-4.0, 6.0, 8.0), (-4.0, 8.0, 6.0), (-4.0, 10.0, 4.0), (-4.0, 12.0, 2.0), (-2.0, 0.0, 12.0), (-2.0, 2.0, 10.0), (-2.0, 4.0, 8.0), (-2.0, 6.0, 6.0), (-2.0, 8.0, 4.0), (-2.0, 10.0, 2.0), (-2.0, 12.0, 0.0), (0.0, -2.0, 12.0), (0.0, 0.0, 10.0), (0.0, 2.0, 8.0), (0.0, 4.0, 6.0), (0.0, 6.0, 4.0), (0.0, 8.0, 2.0), (0.0, 10.0, 0.0), (2.0, -4.0, 12.0), (2.0, -2.0, 10.0), (2.0, 0.0, 8.0), (2.0, 2.0, 6.0), (2.0, 4.0, 4.0), (2.0, 6.0, 2.0), (2.0, 8.0, 0.0), (4.0, -4.0, 10.0), (4.0, -2.0, 8.0), (4.0, 0.0, 6.0), (4.0, 2.0, 4.0), (4.0, 4.0, 2.0), (4.0, 6.0, 0.0), (6.0, -4.0, 8.0), (6.0, -2.0, 6.0), (6.0, 0.0, 4.0), (6.0, 2.0, 2.0), (6.0, 4.0, 0.0), (8.0, -4.0, 6.0), (8.0, -2.0, 4.0), (8.0, 0.0, 2.0), (8.0, 2.0, 0.0), (10.0, -4.0, 4.0), (10.0, -2.0, 2.0), (10.0, 0.0, 0.0)]
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mrm solve.py
+(no output)
+[0m
+[0m# [0mTodos
+[✓] Understand microgrid dispatch problem from task.json
+[✓] Write brute-force optimization script to find least-cost dispatch
+[✓] Write submission.json
+[0m
+[0m$ [0mpython3 -c "import json; data=json.load(open('submission.json')); print('Valid JSON'); print(json.dumps(data, indent=2))"
+Valid JSON
+{
+  "dispatch": {
+    "t1": {
+      "diesel_mw": 39.0,
+      "battery_mw": -4.0,
+      "pv_curtailment_mw": 0.0,
+      "soc_mwh": 21.8,
+      "shed_mw": 0.0
+    },
+    "t2": {
+      "diesel_mw": 52.0,
+      "battery_mw": 2.0,
+      "pv_curtailment_mw": 0.0,
+      "soc_mwh": 19.5778,
+      "shed_mw": 0.0
+    },
+    "t3": {
+      "diesel_mw": 20.0,
+      "battery_mw": 12.0,
+      "pv_curtailment_mw": 0.0,
+      "soc_mwh": 6.2444,
+      "shed_mw": 0.0
+    }
+  },
+  "total_cost": 9435.0
+}
+[0m

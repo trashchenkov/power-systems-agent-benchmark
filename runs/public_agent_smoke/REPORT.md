@@ -1,69 +1,95 @@
-# Public agent smoke runs — latest
+# Public agent runs — full 41-task core (2026-06-11)
 
-Ran the agent-agnostic harness over 7 executable public benchmark cases.
+Three CLI agents ran the complete 41-task public core after the domain-content
+fixes (RoCoF, FDI/WLS redesign, equal-area CCT, IEC 60909 max/min pair) and the
+family swap (transformer / cable / harmonics in; boilers / Sobol out).
 
-## Commands
+## Run artifacts
 
-Prepared per-agent packet directories:
+- Codex CLI 0.139.0: `runs/public_agent_smoke/codex-20260611T074107Z-public41-stable/`
+- OpenCode 1.15.13: `runs/public_agent_smoke/opencode-20260611T074107Z-public41-stable/`
+- Cursor agent CLI: `runs/public_agent_smoke/cursor-20260611T083324Z-public41-stable/`
 
-```bash
-python scripts/prepare_agent_tasks.py --out runs/agent_packets/codex_latest
-python scripts/prepare_agent_tasks.py --out runs/agent_packets/opencode_latest
-python scripts/prepare_agent_tasks.py --out runs/agent_packets/hermes_latest
-```
+## Aggregate results
 
-Agent runs:
+| agent | feasible | mean_score |
+|---|---|---|
+| cursor | 33/41 | 0.800 |
+| codex | 32/41 | 0.776 |
+| opencode | 31/41 | 0.754 |
 
-- Codex: `runs/public_agent_smoke/codex-latest/`
-- OpenCode: `runs/public_agent_smoke/opencode-latest/`
-- Hermes: `runs/public_agent_smoke/hermes-latest/`
+Headline: the public core now discriminates. No agent saturates, the three
+surfaces separate, and every failure is a domain failure — all 123 case runs
+produced a submission (zero harness/auth/no-submission failures).
 
-Command templates are captured in `scripts/local_agent_run_commands.sh`.
+## Failure taxonomy
 
-## Summary
+12 of 41 families failed for at least one agent. Reading the violations splits
+them into two very different groups.
 
-- `codex`: 0/7 feasible, total score 0.0.
-  - Root cause: Codex CLI auth failed before writing submissions: expired/reused refresh token, 401 Unauthorized. Logs are in `runs/public_agent_smoke/codex-latest/logs/*.stderr.txt`.
-- `opencode-deepseek-v4-flash-free`: 6/7 feasible, total score 591.8333.
-  - Failed case: `pv_volt_var`, score 0.0, violations: voltage outside limits at `t_low` and `t_high`.
-- `hermes-file-toolset`: 7/7 feasible, total score 690.969333.
+### A. Genuine capability differences (agents disagree)
 
-## Per-case results
+- `pv_volt_var` — opencode violated voltage limits; codex/cursor cleared them
+  (same discriminator as the earlier hidden-case runs).
+- `ibr_short_circuit_frt` — opencode got the FRT verdict wrong; others passed.
+- `ev_v2g_outage_schedule` — codex inverted the stated discharge sign
+  convention; others passed.
+- `transient_stability_prediction` — cursor passed; codex and opencode
+  miscomputed risk scores in different ways.
+- `microgrid_economic_dispatch` — codex alone passed.
+- Partial credit separated agents too: `contingency_screening` ranking order
+  (0.9 for codex/cursor), `pf_voltage_repair` action cost (0.958 all),
+  `flisr_restoration` switching count (0.96 all).
 
-### Codex
+### B. Suspected spec ambiguities (all three agents fail identically)
 
-- `contingency_screening`: infeasible, score 0.0 — agent did not write `submission.json`.
-- `fdi_state_estimation`: infeasible, score 0.0 — agent did not write `submission.json`.
-- `flisr_restoration`: infeasible, score 0.0 — agent did not write `submission.json`.
-- `frt_compliance`: infeasible, score 0.0 — agent did not write `submission.json`.
-- `overcurrent_protection`: infeasible, score 0.0 — agent did not write `submission.json`.
-- `pf_voltage_repair`: infeasible, score 0.0 — agent did not write `submission.json`.
-- `pv_volt_var`: infeasible, score 0.0 — agent did not write `submission.json`.
+These look like task-definition problems, not agent problems, and should be
+fixed before treating the affected families as discriminating:
 
-### OpenCode
+1. `min_synchronous_share` — submission_schema text says "online synchronous MW
+   divided by demand MW", which literally describes a fraction; codex and
+   cursor dutifully returned 0.51 while the evaluator expects 51.0 (the field
+   name says `_pct`). Fix the schema wording to "in percent (0-100)".
+2. `wind_prediction_interval` — the evaluator computes quantiles by linear
+   interpolation over order statistics (pos = q*(n-1)), but the instructions
+   never state the convention; all three agents used a different one and missed
+   p10 by the same margin. State the convention in the instructions.
+3. `wind_power_forecast` — same family of problem: the bias-correction
+   convention is underspecified; all three agents converged on answers that
+   differ from the evaluator by similar amounts.
+4. `hydro_thermal_storage_uc` — all three agents reported `gas: 0.0` for hours
+   where the unit is decommitted; the evaluator requires the key set to equal
+   the committed units exactly and rejects semantically identical zero entries.
+   Relax the evaluator to accept zero-valued keys.
+5. `fci_saidi_caidi` — all three agents flattened the `baseline.*` /
+   `with_fci.*` nesting the same way and got `None` lookups; the submission
+   schema needs an explicit nested example.
+6. `dynamic_thermal_rating` — codex and opencode converged on the same wrong
+   ampacity (778.14 vs expected 810.66; cursor differed differently); the
+   heat-balance constants/geometry conventions in the instructions need to be
+   made fully explicit against the evaluator.
+7. `rolling_microgrid_dispatch` / `microgrid_economic_dispatch` — the evaluator
+   demands its exact dispatch vector; submissions that satisfy all constraints
+   with different (possibly equal-cost) dispatch are rejected. Score should
+   compare the cost gap against the optimum instead of exact dispatch values,
+   to tolerate alternative optima.
 
-- `contingency_screening`: feasible, score 100.0.
-- `fdi_state_estimation`: feasible, score 100.0.
-- `flisr_restoration`: feasible, score 96.0.
-- `frt_compliance`: feasible, score 100.0.
-- `overcurrent_protection`: feasible, score 100.0.
-- `pf_voltage_repair`: feasible, score 95.8333.
-- `pv_volt_var`: infeasible, score 0.0 — voltage outside limits at `t_low` and `t_high`.
+`min_synchronous_share` sits in both groups: opencode passed it, but the two
+failures were unit-convention failures caused by the schema text.
 
-### Hermes
+## Interpretation
 
-- `contingency_screening`: feasible, score 100.0.
-- `fdi_state_estimation`: feasible, score 100.0.
-- `flisr_restoration`: feasible, score 96.0.
-- `frt_compliance`: feasible, score 100.0.
-- `overcurrent_protection`: feasible, score 100.0.
-- `pf_voltage_repair`: feasible, score 95.833333.
-- `pv_volt_var`: feasible, score 99.136.
+- Group A is the leaderboard signal: real differences in engineering
+  computation and constraint handling.
+- Group B currently measures convention-guessing, not engineering; until fixed,
+  those families penalize every agent identically and add noise, not signal.
+- After fixing group B, a strong agent's ceiling on the public core is roughly
+  39-40/41 — expected for an open-book public split; discrimination then lives
+  in partial-credit scores and the hidden set.
 
-## Notes
+## Historical note
 
-The first harness run is already useful:
-
-- It confirmed that the packet contract works for a Hermes subagent-style CLI run.
-- It confirmed OpenCode can solve most cases using a free model, with one domain/control failure in Volt-VAR.
-- It surfaced an environment/auth issue for Codex that is separate from benchmark mechanics.
+Earlier 7-task runs (Hermes 7/7, OpenCode 6/7, Codex 0/7 on an expired auth
+token) and the hidden case_101 normalized runs predate the domain fixes and the
+family swap; they are kept under their original directories but are not
+comparable with these results.

@@ -1,0 +1,87 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m# [0mTodos
+[•] Analyze overloads and candidate actions
+[ ] Compute optimal action combination
+[ ] Write submission.json
+[0m
+[0m$ [0mpython3 -c "
+branches = {'l12': {'base': 118, 'limit': 100}, 'l23': {'base': 72, 'limit': 90}, 'l13': {'base': 65, 'limit': 80}}
+actions = {
+    'open_tie_13':  {'type': 'open_breaker', 'branch': 'l13', 'mw': 0, 'deltas': {'l12': -8, 'l23': 12}},
+    'shed_bus3_15': {'type': 'shed_load', 'mw': 15, 'deltas': {'l12': -14, 'l23': -6}},
+    'shed_bus2_10': {'type': 'shed_load', 'mw': 10, 'deltas': {'l12': -9, 'l23': -2}},
+}
+
+# Try open_tie_13 + shed_bus3_15
+selected = ['open_tie_13', 'shed_bus3_15']
+flows = {'l12': 118, 'l23': 72, 'l13': 0}
+shed = 0
+for a in selected:
+    if actions[a]['type'] == 'shed_load':
+        shed += actions[a]['mw']
+    for b, d in actions[a]['deltas'].items():
+        flows[b] += d
+print('Flows:', flows)
+print('Limits:', {b: branches[b]['limit'] for b in flows})
+print('All OK:', all(flows[b] <= branches[b]['limit'] for b in flows if b in branches))
+print('Shed MW:', shed)
+
+# Try shed_bus3_15 + shed_bus2_10
+selected2 = ['shed_bus3_15', 'shed_bus2_10']
+flows2 = {'l12': 118, 'l23': 72, 'l13': 65}
+shed2 = 0
+for a in selected2:
+    if actions[a]['type'] == 'shed_load':
+        shed2 += actions[a]['mw']
+    for b, d in actions[a]['deltas'].items():
+        flows2[b] += d
+print()
+print('Flows2:', flows2)
+print('All OK2:', all(flows2[b] <= branches[b]['limit'] for b in flows2))
+print('Shed MW2:', shed2)
+"
+
+Flows: {'l12': 96, 'l23': 78, 'l13': 0}
+Limits: {'l12': 100, 'l23': 90, 'l13': 80}
+All OK: True
+Shed MW: 15
+
+Flows2: {'l12': 95, 'l23': 64, 'l13': 65}
+All OK2: True
+Shed MW2: 25
+[0m
+[0m# [0mTodos
+[✓] Analyze overloads and candidate actions
+[✓] Compute optimal action combination
+[•] Write submission.json
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "import json; d=json.load(open('submission.json')); print('Valid JSON'); print(json.dumps(d, indent=2))"
+Valid JSON
+{
+  "selected_actions": [
+    "open_tie_13",
+    "shed_bus3_15"
+  ],
+  "load_shed_mw": 15,
+  "post_action_flows_mw": {
+    "l12": 96,
+    "l23": 78,
+    "l13": 0
+  },
+  "all_limits_satisfied": true,
+  "rationale": "open_tie_13 relieves 8 MW on l12 but adds 12 MW to l23; shed_bus3_15 removes 14 MW from l12 and 6 MW from l23, bringing l12 from 118 to 96 (limit 100) and l23 from 72+12=84 to 78 (limit 90). l13 opened to 0 (limit 80). Total shed 15 MW is minimal feasible."
+}
+[0m
+[0m# [0mTodos
+[✓] Analyze overloads and candidate actions
+[✓] Compute optimal action combination
+[✓] Write submission.json
+[0m

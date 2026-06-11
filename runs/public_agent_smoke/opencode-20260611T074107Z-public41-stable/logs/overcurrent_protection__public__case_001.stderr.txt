@@ -1,0 +1,61 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+max_load = 420.0
+margin = 1.2
+min_fault = 1800.0
+sens_factor = 1.5
+ct_ratio = 100.0
+downstream_t = 0.35
+selectivity = 0.3
+pickup_min_sec = 1.0
+pickup_max_sec = 10.0
+td_min = 0.0
+td_max = 2.0
+
+# Constraint 1: pickup >= max_load * margin
+pickup_lower = max_load * margin
+# Constraint 2: min_fault / pickup >= sens_factor -> pickup <= min_fault / sens_factor
+pickup_upper_primary = min_fault / sens_factor
+# Constraint 4: secondary pickup must be in [1, 10], so primary/ct_ratio <= 10
+pickup_upper_by_sec = pickup_max_sec * ct_ratio
+
+pickup_upper = min(pickup_upper_primary, pickup_upper_by_sec)
+pickup_primary = pickup_lower  # pick lowest for max sensitivity
+secondary_pickup = pickup_primary / ct_ratio
+
+# Constraint 3: time delay >= downstream + selectivity
+time_delay = downstream_t + selectivity
+
+print(f'Pickup lower bound (primary A): {pickup_lower}')
+print(f'Pickup upper bound by sensitivity (primary A): {pickup_upper_primary}')
+print(f'Pickup upper bound by secondary range (primary A): {pickup_upper_by_sec}')
+print(f'Pickup upper bound overall (primary A): {pickup_upper}')
+print(f'Selected pickup primary (A): {pickup_primary}')
+print(f'Secondary pickup (A): {secondary_pickup}')
+print(f'Sensitivity factor: {min_fault / pickup_primary:.4f}')
+print(f'Time delay (s): {time_delay}')
+print(f'Feasible: {pickup_lower <= pickup_upper}')
+print(f'Sec pickup in range: {pickup_min_sec <= secondary_pickup <= pickup_max_sec}')
+print(f'Time delay in range: {td_min <= time_delay <= td_max}')
+"
+
+Pickup lower bound (primary A): 504.0
+Pickup upper bound by sensitivity (primary A): 1200.0
+Pickup upper bound by secondary range (primary A): 1000.0
+Pickup upper bound overall (primary A): 1000.0
+Selected pickup primary (A): 504.0
+Secondary pickup (A): 5.04
+Sensitivity factor: 3.5714
+Time delay (s): 0.6499999999999999
+Feasible: True
+Sec pickup in range: True
+Time delay in range: True
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

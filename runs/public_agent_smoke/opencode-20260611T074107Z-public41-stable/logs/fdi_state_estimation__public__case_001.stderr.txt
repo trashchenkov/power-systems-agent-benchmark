@@ -1,0 +1,96 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m← [0mWrite solve.py
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 solve.py
+Traceback (most recent call last):
+  File "/Users/Sergej/claude_code/energy_bench/workpack/power-systems-agent-benchmark/runs/agent_packets/opencode_20260611T074107Z_public41_stable/fdi_state_estimation__public__case_001/solve.py", line 71, in <module>
+    state_indices = [bus_to_idx[s] for s in state_vars]
+                     ~~~~~~~~~~^^^
+KeyError: 'theta_2'
+[0m
+[0m← [0mEdit solve.py
+Index: /Users/Sergej/claude_code/energy_bench/workpack/power-systems-agent-benchmark/runs/agent_packets/opencode_20260611T074107Z_public41_stable/fdi_state_estimation__public__case_001/solve.py
+===================================================================
+--- /Users/Sergej/claude_code/energy_bench/workpack/power-systems-agent-benchmark/runs/agent_packets/opencode_20260611T074107Z_public41_stable/fdi_state_estimation__public__case_001/solve.py
++++ /Users/Sergej/claude_code/energy_bench/workpack/power-systems-agent-benchmark/runs/agent_packets/opencode_20260611T074107Z_public41_stable/fdi_state_estimation__public__case_001/solve.py
+@@ -67,9 +67,11 @@
+                     if f in state_indices:
+                         H[row, state_indices.index(f)] += -b
+     return H
+ 
+-state_indices = [bus_to_idx[s] for s in state_vars]
++# Map theta_N to bus bN
++state_to_bus = {sv: f"b{sv.split('_')[1]}" for sv in state_vars}
++state_indices = [bus_to_idx[state_to_bus[sv]] for sv in state_vars]
+ 
+ active = list(range(n_meas))
+ flagged_ids = []
+ 
+
+[0m
+[0m← [0mEdit solve.py
+Index: /Users/Sergej/claude_code/energy_bench/workpack/power-systems-agent-benchmark/runs/agent_packets/opencode_20260611T074107Z_public41_stable/fdi_state_estimation__public__case_001/solve.py
+===================================================================
+--- /Users/Sergej/claude_code/energy_bench/workpack/power-systems-agent-benchmark/runs/agent_packets/opencode_20260611T074107Z_public41_stable/fdi_state_estimation__public__case_001/solve.py
++++ /Users/Sergej/claude_code/energy_bench/workpack/power-systems-agent-benchmark/runs/agent_packets/opencode_20260611T074107Z_public41_stable/fdi_state_estimation__public__case_001/solve.py
+@@ -45,12 +45,13 @@
+ if m["type"] == "flow":
+     br = branch_map[m["branch_id"]]
+     f, t = br["f"], br["t"]
+     b = br["b"]
++    # flow from f to t: P_ft = b*(theta_f - theta_t)
+     if f in state_indices:
+-        H[row, state_indices.index(f)] += -b
++        H[row, state_indices.index(f)] += b
+     if t in state_indices:
+-        H[row, state_indices.index(t)] += b
++        H[row, state_indices.index(t)] += -b
+ elif m["type"] == "injection":
+     bus = bus_to_idx[m["bus_id"]]
+     # Injection at bus = sum of flows leaving the bus
+     for br_id, br in branch_map.items():
+
+[0m
+[0m$ [0mpython3 solve.py
+Active: ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b2', 'inj_b3']
+  theta: [-0.03353992 -0.06895437]
+  residuals: [ 0.06660076  0.00536502 -0.02607224  0.058327    0.01570722]
+  omega_diag: [6.41318124e-05 6.95817490e-05 8.96070976e-05 3.87832700e-05
+ 3.78960710e-05]
+  normalized residuals: [8.31653522 0.64316677 2.75427434 9.36585435 2.55153984]
+  max = 9.365854345173233
+  Flagging inj_b2
+Active: ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b3']
+  theta: [-0.04005882 -0.07009804]
+  residuals: [ 0.00141176 -0.00378431  0.00080392 -0.00201961]
+  omega_diag: [1.56862745e-05 6.86274510e-05 8.13725490e-05 3.43137255e-05]
+  normalized residuals: [0.35645312 0.45681273 0.08911991 0.34477289]
+  max = 0.45681273093955516
+
+Flagged: ['inj_b2']
+Final active: ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b3']
+Corrected state: {'theta_2': -0.04005882352941177, 'theta_3': -0.07009803921568628}
+
+submission.json written
+{
+  "attacked_measurements": [
+    "inj_b2"
+  ],
+  "corrected_state": {
+    "theta_2": -0.04005882352941177,
+    "theta_3": -0.07009803921568628
+  },
+  "rationale": "Iterative LNR bad-data identification on DC WLS state estimation."
+}
+[0m
+[0m→ [0mRead submission.json
+[0m
+[0m$ [0mrm solve.py
+(no output)
+[0m

@@ -1,0 +1,117 @@
+{
+  "task_id": "operator_breaker_load_actions_public_001",
+  "family": "operator_breaker_load_actions",
+  "candidate_id": "REL-TASK-050",
+  "substrate": "executable_operator_breaker_load_actions_case",
+  "objective": "Select operator breaker/load actions that remove overloads with minimal shedding",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-050 — Select operator breaker/load actions that remove overloads with minimal shedding",
+      "ru": "REL-TASK-050 — Выбрать действия оператора с выключателями/нагрузкой для снятия перегрузок"
+    },
+    "objective": {
+      "en": "Select operator breaker/load actions that remove overloads with minimal shedding",
+      "ru": "Выбрать действия оператора с выключателями/нагрузкой для снятия перегрузок"
+    },
+    "instructions": {
+      "en": "Use the public executable inputs to compute the requested JSON submission. Do not copy an expected answer; derive all reported values from the calculation specification.",
+      "ru": "Используйте опубликованные исполняемые входные данные и вычислите требуемый JSON-ответ. Не копируйте ожидаемый ответ; выведите все значения из спецификации расчёта."
+    }
+  },
+  "subdomain": "grid operations & control / restoration",
+  "public_inputs": {
+    "operator_action_case": {
+      "max_actions": 2,
+      "max_shed_mw": 25,
+      "branches": [
+        {
+          "branch_id": "l12",
+          "base_flow_mw": 118,
+          "limit_mw": 100
+        },
+        {
+          "branch_id": "l23",
+          "base_flow_mw": 72,
+          "limit_mw": 90
+        },
+        {
+          "branch_id": "l13",
+          "base_flow_mw": 65,
+          "limit_mw": 80
+        }
+      ],
+      "candidate_actions": [
+        {
+          "action_id": "open_tie_13",
+          "type": "open_breaker",
+          "branch_id": "l13",
+          "flow_delta_mw": {
+            "l12": -8,
+            "l23": 12
+          }
+        },
+        {
+          "action_id": "shed_bus3_15",
+          "type": "shed_load",
+          "mw": 15,
+          "flow_delta_mw": {
+            "l12": -14,
+            "l23": -6
+          }
+        },
+        {
+          "action_id": "shed_bus2_10",
+          "type": "shed_load",
+          "mw": 10,
+          "flow_delta_mw": {
+            "l12": -9,
+            "l23": -2
+          }
+        }
+      ]
+    }
+  },
+  "submission_schema": {
+    "selected_actions": "action ids",
+    "load_shed_mw": "shed load",
+    "post_action_flows_mw": "branch flows after actions",
+    "all_limits_satisfied": "boolean",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Select up to max_actions and ensure every branch flow is within its limit.",
+    "Minimize load shedding, then action count.",
+    "Unknown extra answer keys are infeasible.",
+    "Optional rationale text is ignored by the deterministic evaluator."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether all hard constraints and computed values are satisfied."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "1.0 if feasible, else 0.0."
+    }
+  ],
+  "source_evidence": [
+    "literature/metadata/v4_balanced_core_shortlist.md",
+    "literature/task_bank_v4_gap_fill_balanced.md#rel-task-050"
+  ],
+  "source_provenance": [
+    {
+      "title": "V4 balanced core shortlist — REL-TASK-050",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Literature-derived power-systems task topic converted into a public executable deterministic instance."
+    },
+    {
+      "title": "Bilingual executable benchmark slice requirement",
+      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
+      "confidence": "medium",
+      "notes": "Supports maintaining English and Russian task presentation for benchmark artifacts."
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+
+f0 = 50.0
+H = 4.0
+Pm = 0.9
+prefault_pmax = 2.0
+during_fault_pmax = 0.0
+postfault_pmax = 1.5
+
+delta0 = math.asin(Pm / prefault_pmax)
+delta_max = math.pi - math.asin(Pm / postfault_pmax)
+
+cos_delta_cr = (Pm * (delta_max - delta0) + postfault_pmax * math.cos(delta_max)) / postfault_pmax
+delta_cr = math.acos(cos_delta_cr)
+
+t_cr = math.sqrt(4 * H * (delta_cr - delta0) / (2 * math.pi * f0 * Pm))
+
+print(f'delta0_deg = {math.degrees(delta0):.10f}')
+print(f'delta_max_deg = {math.degrees(delta_max):.10f}')
+print(f'delta_critical_deg = {math.degrees(delta_cr):.10f}')
+print(f'critical_clearing_time_s = {t_cr:.10f}')
+"
+
+delta0_deg = 26.7436839504
+delta_max_deg = 143.1301023542
+delta_critical_deg = 65.2414201989
+critical_clearing_time_s = 0.1949934757
+[0m
+[0m$ [0mpython3 -c "
+import math
+
+f0 = 50.0
+H = 4.0
+Pm = 0.9
+prefault_pmax = 2.0
+postfault_pmax = 1.5
+
+delta0 = math.asin(0.9/2.0)
+delta_max = math.pi - math.asin(0.9/1.5)
+
+cos_delta_cr = (Pm*(delta_max - delta0) + postfault_pmax*math.cos(delta_max)) / postfault_pmax
+delta_cr = math.acos(cos_delta_cr)
+
+t_cr = math.sqrt(4*H*(delta_cr - delta0) / (2*math.pi*f0*Pm))
+
+# Verify equal-area balance
+A_acc = Pm * (delta_cr - delta0)
+A_dec = (postfault_pmax*math.cos(delta_cr) - postfault_pmax*math.cos(delta_max)) - Pm*(delta_cr - delta_max)
+
+print(f'Delta0 (deg):    {math.degrees(delta0):.6f}')
+print(f'Delta_max (deg): {math.degrees(delta_max):.6f}')
+print(f'Delta_cr (deg):  {math.degrees(delta_cr):.6f}')
+print(f't_cr (s):        {t_cr:.6f}')
+print(f'A_acc = A_dec?   {abs(A_acc - A_dec):.2e}')
+print(f'')
+# round to required precision
+print(f'--- Rounded to spec tolerance ---')
+print(f'delta0_deg:            {round(math.degrees(delta0), 4)}')
+print(f'delta_max_deg:         {round(math.degrees(delta_max), 4)}')
+print(f'delta_critical_deg:    {round(math.degrees(delta_cr), 4)}')
+print(f'critical_clearing_time_s: {round(t_cr, 6)}')
+"
+
+Delta0 (deg):    26.743684
+Delta_max (deg): 143.130102
+Delta_cr (deg):  65.241420
+t_cr (s):        0.194993
+A_acc = A_dec?   2.45e+00
+
+--- Rounded to spec tolerance ---
+delta0_deg:            26.7437
+delta_max_deg:         143.1301
+delta_critical_deg:    65.2414
+critical_clearing_time_s: 0.194993
+[0m
+[0m$ [0mpython3 -c "
+import math
+
+f0 = 50.0; H = 4.0; Pm = 0.9
+prefault_pmax = 2.0; postfault_pmax = 1.5
+
+delta0 = math.asin(Pm / prefault_pmax)
+delta_max = math.pi - math.asin(Pm / postfault_pmax)
+cos_delta_cr = (Pm*(delta_max - delta0) + postfault_pmax*math.cos(delta_max)) / postfault_pmax
+delta_cr = math.acos(cos_delta_cr)
+t_cr = math.sqrt(4*H*(delta_cr - delta0) / (2*math.pi*f0*Pm))
+
+# verify equal-area: A_acc = A_dec
+A_acc = Pm * (delta_cr - delta0)
+A_dec = postfault_pmax * (math.cos(delta_cr) - math.cos(delta_max)) + Pm * (delta_cr - delta_max)
+print(f'Equal-area balance: A_acc={A_acc:.10f}, A_dec={A_dec:.10f}, diff={A_acc-A_dec:.2e}')
+
+# round properly
+print(f'')
+print(json.dumps({
+    'delta0_deg': round(math.degrees(delta0), 4),
+    'delta_max_deg': round(math.degrees(delta_max), 4),
+    'delta_critical_deg': round(math.degrees(delta_cr), 4),
+    'critical_clearing_time_s': round(t_cr, 6),
+    'rationale': 'Computed via equal-area criterion: delta0=asin(Pm/pre)=' + str(round(math.degrees(delta0),4)) + ', delta_max=pi-asin(Pm/post)=' + str(round(math.degrees(delta_max),4)) + ', then cos(delta_cr)=(Pm*(d_max-d0)+post*cos(d_max))/post, t_cr=sqrt(4H*(d_cr-d0)/(2pi*f0*Pm)).'
+}, indent=2))
+" 2>&1
+
+Traceback (most recent call last):
+  File "<string>", line 20, in <module>
+    print(json.dumps({
+          ^^^^
+NameError: name 'json' is not defined. Did you forget to import 'json'?
+Equal-area balance: A_acc=0.6047210269, A_dec=0.6047210269, diff=1.11e-16
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m→ [0mRead submission.json
