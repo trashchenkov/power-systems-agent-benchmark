@@ -1,4 +1,61 @@
-# Hidden agent smoke report — case_101 normalized run
+# Hidden agent runs — full 41-family generated set (2026-06-11, case_301)
+
+Three CLI agents ran the complete hidden set: one generated `case_301` per
+family from `scripts/generate_hidden_cases.py` with a random private seed
+(48 hex chars, not recorded anywhere). Packets were prepared with the standard
+hidden redaction and are deliberately NOT committed; only run results are.
+Same agents, models, prompts, and 600 s per-case timeout as the public matrix.
+
+## Run artifacts
+
+- Codex CLI 0.139.0, `gpt-5.5` medium: `runs/hidden_agent_smoke/codex-hidden301/`
+- OpenCode 1.15.13, `deepseek-v4-flash`: `runs/hidden_agent_smoke/opencode-hidden301/`
+- Cursor agent CLI, `composer-2.5`: `runs/hidden_agent_smoke/cursor-hidden301/`
+
+## Public vs hidden
+
+| agent (model) | public feasible | hidden feasible | public mean | hidden mean |
+|---|---|---|---|---|
+| codex (gpt-5.5 medium) | 39/41 | **38/41** | 0.947 | **0.919** |
+| cursor (composer-2.5) | **41/41** | 35/41 | **0.995** | 0.846 |
+| opencode (deepseek-v4-flash) | 37/41 | 35/41 | 0.900 | 0.846 |
+
+Headline: **the ranking flips on hidden cases.** Cursor led the public core
+(41/41) but degrades most on unseen draws (-6 feasible); codex degrades least
+(-1) and takes the hidden lead. A public-only leaderboard would have crowned
+the wrong agent — this is the concrete argument for hidden evaluation.
+
+## Hidden failure notes
+
+- Genuine capability failures dominate: volt-var control under deeper hidden
+  excursions (codex and opencode violated limits; cursor burned the full 600 s
+  timeout on it — rc 124, the only no-submission case in 123 runs),
+  EV/V2G dispatch step and sign handling (opencode, cursor),
+  MAS lead-agent selection (opencode), N-1 commitment choice and meter-coverage
+  optimization (cursor), rolling-dispatch SOC self-consistency (cursor).
+- `transient_stability_prediction` failed codex and opencode again with
+  different numbers while cursor passed — the risk-score specification is
+  flagged for an explicit-formula review.
+- `islanded_microgrid_pq_dispatch` failed all three agents with similar
+  voltage mismatches (two agents identically): suspected next spec-ambiguity
+  candidate — likely alternative Q-dispatch optima; should get the same
+  re-simulate-and-cost-gap treatment as the other microgrid families.
+- Identical partial credits across all three agents (`contingency_screening`
+  0.8, `flisr_restoration` 0.96, `pf_voltage_repair` 0.9348) suggest the
+  reference solutions in those evaluators have tie-break conventions worth a
+  review pass; low priority.
+
+## Protocol note
+
+This run burned its seed (the operator machine ran all three agents), so
+case_301 should be treated as a development snapshot. For a citable
+leaderboard round, regenerate with a fresh seed on an isolated evaluation
+host, run agents, and publish only aggregate results.
+
+---
+
+# Historical: case_101 normalized run (pre domain fixes)
+
 
 This report compares Hermes CLI/file-toolset and OpenCode on the first harder hidden cases after the benchmark score migration from `0–100` totals to per-case normalized `score ∈ [0,1]` and aggregate `mean_score`.
 
