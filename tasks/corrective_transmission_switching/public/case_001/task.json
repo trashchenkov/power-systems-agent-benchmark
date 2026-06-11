@@ -22,27 +22,124 @@
   "public_inputs": {
     "contingency": "Branch l13 is out of service after the initiating contingency. Branch l14 is an available normally-open tie that may be closed as a corrective action.",
     "dc_power_flow_model": "Lossless DC model. Bus p_mw injections sum to zero. Branch flow is (theta_from - theta_to) / x_pu. Slack bus is the first bus listed.",
-    "candidate_switches": "Only branches listed in candidate_switches may be opened or closed. Use at most switching_budget actions."
+    "candidate_switches": [
+      {
+        "branch_id": "l14",
+        "action": "close",
+        "cost": 1.0
+      },
+      {
+        "branch_id": "l23",
+        "action": "open",
+        "cost": 1.0
+      },
+      {
+        "branch_id": "l24",
+        "action": "open",
+        "cost": 1.0
+      },
+      {
+        "branch_id": "l34",
+        "action": "open",
+        "cost": 1.0
+      }
+    ]
   },
   "buses": [
-    {"id": "b1", "p_mw": 100.0},
-    {"id": "b2", "p_mw": -20.0},
-    {"id": "b3", "p_mw": -50.0},
-    {"id": "b4", "p_mw": -30.0}
+    {
+      "id": "b1",
+      "p_mw": 100.0
+    },
+    {
+      "id": "b2",
+      "p_mw": -20.0
+    },
+    {
+      "id": "b3",
+      "p_mw": -50.0
+    },
+    {
+      "id": "b4",
+      "p_mw": -30.0
+    }
   ],
   "branches": [
-    {"id": "l12", "from_bus": "b1", "to_bus": "b2", "x_pu": 0.1, "rating_mw": 75.0, "closed": true, "role": "post-contingency active branch"},
-    {"id": "l13", "from_bus": "b1", "to_bus": "b3", "x_pu": 0.1, "rating_mw": 40.0, "closed": false, "role": "initiating contingency outage; not a corrective candidate"},
-    {"id": "l23", "from_bus": "b2", "to_bus": "b3", "x_pu": 0.1, "rating_mw": 50.0, "closed": true, "role": "post-contingency active branch"},
-    {"id": "l24", "from_bus": "b2", "to_bus": "b4", "x_pu": 0.1, "rating_mw": 50.0, "closed": true, "role": "post-contingency active branch"},
-    {"id": "l34", "from_bus": "b3", "to_bus": "b4", "x_pu": 0.1, "rating_mw": 50.0, "closed": true, "role": "post-contingency active branch"},
-    {"id": "l14", "from_bus": "b1", "to_bus": "b4", "x_pu": 0.3, "rating_mw": 50.0, "closed": false, "role": "normally-open corrective tie"}
+    {
+      "id": "l12",
+      "from_bus": "b1",
+      "to_bus": "b2",
+      "x_pu": 0.1,
+      "rating_mw": 75.0,
+      "closed": true,
+      "role": "post-contingency active branch"
+    },
+    {
+      "id": "l13",
+      "from_bus": "b1",
+      "to_bus": "b3",
+      "x_pu": 0.1,
+      "rating_mw": 40.0,
+      "closed": false,
+      "role": "initiating contingency outage; not a corrective candidate"
+    },
+    {
+      "id": "l23",
+      "from_bus": "b2",
+      "to_bus": "b3",
+      "x_pu": 0.1,
+      "rating_mw": 50.0,
+      "closed": true,
+      "role": "post-contingency active branch"
+    },
+    {
+      "id": "l24",
+      "from_bus": "b2",
+      "to_bus": "b4",
+      "x_pu": 0.1,
+      "rating_mw": 50.0,
+      "closed": true,
+      "role": "post-contingency active branch"
+    },
+    {
+      "id": "l34",
+      "from_bus": "b3",
+      "to_bus": "b4",
+      "x_pu": 0.1,
+      "rating_mw": 50.0,
+      "closed": true,
+      "role": "post-contingency active branch"
+    },
+    {
+      "id": "l14",
+      "from_bus": "b1",
+      "to_bus": "b4",
+      "x_pu": 0.3,
+      "rating_mw": 50.0,
+      "closed": false,
+      "role": "normally-open corrective tie"
+    }
   ],
   "candidate_switches": [
-    {"branch_id": "l14", "action": "close", "cost": 1.0},
-    {"branch_id": "l23", "action": "open", "cost": 1.0},
-    {"branch_id": "l24", "action": "open", "cost": 1.0},
-    {"branch_id": "l34", "action": "open", "cost": 1.0}
+    {
+      "branch_id": "l14",
+      "action": "close",
+      "cost": 1.0
+    },
+    {
+      "branch_id": "l23",
+      "action": "open",
+      "cost": 1.0
+    },
+    {
+      "branch_id": "l24",
+      "action": "open",
+      "cost": 1.0
+    },
+    {
+      "branch_id": "l34",
+      "action": "open",
+      "cost": 1.0
+    }
   ],
   "switching_budget": 1,
   "flow_tolerance_pct": 1e-06,
@@ -59,10 +156,26 @@
     "Every active branch loading must be at or below 100% of its emergency rating under the DC power-flow model."
   ],
   "metrics": [
-    {"name": "feasible", "direction": "boolean", "description": "True when the switching action satisfies budget, candidate, connectivity, and line-loading constraints."},
-    {"name": "score", "direction": "maximize", "description": "Normalized score based on feasibility, switch count, and max loading versus enumerated feasible actions."},
-    {"name": "max_loading_pct", "direction": "minimize", "description": "Maximum absolute branch loading after the submitted switching action."},
-    {"name": "switch_count", "direction": "minimize", "description": "Number of corrective switching actions used."}
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "True when the switching action satisfies budget, candidate, connectivity, and line-loading constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized score based on feasibility, switch count, and max loading versus enumerated feasible actions."
+    },
+    {
+      "name": "max_loading_pct",
+      "direction": "minimize",
+      "description": "Maximum absolute branch loading after the submitted switching action."
+    },
+    {
+      "name": "switch_count",
+      "direction": "minimize",
+      "description": "Number of corrective switching actions used."
+    }
   ],
   "source_evidence": [
     "literature/task_bank_v4_gap_fill_balanced.md#gap-task-002",

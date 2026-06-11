@@ -84,6 +84,22 @@ runs/
   public_agent_smoke/
 ```
 
+## Hidden case generation
+
+Hidden cases are intentionally untracked (`.gitignore`: `**/hidden/`). Instead of
+shipping them, the repository ships a deterministic generator with a registered
+perturbation for every public family. The evaluation host derives hidden cases
+from a private seed; every generated case is accepted only if the family
+baseline solves it and the evaluator marks the solution feasible:
+
+```bash
+python scripts/generate_hidden_cases.py --seed <private-seed> --case-id 201
+```
+
+Anyone with the repository can audit how hidden cases are produced, but without
+the seed the concrete hidden numbers stay unknown. Keep leaderboard seeds off
+the public record.
+
 ## Smoke check
 
 From the repository root:
