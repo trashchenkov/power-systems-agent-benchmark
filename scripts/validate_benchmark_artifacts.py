@@ -74,6 +74,15 @@ def validate_task_data(data: dict, path_label: str) -> list[str]:
                     elif not str(source[key]).strip():
                         errors.append(f"{path_label}: source_provenance[{idx}].{key} must be non-empty")
 
+    public_inputs = data.get("public_inputs")
+    if isinstance(public_inputs, dict):
+        # Several families mirror case data both inside public_inputs and at the
+        # top level; evaluators read one copy and agents may read the other, so
+        # the copies must never drift apart.
+        for key, value in public_inputs.items():
+            if key in data and data[key] != value:
+                errors.append(f"{path_label}: public_inputs.{key} diverged from the top-level copy")
+
     bilingual = data.get("bilingual")
     if not isinstance(bilingual, dict):
         errors.append(f"{path_label}: bilingual must be an object with English and Russian text")
