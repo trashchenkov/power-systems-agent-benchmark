@@ -1,0 +1,141 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import math
+
+# Inputs
+design_current = 180.0
+pf = 0.9
+sin_phi = math.sqrt(1 - pf**2)
+V = 400.0
+L = 250.0
+max_vd = 5.0
+
+ambient_factor = 0.96
+grouping_factor = 0.8
+
+I_fault = 12_000  # A
+t = 0.4
+k = 143.0
+
+# Adiabatic criterion
+min_thermal = I_fault * math.sqrt(t) / k
+print(f"min_thermal_section = {min_thermal:.4f} mm²")
+
+catalog = [
+    (50,  192.0, 0.387, 0.085),
+    (70,  246.0, 0.268, 0.082),
+    (95,  298.0, 0.193, 0.082),
+    (120, 346.0, 0.153, 0.080),
+    (150, 399.0, 0.124, 0.080),
+    (185, 456.0, 0.0991, 0.080),
+]
+
+for cs, base_amp, r, x in catalog:
+    derated = base_amp * ambient_factor * grouping_factor
+    amp_ok = derated >= design_current
+    
+    # dU = sqrt(3) * I * (L/1000) * (R*pf + X*sin(phi))
+    vd_num = math.sqrt(3) * design_current * (L/1000) * (r*pf + x*sin_phi)
+    vd_pct = vd_num / V * 100
+    vd_ok = vd_pct <= max_vd
+    
+    thermal_ok = cs >= min_thermal
+    
+    print(f"\n{cs} mm²:")
+    print(f"  derated_ampacity = {derated:.4f} A (ok={amp_ok})")
+    print(f"  vd = {vd_pct:.4f}% (ok={vd_ok})")
+    print(f"  thermal >= {min_thermal:.2f}: {cs} >= {min_thermal:.2f} (ok={thermal_ok})")
+    print(f"  ALL OK = {amp_ok and vd_ok and thermal_ok}")
+PYEOF
+min_thermal_section = 53.0732 mm²
+
+50 mm²:
+  derated_ampacity = 147.4560 A (ok=False)
+  vd = 7.5088% (ok=False)
+  thermal >= 53.07: 50 >= 53.07 (ok=False)
+  ALL OK = False
+
+70 mm²:
+  derated_ampacity = 188.9280 A (ok=True)
+  vd = 5.3964% (ok=False)
+  thermal >= 53.07: 70 >= 53.07 (ok=True)
+  ALL OK = False
+
+95 mm²:
+  derated_ampacity = 228.8640 A (ok=True)
+  vd = 4.0811% (ok=True)
+  thermal >= 53.07: 95 >= 53.07 (ok=True)
+  ALL OK = True
+
+120 mm²:
+  derated_ampacity = 265.7280 A (ok=True)
+  vd = 3.3626% (ok=True)
+  thermal >= 53.07: 120 >= 53.07 (ok=True)
+  ALL OK = True
+
+150 mm²:
+  derated_ampacity = 306.4320 A (ok=True)
+  vd = 2.8541% (ok=True)
+  thermal >= 53.07: 150 >= 53.07 (ok=True)
+  ALL OK = True
+
+185 mm²:
+  derated_ampacity = 350.2080 A (ok=True)
+  vd = 2.4174% (ok=True)
+  thermal >= 53.07: 185 >= 53.07 (ok=True)
+  ALL OK = True
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import math, json
+
+pf = 0.9
+sin_phi = math.sqrt(1 - pf**2)
+I_fault = 12000
+t = 0.4
+k = 143.0
+min_thermal = I_fault * math.sqrt(t) / k
+
+# 95 mm² cable
+I = 180.0
+V = 400.0
+L = 250.0
+r = 0.193
+x = 0.082
+derated = 298.0 * 0.96 * 0.8
+vd_num = math.sqrt(3) * I * (L/1000) * (r*pf + x*sin_phi)
+vd_pct = vd_num / V * 100
+
+print(f"min_thermal = {min_thermal}")
+print(f"derated = {derated}")
+print(f"vd_pct = {vd_pct}")
+
+result = {
+    "selected_cross_section_mm2": 95,
+    "selected_derated_ampacity_a": round(derated, 6),
+    "selected_voltage_drop_pct": round(vd_pct, 6),
+    "min_thermal_section_mm2": round(min_thermal, 6),
+    "rationale": "95 mm² is the smallest catalog section passing all three checks: derated ampacity 228.86 A >= 180 A, voltage drop 4.08% <= 5%, and section 95 mm² >= 53.07 mm² adiabatic minimum."
+}
+print(json.dumps(result, indent=2))
+PYEOF
+min_thermal = 53.07319149932945
+derated = 228.864
+vd_pct = 4.0811160109942595
+{
+  "selected_cross_section_mm2": 95,
+  "selected_derated_ampacity_a": 228.864,
+  "selected_voltage_drop_pct": 4.081116,
+  "min_thermal_section_mm2": 53.073191,
+  "rationale": "95 mm\u00b2 is the smallest catalog section passing all three checks: derated ampacity 228.86 A >= 180 A, voltage drop 4.08% <= 5%, and section 95 mm\u00b2 >= 53.07 mm\u00b2 adiabatic minimum."
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m→ [0mRead submission.json

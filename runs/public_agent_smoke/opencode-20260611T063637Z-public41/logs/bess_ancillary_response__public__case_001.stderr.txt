@@ -1,0 +1,57 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+nom_freq = 50.0
+target_v = 1.0
+dt = 10.0
+soc = 4.8
+soc_min, soc_max = 1.0, 8.0
+p_dch = 4.0
+p_ch = 3.0
+s_rating = 5.0
+f_droop = 18.0
+v_droop = 30.0
+ch_eff = 0.96
+dch_eff = 0.94
+
+measurements = {
+    't0': {'f': 49.86, 'v': 0.965},
+    't1': {'f': 49.92, 'v': 0.982},
+    't2': {'f': 50.04, 'v': 1.018}
+}
+
+results = {}
+for ts, m in measurements.items():
+    # P from frequency droop
+    p = (nom_freq - m['f']) * f_droop
+    p = max(-p_ch, min(p_dch, p))
+    
+    # Q from voltage droop
+    q = (target_v - m['v']) * v_droop
+    q_limit = (s_rating**2 - p**2)**0.5
+    q = max(-q_limit, min(q_limit, q))
+    
+    # SOC update
+    if p > 0:
+        soc -= p * dt / 3600 / dch_eff
+    else:
+        soc += abs(p) * dt / 3600 * ch_eff
+    
+    print(f'{ts}: p={p}, q={q}, soc={soc}')
+    results[ts] = {'p': p, 'q': q}
+
+print(f'final_soc = {soc}')
+"
+
+t0: p=2.5200000000000102, q=1.050000000000001, soc=4.792553191489361
+t1: p=1.4399999999999693, q=0.5400000000000005, soc=4.788297872340425
+t2: p=-0.7199999999999847, q=-0.5400000000000005, soc=4.790217872340425
+final_soc = 4.790217872340425
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

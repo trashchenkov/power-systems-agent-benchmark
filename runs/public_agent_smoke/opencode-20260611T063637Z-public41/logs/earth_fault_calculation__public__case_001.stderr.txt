@@ -1,0 +1,114 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import cmath, math
+
+# Given data
+S_base = 50.0  # MVA
+V_base = 13.8  # kV
+V_pre = 1.0    # pu
+Zf = 0.04      # pu
+
+# Sequence impedances (pu)
+Z1 = complex(0.042, 0.314)
+Z2 = complex(0.045, 0.290)
+Z0 = complex(0.120, 0.820)
+
+# Total impedance
+Z_total = Z1 + Z2 + Z0 + 3*Zf
+print(f"Z_total = {Z_total:.6f}")
+
+# Sequence currents in pu
+I_pu = V_pre / Z_total
+print(f"I1 = I2 = I0 (pu) = {abs(I_pu):.6f} ∠ {math.degrees(cmath.phase(I_pu)):.4f}°")
+
+# Base current
+I_base = S_base / (math.sqrt(3) * V_base)
+print(f"I_base = {I_base:.6f} kA")
+
+# Sequence currents in kA
+I_ka = I_pu * I_base
+mag = abs(I_ka)
+angle = math.degrees(cmath.phase(I_ka))
+print(f"I1 = I2 = I0 (kA) = {mag:.6f} ∠ {angle:.4f}°")
+
+# Fault current = 3 * I0
+I_fault_ka = 3 * I_ka
+fault_mag = abs(I_fault_ka)
+fault_angle = math.degrees(cmath.phase(I_fault_ka))
+print(f"Fault current = 3*I0 (kA) = {fault_mag:.6f} ∠ {fault_angle:.4f}°")
+print(f"Residual current magnitude = {fault_mag:.6f} kA")
+EOF
+Z_total = 0.327000+1.424000j
+I1 = I2 = I0 (pu) = 0.684433 ∠ -77.0671°
+I_base = 2.091849 kA
+I1 = I2 = I0 (kA) = 1.431731 ∠ -77.0671°
+Fault current = 3*I0 (kA) = 4.295192 ∠ -77.0671°
+Residual current magnitude = 4.295192 kA
+[0m
+[0m$ [0mpython3 << 'EOF'
+import cmath, math, json
+
+S_base = 50.0
+V_base = 13.8
+Zf = 0.04
+
+Z1 = complex(0.042, 0.314)
+Z2 = complex(0.045, 0.290)
+Z0 = complex(0.120, 0.820)
+
+Z_total = Z1 + Z2 + Z0 + 3*Zf
+I_pu = 1.0 / Z_total
+I_base = S_base / (math.sqrt(3) * V_base)
+I_ka = I_pu * I_base
+
+mag = abs(I_ka)
+angle = math.degrees(cmath.phase(I_ka))
+I_fault_ka = 3 * I_ka
+fault_mag = abs(I_fault_ka)
+fault_angle = math.degrees(cmath.phase(I_fault_ka))
+
+submission = {
+    "sequence_currents_ka": {
+        "i1": {"mag_ka": round(mag, 6), "angle_deg": round(angle, 4)},
+        "i2": {"mag_ka": round(mag, 6), "angle_deg": round(angle, 4)},
+        "i0": {"mag_ka": round(mag, 6), "angle_deg": round(angle, 4)}
+    },
+    "fault_current_ka": {
+        "mag_ka": round(fault_mag, 6),
+        "angle_deg": round(fault_angle, 4)
+    },
+    "residual_current_mag_ka": round(fault_mag, 6)
+}
+
+print(json.dumps(submission, indent=2))
+EOF
+{
+  "sequence_currents_ka": {
+    "i1": {
+      "mag_ka": 1.431731,
+      "angle_deg": -77.0671
+    },
+    "i2": {
+      "mag_ka": 1.431731,
+      "angle_deg": -77.0671
+    },
+    "i0": {
+      "mag_ka": 1.431731,
+      "angle_deg": -77.0671
+    }
+  },
+  "fault_current_ka": {
+    "mag_ka": 4.295192,
+    "angle_deg": -77.0671
+  },
+  "residual_current_mag_ka": 4.295192
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

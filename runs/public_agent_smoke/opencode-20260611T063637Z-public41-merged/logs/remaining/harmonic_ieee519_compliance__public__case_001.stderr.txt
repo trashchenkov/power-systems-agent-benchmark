@@ -1,0 +1,188 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import math
+
+# Given data
+IL = 480.0  # max demand current, A
+Isc = 12.0e3  # short circuit current, A (12.0 kA)
+
+# Harmonic currents in A
+h_currents = {
+    5: 28.0,
+    7: 19.0,
+    11: 9.0,
+    13: 7.0,
+    17: 4.0,
+    19: 3.0,
+    23: 1.5
+}
+
+# Harmonic voltages in %
+h_voltages = {
+    5: 2.1,
+    7: 1.6,
+    11: 0.9
+}
+
+# Current limit table
+limit_table = [
+    {"isc_il_below": 20, "tdd_pct": 5.0, "h_below_11_pct": 4.0, "h_11_to_17_pct": 2.0, "h_17_to_23_pct": 1.5, "h_23_to_35_pct": 0.6, "h_35_up_pct": 0.3},
+    {"isc_il_below": 50, "tdd_pct": 8.0, "h_below_11_pct": 7.0, "h_11_to_17_pct": 3.5, "h_17_to_23_pct": 2.5, "h_23_to_35_pct": 1.0, "h_35_up_pct": 0.5},
+    {"isc_il_below": 100, "tdd_pct": 12.0, "h_below_11_pct": 10.0, "h_11_to_17_pct": 4.5, "h_17_to_23_pct": 4.0, "h_23_to_35_pct": 1.5, "h_35_up_pct": 0.7},
+    {"isc_il_below": 1000, "tdd_pct": 15.0, "h_below_11_pct": 12.0, "h_11_to_17_pct": 5.5, "h_17_to_23_pct": 5.0, "h_23_to_35_pct": 2.0, "h_35_up_pct": 1.0},
+    {"isc_il_below": 1e9, "tdd_pct": 20.0, "h_below_11_pct": 15.0, "h_11_to_17_pct": 7.0, "h_17_to_23_pct": 6.0, "h_23_to_35_pct": 2.5, "h_35_up_pct": 1.4}
+]
+
+voltage_limits = {"individual_pct": 3.0, "thd_pct": 5.0}
+
+# Step 1: Compute Isc/IL
+isc_il = Isc / IL
+print(f"Isc/IL = {Isc} / {IL} = {isc_il}")
+
+# Step 2: Select limit row (first row with isc_il_below > isc_il)
+selected_row = None
+for row in limit_table:
+    if row["isc_il_below"] > isc_il:
+        selected_row = row
+        break
+print(f"Selected row: isc_il_below = {selected_row['isc_il_below']}")
+print(f"  TDD limit: {selected_row['tdd_pct']}%")
+print(f"  h<11 limit: {selected_row['h_below_11_pct']}%")
+print(f"  11-17 limit: {selected_row['h_11_to_17_pct']}%")
+print(f"  17-23 limit: {selected_row['h_17_to_23_pct']}%")
+print(f"  23-35 limit: {selected_row['h_23_to_35_pct']}%")
+print(f"  35+ limit: {selected_row['h_35_up_pct']}%")
+
+# Step 3: Compute TDD
+sum_sq = sum(v*v for v in h_currents.values())
+tdd = math.sqrt(sum_sq) / IL * 100
+print(f"\nTDD computation:")
+print(f"  Sum of squared harmonic currents: {sum_sq}")
+print(f"  sqrt(sum) = {math.sqrt(sum_sq)}")
+print(f"  TDD = {math.sqrt(sum_sq)} / {IL} * 100 = {tdd}%")
+print(f"  TDD limit: {selected_row['tdd_pct']}%")
+print(f"  TDD violation: {tdd > selected_row['tdd_pct']}")
+
+# Step 4: Individual harmonic current limits (in % of IL)
+print(f"\nIndividual harmonic current checks (all in % of IL={IL}A):")
+current_violations = []
+for h_order in sorted(h_currents.keys(), key=int):
+    h_pct = h_currents[h_order] / IL * 100
+    
+    # Determine which bucket the harmonic belongs to
+    h_int = int(h_order)
+    if h_int < 11:
+        limit = selected_row["h_below_11_pct"]
+    elif h_int < 17:
+        limit = selected_row["h_11_to_17_pct"]
+    elif h_int < 23:
+        limit = selected_row["h_17_to_23_pct"]
+    elif h_int < 35:
+        limit = selected_row["h_23_to_35_pct"]
+    else:
+        limit = selected_row["h_35_up_pct"]
+    
+    violated = h_pct > limit
+    print(f"  h{h_order}: {h_pct:.4f}% (limit: {limit}%) {'VIOLATION' if violated else 'OK'}")
+    if violated:
+        current_violations.append(str(h_order))
+
+if tdd > selected_row["tdd_pct"]:
+    current_violations.append("tdd")
+
+print(f"Current violations: {current_violations}")
+
+# Step 5: Compute voltage THD
+voltage_thd = math.sqrt(sum(v*v for v in h_voltages.values()))
+print(f"\nVoltage THD computation:")
+print(f"  Sum of squared voltage harmonics: {sum(v*v for v in h_voltages.values())}")
+print(f"  THD = sqrt(sum) = {voltage_thd}%")
+print(f"  THD limit: {voltage_limits['thd_pct']}%")
+print(f"  THD violation: {voltage_thd > voltage_limits['thd_pct']}")
+
+# Step 6: Individual voltage harmonic checks
+print(f"\nIndividual voltage harmonic checks:")
+voltage_violations = []
+for h_order in sorted(h_voltages.keys(), key=int):
+    h_pct = h_voltages[h_order]
+    limit = voltage_limits["individual_pct"]
+    violated = h_pct > limit
+    print(f"  h{h_order}: {h_pct}% (limit: {limit}%) {'VIOLATION' if violated else 'OK'}")
+    if violated:
+        voltage_violations.append(str(h_order))
+
+if voltage_thd > voltage_limits["thd_pct"]:
+    voltage_violations.append("thd")
+
+print(f"Voltage violations: {voltage_violations}")
+
+# Step 7: Overall verdict
+compliant = len(current_violations) == 0 and len(voltage_violations) == 0
+print(f"\nOverall compliant: {compliant}")
+
+print(f"\n=== SUBMISSION ===")
+print(f"isc_over_il: {isc_il}")
+print(f"tdd_pct: {tdd}")
+sorted_cv = sorted(set(current_violations), key=lambda x: (x != "tdd", int(x) if x != "tdd" else 0))
+print(f"current_violations: {sorted_cv}")
+print(f"voltage_thd_pct: {voltage_thd}")
+sorted_vv = sorted(set(voltage_violations), key=lambda x: (x != "thd", int(x) if x != "thd" else 0))
+print(f"voltage_violations: {sorted_vv}")
+print(f"compliant: {compliant}")
+EOF
+Isc/IL = 12000.0 / 480.0 = 25.0
+Selected row: isc_il_below = 50
+  TDD limit: 8.0%
+  h<11 limit: 7.0%
+  11-17 limit: 3.5%
+  17-23 limit: 2.5%
+  23-35 limit: 1.0%
+  35+ limit: 0.5%
+
+TDD computation:
+  Sum of squared harmonic currents: 1302.25
+  sqrt(sum) = 36.08670115153226
+  TDD = 36.08670115153226 / 480.0 * 100 = 7.518062739902555%
+  TDD limit: 8.0%
+  TDD violation: False
+
+Individual harmonic current checks (all in % of IL=480.0A):
+  h5: 5.8333% (limit: 7.0%) OK
+  h7: 3.9583% (limit: 7.0%) OK
+  h11: 1.8750% (limit: 3.5%) OK
+  h13: 1.4583% (limit: 3.5%) OK
+  h17: 0.8333% (limit: 2.5%) OK
+  h19: 0.6250% (limit: 2.5%) OK
+  h23: 0.3125% (limit: 1.0%) OK
+Current violations: []
+
+Voltage THD computation:
+  Sum of squared voltage harmonics: 7.780000000000001
+  THD = sqrt(sum) = 2.7892651361962706%
+  THD limit: 5.0%
+  THD violation: False
+
+Individual voltage harmonic checks:
+  h5: 2.1% (limit: 3.0%) OK
+  h7: 1.6% (limit: 3.0%) OK
+  h11: 0.9% (limit: 3.0%) OK
+Voltage violations: []
+
+Overall compliant: True
+
+=== SUBMISSION ===
+isc_over_il: 25.0
+tdd_pct: 7.518062739902555
+current_violations: []
+voltage_thd_pct: 2.7892651361962706
+voltage_violations: []
+compliant: True
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

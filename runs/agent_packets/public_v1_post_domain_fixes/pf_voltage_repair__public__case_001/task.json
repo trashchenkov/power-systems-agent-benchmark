@@ -1,0 +1,112 @@
+{
+  "task_id": "pf_voltage_repair_public_001",
+  "family": "pf_voltage_repair",
+  "substrate": "pandapower_hidden__linear_sensitivity_public_surrogate",
+  "objective": "Choose corrective reactive-power actions that remove voltage violations at minimum cost.",
+  "public_inputs": {
+    "base_voltage_pu": {
+      "bus_1": 1.0,
+      "bus_2": 0.925
+    },
+    "limits": {
+      "min_vm_pu": 0.95,
+      "max_vm_pu": 1.05
+    },
+    "sensitivities": {
+      "bus_2": {
+        "q_cap_mvar": 0.006
+      }
+    },
+    "action_bounds": {
+      "q_cap_mvar": {
+        "min": 0.0,
+        "max": 20.0,
+        "cost_per_unit": 1.0
+      }
+    }
+  },
+  "base_voltage_pu": {
+    "bus_1": 1.0,
+    "bus_2": 0.925
+  },
+  "limits": {
+    "min_vm_pu": 0.95,
+    "max_vm_pu": 1.05
+  },
+  "sensitivities": {
+    "bus_2": {
+      "q_cap_mvar": 0.006
+    }
+  },
+  "action_bounds": {
+    "q_cap_mvar": {
+      "min": 0.0,
+      "max": 20.0,
+      "cost_per_unit": 1.0
+    }
+  },
+  "submission_schema": {
+    "actions": {
+      "<bus_id>": {
+        "q_cap_mvar": "float within action bounds"
+      }
+    },
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "All final bus voltages must be within [min_vm_pu, max_vm_pu].",
+    "Actions must respect published bounds.",
+    "Unknown buses/actions are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether hard voltage and action constraints are satisfied."
+    },
+    {
+      "name": "action_cost",
+      "direction": "minimize",
+      "description": "Cost-weighted corrective action magnitude."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 - action_cost/100 if feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "literature/task_bank_v0_from_local_archive.md#1-ac-load-flow-correction--voltage-violation-repair",
+    "Power System Analysis and Design",
+    "Advanced Prediction Techniques Applied to Smart Grids"
+  ],
+  "source_provenance": [
+    {
+      "title": "Power System Analysis and Design / AC power-flow formulation",
+      "locator": "literature/extracted_text/all_local_archive/Power System Analysis and Design_030246bc.txt:2502-2512; literature/v0_executable_benchmark_slice.en.md#REL-TASK-046",
+      "confidence": "strong",
+      "notes": "Supports AC power-flow solve and violation diagnosis as a domain task; public evaluator is a lightweight linear-sensitivity surrogate for the future pandapower hidden evaluator."
+    },
+    {
+      "title": "v0 executable benchmark slice — REL-TASK-046",
+      "locator": "literature/v0_executable_benchmark_slice.en.md and literature/v0_executable_benchmark_slice.ru.md",
+      "confidence": "strong",
+      "notes": "Bilingual benchmark planning artifact selecting AC PF diagnosis / voltage repair for v0 and recording the source requirement."
+    }
+  ],
+  "candidate_id": "REL-TASK-046",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-046 — AC power-flow solve and violation diagnosis",
+      "ru": "REL-TASK-046 — Расчет AC power flow и диагностика нарушений"
+    },
+    "objective": {
+      "en": "Choose corrective reactive-power actions that remove voltage violations at minimum cost.",
+      "ru": "Расчет AC power flow и диагностика нарушений"
+    },
+    "instructions": {
+      "en": "Solve the executable power-systems task and submit JSON matching the published schema.",
+      "ru": "Решите исполняемую задачу по электроэнергетике и отправьте JSON согласно опубликованной схеме."
+    }
+  }
+}

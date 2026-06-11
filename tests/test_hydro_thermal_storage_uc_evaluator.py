@@ -13,4 +13,11 @@ class HydroThermalStorageUCTests(unittest.TestCase):
         submission=solve_case(self.task); submission['total_cost_usd'] += 1; result=evaluate_case(self.task, submission); self.assertFalse(result["feasible"]); self.assertTrue(any("total_cost_usd" in v for v in result["violations"]), result)
     def test_unknown_field_is_rejected(self):
         submission=solve_case(self.task); submission["answer"]="leak"; result=evaluate_case(self.task, submission); self.assertFalse(result["feasible"]); self.assertTrue(any("unknown answer fields" in v for v in result["violations"]))
+    def test_zero_valued_decommitted_unit_is_accepted(self):
+        submission=solve_case(self.task)
+        for row in submission["thermal_dispatch_mw"].values():
+            if "gas" not in row: row["gas"]=0.0
+        result=evaluate_case(self.task, submission)
+        self.assertTrue(result["feasible"], result)
+
 if __name__=="__main__": unittest.main()

@@ -1,0 +1,134 @@
+{
+  "task_id": "wind_power_forecast_public_001",
+  "family": "wind_power_forecast",
+  "candidate_id": "REL-TASK-009",
+  "substrate": "executable_wind_power_curve_forecast_case",
+  "objective": "Produce a multi-step wind-power forecast from wind-speed forecasts, air-density forecasts, a turbine power curve, and recent bias history.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-009 — Multi-step wind-power forecast from weather inputs",
+      "ru": "REL-TASK-009 — Многошаговый прогноз ветровой генерации по погодным данным"
+    },
+    "objective": {
+      "en": "Forecast wind-farm output by applying the turbine power curve and a historical residual bias correction.",
+      "ru": "Спрогнозировать выдачу ветропарка, используя кривую мощности турбины и поправку по исторической ошибке."
+    },
+    "instructions": {
+      "en": "Use wind_forecast_case. First compute the average residual between measured historical power and the power-curve estimate at historical wind speed and density. Then convert every weather_forecast row through the same power curve, add the residual bias, clamp to [0, farm capacity], and report forecast_mw_by_timestamp, total_forecast_mwh, and peak_timestamp.",
+      "ru": "Используйте wind_forecast_case. Сначала найдите среднюю разность между фактической исторической мощностью и оценкой по кривой мощности для исторических скорости ветра и плотности воздуха. Затем переведите каждый прогноз погоды через ту же кривую мощности, добавьте эту поправку, ограничьте результат диапазоном от 0 до мощности ветропарка и укажите forecast_mw_by_timestamp, total_forecast_mwh и peak_timestamp."
+    }
+  },
+  "subdomain": "forecasting & uncertainty",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-009",
+    "subdomain": "forecasting & uncertainty",
+    "input_fields": [
+      "wind_forecast_case.turbine",
+      "wind_forecast_case.power_curve",
+      "wind_forecast_case.history",
+      "wind_forecast_case.weather_forecast"
+    ]
+  },
+  "wind_forecast_case": {
+    "forecast_step_hours": 1.0,
+    "reference_air_density_kg_m3": 1.225,
+    "turbine": {
+      "count": 8,
+      "rated_mw_each": 2.5
+    },
+    "power_curve": {
+      "cut_in_m_s": 3.0,
+      "rated_m_s": 12.0,
+      "cut_out_m_s": 25.0
+    },
+    "history": [
+      {
+        "timestamp": "h-4",
+        "wind_speed_m_s": 6.2,
+        "air_density_kg_m3": 1.21,
+        "actual_power_mw": 0.98
+      },
+      {
+        "timestamp": "h-3",
+        "wind_speed_m_s": 7.4,
+        "air_density_kg_m3": 1.2,
+        "actual_power_mw": 2.35
+      },
+      {
+        "timestamp": "h-2",
+        "wind_speed_m_s": 8.6,
+        "air_density_kg_m3": 1.19,
+        "actual_power_mw": 4.55
+      },
+      {
+        "timestamp": "h-1",
+        "wind_speed_m_s": 9.1,
+        "air_density_kg_m3": 1.18,
+        "actual_power_mw": 5.85
+      }
+    ],
+    "weather_forecast": [
+      {
+        "timestamp": "t01",
+        "wind_speed_m_s": 8.0,
+        "air_density_kg_m3": 1.19
+      },
+      {
+        "timestamp": "t02",
+        "wind_speed_m_s": 9.5,
+        "air_density_kg_m3": 1.18
+      },
+      {
+        "timestamp": "t03",
+        "wind_speed_m_s": 11.0,
+        "air_density_kg_m3": 1.17
+      },
+      {
+        "timestamp": "t04",
+        "wind_speed_m_s": 13.2,
+        "air_density_kg_m3": 1.16
+      }
+    ]
+  },
+  "submission_schema": {
+    "forecast_mw_by_timestamp": "object mapping forecast timestamp to MW",
+    "total_forecast_mwh": "sum of hourly forecast values in MWh",
+    "peak_timestamp": "timestamp with the largest forecast power",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Forecast values must match the independent power-curve and bias-correction calculation within 0.01 MW.",
+    "Total energy and peak timestamp must match the recomputed forecast.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted forecast satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "literature/metadata/v4_balanced_core_shortlist.md",
+    "literature/task_bank_v4_gap_fill_balanced.md#rel-task-009"
+  ],
+  "source_provenance": [
+    {
+      "title": "V4 balanced core shortlist — REL-TASK-009",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Candidate task selected from the forecasting and uncertainty part of the literature-derived taxonomy."
+    },
+    {
+      "title": "Wind-turbine power-curve forecasting practice",
+      "locator": "standard engineering model: speed-to-power conversion with density correction and residual bias correction",
+      "confidence": "medium",
+      "notes": "The public case uses a compact deterministic power-curve instance for executable evaluation."
+    }
+  ]
+}

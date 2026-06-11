@@ -1,0 +1,104 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat << 'PYEOF' > /tmp/calc.py
+import json
+
+cases_data = {
+    "fault_a": {"clearing": 0.1, "cct": 0.17, "angle": 142.0, "voltage": 0.76, "damping": 5.0},
+    "fault_b": {"clearing": 0.16, "cct": 0.14, "angle": 188.0, "voltage": 0.68, "damping": 2.2},
+    "fault_c": {"clearing": 0.08, "cct": 0.11, "angle": 171.0, "voltage": 0.72, "damping": 3.4},
+}
+
+angle_limit = 180.0
+voltage_floor = 0.7
+min_damping = 3.0
+
+def is_stable(c):
+    angle_ok = c["angle"] < angle_limit
+    voltage_ok = c["voltage"] >= voltage_floor
+    margin_ok = c["cct"] > c["clearing"]
+    damping_ok = c["damping"] >= min_damping
+    return all([angle_ok, voltage_ok, margin_ok, damping_ok])
+
+def risk_score(c):
+    components = []
+    # angle
+    components.append(c["angle"] / angle_limit)
+    # voltage
+    if c["voltage"] < voltage_floor:
+        components.append(1 + (voltage_floor - c["voltage"]) / voltage_floor)
+    else:
+        components.append(voltage_floor / c["voltage"])
+    # damping
+    if c["damping"] < min_damping:
+        components.append(1 + (min_damping - c["damping"]) / min_damping)
+    else:
+        components.append(min_damping / c["damping"])
+    # margin
+    if c["clearing"] > c["cct"]:
+        components.append(1 + (c["clearing"] - c["cct"]) / c["cct"])
+    else:
+        components.append(c["clearing"] / c["cct"])
+    return max(components)
+
+def clearing_margin(c):
+    return round(c["cct"] - c["clearing"], 4)
+
+results = {}
+for cid, c in cases_data.items():
+    label = "stable" if is_stable(c) else "unstable"
+    rs = round(risk_score(c), 4)
+    cm = clearing_margin(c)
+    results[cid] = {"label": label, "risk_score": rs, "clearing_margin_s": cm}
+    print(f"{cid}: label={label}, risk_score={rs}, margin={cm}")
+
+stable_count = sum(1 for r in results.values() if r["label"] == "stable")
+highest_risk = max(results.items(), key=lambda x: x[1]["risk_score"])[0]
+print(f"stable_count={stable_count}, highest_risk={highest_risk}")
+
+submission = {
+    "case_results": results,
+    "stable_case_count": stable_count,
+    "highest_risk_case": highest_risk,
+    "rationale": "Computed per-case stability based on angle (<180 deg), voltage (>=0.7 pu), positive clearing margin, and damping (>=3%). Risk score = maximum of normalized metrics (value/threshold; for violations, 1+excess/threshold)."
+}
+print(json.dumps(submission, indent=2))
+PYEOF
+python3 /tmp/calc.py
+fault_a: label=stable, risk_score=0.9211, margin=0.07
+fault_b: label=unstable, risk_score=1.2667, margin=-0.02
+fault_c: label=stable, risk_score=0.9722, margin=0.03
+stable_count=2, highest_risk=fault_b
+{
+  "case_results": {
+    "fault_a": {
+      "label": "stable",
+      "risk_score": 0.9211,
+      "clearing_margin_s": 0.07
+    },
+    "fault_b": {
+      "label": "unstable",
+      "risk_score": 1.2667,
+      "clearing_margin_s": -0.02
+    },
+    "fault_c": {
+      "label": "stable",
+      "risk_score": 0.9722,
+      "clearing_margin_s": 0.03
+    }
+  },
+  "stable_case_count": 2,
+  "highest_risk_case": "fault_b",
+  "rationale": "Computed per-case stability based on angle (<180 deg), voltage (>=0.7 pu), positive clearing margin, and damping (>=3%). Risk score = maximum of normalized metrics (value/threshold; for violations, 1+excess/threshold)."
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -m json.tool /Users/Sergej/claude_code/energy_bench/workpack/power-systems-agent-benchmark/runs/agent_packets/opencode_20260611T063637Z_public41/transient_stability_prediction__public__case_001/submission.json > /dev/null && echo "valid JSON"
+valid JSON
+[0m

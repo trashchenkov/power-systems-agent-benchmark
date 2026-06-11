@@ -35,8 +35,21 @@ def _cmp(path, got, exp, violations):
     else:
         if got!=exp: violations.append(f"{path} expected {exp} got {got}")
 
+def _drop_zero_dispatch(submission):
+    """Treat explicit zero-MW entries as equivalent to omitting the unit."""
+    dispatch=submission.get("thermal_dispatch_mw")
+    if not isinstance(dispatch, dict): return submission
+    cleaned=dict(submission)
+    cleaned["thermal_dispatch_mw"]={
+        hour: {uid: p for uid, p in row.items() if not (isinstance(p,(int,float)) and abs(float(p))<1e-9)}
+        if isinstance(row, dict) else row
+        for hour, row in dispatch.items()
+    }
+    return cleaned
+
 def evaluate_case(task, submission):
     exp=_expected(task); allowed=set(exp)|{"rationale"}; violations=[]
+    submission=_drop_zero_dispatch(submission)
     extra=set(submission)-allowed
     if extra: violations.append(f"unknown answer fields: {sorted(extra)}")
     for k,v in exp.items(): _cmp(k, submission.get(k), v, violations)

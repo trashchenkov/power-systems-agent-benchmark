@@ -1,0 +1,72 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+
+base_mva = 100.0
+voltage_kv = 10.5
+cmax = 1.1
+cmin = 1.0
+fault_r = 0.005
+
+# sum impedances
+r_total = 0.018 + 0.012 + 0.002
+x_total = 0.155 + 0.095 + 0.011
+
+z_bolted_mag_pu = math.hypot(r_total, x_total)
+I_base = base_mva / (math.sqrt(3) * voltage_kv)
+
+ik_max_ka = cmax / z_bolted_mag_pu * I_base
+sk_max_mva = math.sqrt(3) * voltage_kv * ik_max_ka
+
+z_min_mag_pu = math.hypot(r_total + fault_r, x_total)
+ik_min_ka = cmin / z_min_mag_pu * I_base
+
+print(f'z_bolted_mag_pu = {z_bolted_mag_pu:.10f}')
+print(f'I_base = {I_base:.10f} kA')
+print(f'ik_max_ka = {ik_max_ka:.10f}')
+print(f'sk_max_mva = {sk_max_mva:.10f}')
+print(f'z_min_mag_pu = {z_min_mag_pu:.10f}')
+print(f'ik_min_ka = {ik_min_ka:.10f}')
+
+# Rounding for submission
+print()
+print('--- Rounded (4 decimal places) ---')
+print(f'ik_max_ka = {round(ik_max_ka, 4)}')
+print(f'sk_max_mva = {round(sk_max_mva, 4)}')
+print(f'ik_min_ka = {round(ik_min_ka, 4)}')
+print(f'z_bolted_mag_pu = {round(z_bolted_mag_pu, 4)}')
+print(f'z_min_mag_pu = {round(z_min_mag_pu, 4)}')
+"
+
+z_bolted_mag_pu = 0.2629543687
+I_base = 5.4985739923 kA
+ik_max_ka = 23.0018288809
+sk_max_mva = 418.3235310311
+z_min_mag_pu = 0.2636095598
+ik_min_ka = 20.8587806799
+
+--- Rounded (4 decimal places) ---
+ik_max_ka = 23.0018
+sk_max_mva = 418.3235
+ik_min_ka = 20.8588
+z_bolted_mag_pu = 0.263
+z_min_mag_pu = 0.2636
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "import json; d=json.load(open('submission.json')); print(json.dumps(d, indent=2))"
+{
+  "ik_max_ka": 23.0018,
+  "sk_max_mva": 418.3235,
+  "ik_min_ka": 20.8588,
+  "z_bolted_mag_pu": 0.263,
+  "z_min_mag_pu": 0.2636
+}
+[0m

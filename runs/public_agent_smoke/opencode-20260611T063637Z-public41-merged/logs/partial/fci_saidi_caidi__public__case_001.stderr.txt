@@ -1,0 +1,91 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+total_customers = 320
+min_restore = 25
+deployed = {'n2', 'n4'}
+
+fault_sections = {
+    's12': {'rate': 0.18, 'cust': 120, 'base': 95},
+    's23': {'rate': 0.14, 'cust': 70, 'base': 80},
+    's24': {'rate': 0.12, 'cust': 90, 'base': 85},
+    's45': {'rate': 0.09, 'cust': 40, 'base': 75},
+}
+
+fci = {
+    'n2': {'s12': 6, 's23': 28, 's24': 26, 's45': 23},
+    'n4': {'s12': 0, 's23': 4, 's24': 18, 's45': 34},
+}
+
+# Baseline
+base_cust_min = sum(s['rate'] * s['cust'] * s['base'] for s in fault_sections.values())
+base_cust_int = sum(s['rate'] * s['cust'] for s in fault_sections.values())
+base_saidi = base_cust_min / total_customers
+base_caidi = base_cust_min / base_cust_int
+base_saifi = base_cust_int / total_customers
+
+print('=== BASELINE ===')
+print(f'Customer-minutes: {base_cust_min}')
+print(f'Customer-interruptions: {base_cust_int}')
+print(f'SAIDI: {base_saidi}')
+print(f'CAIDI: {base_caidi}')
+print(f'SAIFI: {base_saifi}')
+
+# With FCI
+fci_cust_min = 0
+for sec_id, sec in fault_sections.items():
+    best_reduction = max(fci[loc][sec_id] for loc in deployed)
+    new_time = max(sec['base'] - best_reduction, min_restore)
+    contrib = sec['rate'] * sec['cust'] * new_time
+    fci_cust_min += contrib
+    print(f'{sec_id}: best_reduction={best_reduction}, new_time={new_time}, contrib={contrib}')
+
+fci_saidi = fci_cust_min / total_customers
+fci_caidi = fci_cust_min / base_cust_int
+fci_saifi = base_cust_int / total_customers  # unchanged
+
+print()
+print('=== WITH FCI ===')
+print(f'Customer-minutes: {fci_cust_min}')
+print(f'SAIDI: {fci_saidi}')
+print(f'CAIDI: {fci_caidi}')
+print(f'SAIFI: {fci_saifi}')
+
+print()
+print('=== IMPROVEMENTS ===')
+print(f'SAIDI improvement: {base_saidi - fci_saidi}')
+print(f'CAIDI improvement: {base_caidi - fci_caidi}')
+"
+
+=== BASELINE ===
+Customer-minutes: 4024.0
+Customer-interruptions: 45.8
+SAIDI: 12.575
+CAIDI: 87.86026200873363
+SAIFI: 0.143125
+s12: best_reduction=6, new_time=89, contrib=1922.3999999999999
+s23: best_reduction=28, new_time=52, contrib=509.6
+s24: best_reduction=26, new_time=59, contrib=637.1999999999999
+s45: best_reduction=34, new_time=41, contrib=147.6
+
+=== WITH FCI ===
+Customer-minutes: 3216.7999999999997
+SAIDI: 10.052499999999998
+CAIDI: 70.23580786026201
+SAIFI: 0.143125
+
+=== IMPROVEMENTS ===
+SAIDI improvement: 2.522500000000001
+CAIDI improvement: 17.624454148471614
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "import json; json.load(open('submission.json'))" && echo "Valid JSON"
+Valid JSON
+[0m

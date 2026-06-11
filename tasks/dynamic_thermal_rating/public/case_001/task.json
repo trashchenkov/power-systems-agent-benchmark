@@ -14,8 +14,8 @@
       "ru": "Рассчитать предельный оперативный ток линии по короткому ряду погодных условий."
     },
     "instructions": {
-      "en": "For each weather timestamp, solve the published steady-state heat balance: I^2 R(Tmax) + solar = convection + radiation. Report ampacity_by_timestamp_a, minimum_ampacity_a, limiting_timestamp, and overload_timestamps for the scheduled current.",
-      "ru": "Для каждого момента времени решите опубликованный установившийся тепловой баланс: I^2 R(Tmax) + солнечный нагрев = конвекция + излучение. Укажите ampacity_by_timestamp_a, minimum_ampacity_a, limiting_timestamp и overload_timestamps для заданного планового тока."
+      "en": "Use thermal_rating_case. Solve the steady-state heat balance per metre of conductor at T_max (use exactly these terms): R_hot = (resistance_ohm_per_km_at_20c/1000) * (1 + resistance_temp_coeff_per_c*(T_max - 20)); convection = convective_w_per_m_c_at_1ms * max(wind_speed_m_s, 0.05)^0.6 * (T_max - ambient_temperature_c); radiation = emissivity * 5.670374419e-8 * (pi * diameter_mm/1000) * ((T_max+273.15)^4 - (ambient+273.15)^4) — note the radiating surface is pi*D per metre; solar gain = solar_absorptivity * solar_w_per_m2 * (diameter_mm/1000) — the projected width D per metre. Ampacity = sqrt(max(convection + radiation - solar gain, 0) / R_hot). Report ampacity_by_timestamp_a, minimum_ampacity_a, limiting_timestamp, and overload_timestamps where scheduled_current_a exceeds the rating.",
+      "ru": "Используйте thermal_rating_case. Решите установившийся тепловой баланс на метр провода при T_max (используйте ровно эти члены): R_hot = (resistance_ohm_per_km_at_20c/1000) * (1 + resistance_temp_coeff_per_c*(T_max - 20)); конвекция = convective_w_per_m_c_at_1ms * max(wind_speed_m_s, 0.05)^0.6 * (T_max - ambient_temperature_c); излучение = emissivity * 5.670374419e-8 * (pi * diameter_mm/1000) * ((T_max+273.15)^4 - (ambient+273.15)^4) — излучающая поверхность pi*D на метр; солнечный нагрев = solar_absorptivity * solar_w_per_m2 * (diameter_mm/1000) — проекция шириной D на метр. Допустимый ток = sqrt(max(конвекция + излучение - солнечный нагрев, 0) / R_hot). Укажите ampacity_by_timestamp_a, minimum_ampacity_a, limiting_timestamp и overload_timestamps, где scheduled_current_a превышает рейтинг."
     }
   },
   "subdomain": "transmission operations & asset ratings",
@@ -46,10 +46,30 @@
       "convective_w_per_m_c_at_1ms": 0.72
     },
     "weather_series": [
-      {"timestamp": "t00", "ambient_temperature_c": 18.0, "wind_speed_m_s": 2.8, "solar_w_per_m2": 150.0},
-      {"timestamp": "t01", "ambient_temperature_c": 31.0, "wind_speed_m_s": 0.7, "solar_w_per_m2": 850.0},
-      {"timestamp": "t02", "ambient_temperature_c": 27.0, "wind_speed_m_s": 1.4, "solar_w_per_m2": 600.0},
-      {"timestamp": "t03", "ambient_temperature_c": 22.0, "wind_speed_m_s": 3.2, "solar_w_per_m2": 100.0}
+      {
+        "timestamp": "t00",
+        "ambient_temperature_c": 18.0,
+        "wind_speed_m_s": 2.8,
+        "solar_w_per_m2": 150.0
+      },
+      {
+        "timestamp": "t01",
+        "ambient_temperature_c": 31.0,
+        "wind_speed_m_s": 0.7,
+        "solar_w_per_m2": 850.0
+      },
+      {
+        "timestamp": "t02",
+        "ambient_temperature_c": 27.0,
+        "wind_speed_m_s": 1.4,
+        "solar_w_per_m2": 600.0
+      },
+      {
+        "timestamp": "t03",
+        "ambient_temperature_c": 22.0,
+        "wind_speed_m_s": 3.2,
+        "solar_w_per_m2": 100.0
+      }
     ]
   },
   "submission_schema": {
@@ -65,15 +85,33 @@
     "Unknown extra answer keys are infeasible."
   ],
   "metrics": [
-    {"name": "feasible", "direction": "boolean", "description": "Whether the submitted ratings satisfy all hard constraints."},
-    {"name": "score", "direction": "maximize", "description": "Normalized [0,1] score: 1 when feasible, else 0."}
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted ratings satisfy all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
   ],
   "source_evidence": [
     "literature/metadata/v4_balanced_core_shortlist.md",
     "literature/task_bank_v4_gap_fill_balanced.md#rel-task-014"
   ],
   "source_provenance": [
-    {"title": "V4 balanced core shortlist — REL-TASK-014", "locator": "literature/metadata/v4_balanced_core_shortlist.md", "confidence": "medium", "notes": "Candidate task selected from the literature-derived transmission operations and asset-ratings taxonomy."},
-    {"title": "IEEE 738-style overhead-conductor heat balance", "locator": "standard engineering model: Joule heat plus solar heat equals convective plus radiative cooling", "confidence": "medium", "notes": "The public case uses a compact deterministic version of the standard heat-balance idea for executable evaluation."}
+    {
+      "title": "V4 balanced core shortlist — REL-TASK-014",
+      "locator": "literature/metadata/v4_balanced_core_shortlist.md",
+      "confidence": "medium",
+      "notes": "Candidate task selected from the literature-derived transmission operations and asset-ratings taxonomy."
+    },
+    {
+      "title": "IEEE 738-style overhead-conductor heat balance",
+      "locator": "standard engineering model: Joule heat plus solar heat equals convective plus radiative cooling",
+      "confidence": "medium",
+      "notes": "The public case uses a compact deterministic version of the standard heat-balance idea for executable evaluation."
+    }
   ]
 }

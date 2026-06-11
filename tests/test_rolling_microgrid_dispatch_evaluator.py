@@ -39,5 +39,60 @@ class RollingMicrogridDispatchEvaluatorTests(unittest.TestCase):
         self.assertTrue(any("unknown answer fields" in v for v in result["violations"]))
 
 
+    def test_equal_cost_alternative_optimum_is_accepted(self) -> None:
+        import itertools
+        from prototype.evaluators.evaluate_rolling_microgrid_dispatch import _simulate, _times, solve_core, CASE_KEY
+        case = self.task[CASE_KEY]
+        exp = solve_core(self.task)
+        b = case["battery"]; step = float(b["dispatch_step_mw"])
+        vals = []; x = -float(b["charge_pmax_mw"])
+        while x <= float(b["discharge_pmax_mw"]) + 1e-9:
+            vals.append(round(x, 6)); x += step
+        alternative = None
+        for combo in itertools.product(vals, repeat=len(_times(case))):
+            feas, cost, rows = _simulate(case, combo)
+            if feas and abs(cost - exp["total_cost"]) < 1e-6 and rows != exp["dispatch"]:
+                alternative = (cost, rows); break
+        if alternative is None:
+            self.skipTest("no equal-cost alternative optimum in this public case")
+        cost, rows = alternative
+        result = evaluate_case(self.task, {"dispatch": rows, "total_cost": cost})
+        self.assertTrue(result["feasible"], result)
+        self.assertEqual(result["score"], 1.0)
+        self.assertEqual(result["cost_gap_usd"], 0.0)
+
+    def test_suboptimal_feasible_dispatch_gets_partial_credit(self) -> None:
+        import itertools
+        from prototype.evaluators.evaluate_rolling_microgrid_dispatch import _simulate, _times, solve_core, CASE_KEY
+        case = self.task[CASE_KEY]
+        exp = solve_core(self.task)
+        b = case["battery"]; step = float(b["dispatch_step_mw"])
+        vals = []; x = -float(b["charge_pmax_mw"])
+        while x <= float(b["discharge_pmax_mw"]) + 1e-9:
+            vals.append(round(x, 6)); x += step
+        suboptimal = None
+        for combo in itertools.product(vals, repeat=len(_times(case))):
+            feas, cost, rows = _simulate(case, combo)
+            if feas and cost > exp["total_cost"] + 1.0:
+                suboptimal = (cost, rows); break
+        self.assertIsNotNone(suboptimal)
+        cost, rows = suboptimal
+        result = evaluate_case(self.task, {"dispatch": rows, "total_cost": cost})
+        self.assertTrue(result["feasible"], result)
+        self.assertLess(result["score"], 1.0)
+        self.assertGreater(result["score"], 0.0)
+        self.assertGreater(result["cost_gap_usd"], 0.0)
+
+    def test_soc_violating_schedule_is_rejected(self) -> None:
+        from prototype.evaluators.evaluate_rolling_microgrid_dispatch import _simulate, _times, CASE_KEY
+        case = self.task[CASE_KEY]
+        battery = [float(case["battery"]["discharge_pmax_mw"])] * len(_times(case))
+        feas, cost, rows = _simulate(case, battery)
+        if feas:
+            self.skipTest("max discharge stays within SOC for this public case")
+        result = evaluate_case(self.task, {"dispatch": rows, "total_cost": cost})
+        self.assertFalse(result["feasible"])
+        self.assertTrue(any("SOC bounds or sheds load" in v for v in result["violations"]))
+
 if __name__ == "__main__":
     unittest.main()

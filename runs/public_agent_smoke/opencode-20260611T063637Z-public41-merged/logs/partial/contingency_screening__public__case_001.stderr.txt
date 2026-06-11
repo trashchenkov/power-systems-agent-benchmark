@@ -1,0 +1,97 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat << 'PYEOF' > compute.py
+import json
+
+branches = {
+    "l12": {"from": "b1", "to": "b2", "rating": 100.0},
+    "l23": {"from": "b2", "to": "b3", "rating": 100.0},
+    "l13": {"from": "b1", "to": "b3", "rating": 70.0},
+    "l34": {"from": "b3", "to": "b4", "rating": 60.0},
+}
+
+contingencies = {
+    "out_l12": {"outaged": "l12", "post_flows": {"l23": 95.0, "l13": 88.0, "l34": 30.0}},
+    "out_l23": {"outaged": "l23", "post_flows": {"l12": 91.0, "l13": 55.0, "l34": 30.0}},
+    "out_l13": {"outaged": "l13", "post_flows": {"l12": 99.0, "l23": 80.0, "l34": 30.0}},
+    "out_l34": {"outaged": "l34", "post_flows": {"l12": 80.0, "l23": 60.0, "l13": 40.0}},
+}
+
+def is_islanding(outaged_branch):
+    # Build adjacency after removing the outaged branch
+    adj = {b: set() for b in ["b1", "b2", "b3", "b4"]}
+    for bid, br in branches.items():
+        if bid == outaged_branch:
+            continue
+        adj[br["from"]].add(br["to"])
+        adj[br["to"]].add(br["from"])
+    # BFS from b1
+    visited = set()
+    stack = ["b1"]
+    while stack:
+        v = stack.pop()
+        if v in visited:
+            continue
+        visited.add(v)
+        for n in adj[v]:
+            if n not in visited:
+                stack.append(n)
+    return len(visited) < 4
+
+results = []
+for cid, c in contingencies.items():
+    overloads = []
+    max_loading = 0.0
+    for bid, flow in c["post_flows"].items():
+        rating = branches[bid]["rating"]
+        loading = flow / rating * 100
+        max_loading = max(max_loading, loading)
+        if loading > 100.0:
+            overloads.append((bid, loading))
+    islanding = is_islanding(c["outaged"])
+    results.append((cid, len(overloads), max_loading, islanding, overloads))
+    print(f"{cid}: overloads={len(overloads)}, max_loading={max_loading:.1f}%, islanding={islanding}")
+
+# Sort: more overloads first, then max loading descending, then islanding
+results.sort(key=lambda r: (-r[1], -r[2], -r[3]))
+print()
+ranking = [r[0] for r in results]
+print("Ranking:", ranking)
+islanding_flags = {r[0]: r[3] for r in results}
+print("Islanding flags:", islanding_flags)
+PYEOF
+python3 compute.py
+out_l12: overloads=1, max_loading=125.7%, islanding=False
+out_l23: overloads=0, max_loading=91.0%, islanding=False
+out_l13: overloads=0, max_loading=99.0%, islanding=False
+out_l34: overloads=0, max_loading=80.0%, islanding=True
+
+Ranking: ['out_l12', 'out_l13', 'out_l23', 'out_l34']
+Islanding flags: {'out_l12': False, 'out_l13': False, 'out_l23': False, 'out_l34': True}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "import json; d=json.load(open('submission.json')); print(json.dumps(d, indent=2)); print('Valid JSON: OK')"
+{
+  "ranking": [
+    "out_l12",
+    "out_l34",
+    "out_l13",
+    "out_l23"
+  ],
+  "islanding_flags": {
+    "out_l12": false,
+    "out_l23": false,
+    "out_l13": false,
+    "out_l34": true
+  },
+  "rationale": "out_l12 causes 125.7% overload on l13 (88/70 MW); out_l34 islands bus b4 (only link l34 cut); out_l13 has l12 at 99% near limit; out_l23 has all flows within ratings."
+}
+Valid JSON: OK
+[0m

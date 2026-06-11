@@ -56,18 +56,47 @@ def _close(name,a,e,viol,tol=0.01):
     if a is None: return
     if abs(a-e)>tol: viol.append(f"{name}={a:.6g} differs from expected {e:.6g}")
 
+CASE_KEY="microgrid_dispatch_case"
+
 def evaluate_case(task, submission):
+    # The battery profile is the only true decision variable: diesel, SOC,
+    # curtailment, and shedding all follow deterministically from it. The
+    # submitted schedule is therefore re-simulated and judged on feasibility
+    # and cost gap against the enumerated optimum, so alternative equal-cost
+    # optima are accepted.
     viol=[]; allowed={"dispatch","total_cost","rationale"}
     extra=sorted(set(submission)-allowed)
     if extra: viol.append(f"unknown answer fields: {extra}")
-    exp=solve_core(task); subd=submission.get("dispatch")
-    if not isinstance(subd, dict): viol.append("dispatch must be an object keyed by timestamp"); subd={}
-    for t,row in exp["dispatch"].items():
-        got=subd.get(t)
-        if not isinstance(got, dict): viol.append(f"missing dispatch object for {t}"); got={}
-        for k,e in row.items(): _close(f"dispatch.{t}.{k}", _num(got.get(k),f"dispatch.{t}.{k}",viol), e, viol)
-    _close("total_cost", _num(submission.get("total_cost"),"total_cost",viol), exp["total_cost"], viol)
-    return {"task_id":task["task_id"],"feasible":not viol,"score":1.0 if not viol else 0.0,"study":exp,"violations":viol}
+    case=task[CASE_KEY]
+    exp=solve_core(task)
+    subd=submission.get("dispatch")
+    cost=None
+    if not isinstance(subd, dict):
+        viol.append("dispatch must be an object keyed by timestamp")
+    else:
+        battery=[]
+        for t in _times(case):
+            row=subd.get(t)
+            if not isinstance(row, dict): viol.append(f"missing dispatch object for {t}"); break
+            b=_num(row.get("battery_mw"), f"dispatch.{t}.battery_mw", viol)
+            if b is None: break
+            battery.append(b)
+        else:
+            feas, cost, rows=_simulate(case, battery)
+            if not feas:
+                viol.append("submitted battery schedule violates SOC bounds or sheds load")
+            for t in _times(case):
+                got=subd[t]
+                for k,e in rows[t].items():
+                    _close(f"dispatch.{t}.{k}", _num(got.get(k),f"dispatch.{t}.{k}",viol), e, viol, tol=0.05)
+            _close("total_cost", _num(submission.get("total_cost"),"total_cost",viol), cost, viol, tol=0.5)
+    feasible=not viol
+    if not feasible:
+        score=0.0; gap=None
+    else:
+        gap=round(max(0.0, cost-exp["total_cost"]),3)
+        score=1.0 if gap<=0.01 else round(max(0.0, 1.0-gap/exp["total_cost"]),6)
+    return {"task_id":task["task_id"],"feasible":feasible,"score":score,"cost_gap_usd":gap,"optimal_cost":exp["total_cost"],"study":exp,"violations":viol}
 
 def evaluate(task_path: Path, submission_path: Path): return evaluate_case(_load_json(task_path), _load_json(submission_path))
 def main(argv=None):

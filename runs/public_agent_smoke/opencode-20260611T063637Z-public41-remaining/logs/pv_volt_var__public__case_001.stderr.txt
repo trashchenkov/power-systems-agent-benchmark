@@ -1,0 +1,137 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat > /tmp/solve.py << 'PYEOF'
+import json
+
+# Problem data
+voltage_limits = {"min": 0.95, "max": 1.05}
+timesteps = [
+    {"id": "t_low",  "base_voltage_pu": 0.94, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007},
+    {"id": "t_nom",  "base_voltage_pu": 1.00, "pv_kw": 80.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.00055},
+    {"id": "t_high", "base_voltage_pu": 1.07, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007},
+]
+
+# Compute minimal feasible solution
+# t_low: need V_corr >= 0.95 → V_base + Q*sens >= 0.95 → Q >= (0.95-0.94)/0.0007 = 14.2857...
+# t_high: need V_corr <= 1.05 → V_base + Q*sens <= 1.05 → Q <= (1.05-1.07)/0.0007 = -28.5714...
+# t_nom: already within limits, can set Q=0
+
+# Q = q_fraction * inverter_kva
+# q_low = 14.2857... / 100 = 0.142857...
+# q_high = -28.5714... / 100 = -0.285714...
+
+kva = 100.0
+q_low = (voltage_limits["min"] - 0.94) / (0.0007 * kva)
+q_mid = 0.0
+q_high = (voltage_limits["max"] - 1.07) / (0.0007 * kva)
+
+print(f"q_low  = {q_low:.15f}")
+print(f"q_mid  = {q_mid:.15f}")
+print(f"q_high = {q_high:.15f}")
+
+# Verify constraints
+def check_ts(ts, q):
+    V_base = ts["base_voltage_pu"]
+    sens = ts["voltage_sensitivity_pu_per_kvar"]
+    kva = ts["inverter_kva"]
+    kw = ts["pv_kw"]
+    Q = q * kva
+    Q_max = (kva**2 - kw**2)**0.5
+    V_corr = V_base + Q * sens
+    print(f"\n{ts['id']}:")
+    print(f"  q={q:.10f}, Q={Q:.4f} kvar, |Q|={abs(Q):.4f}, Q_max={Q_max:.4f}, in_limit={abs(Q) <= Q_max}")
+    print(f"  V_base={V_base}, V_corr={V_corr:.6f}, in_bounds={voltage_limits['min'] <= V_corr <= voltage_limits['max']}")
+    assert abs(Q) <= Q_max + 1e-9, f"Q limit violated: |{Q}| > {Q_max}"
+    assert voltage_limits["min"] <= V_corr <= voltage_limits["max"], f"Voltage limit violated: {V_corr}"
+
+for ts in timesteps:
+    if ts["id"] == "t_low":
+        check_ts(ts, q_low)
+    elif ts["id"] == "t_nom":
+        check_ts(ts, q_mid)
+    elif ts["id"] == "t_high":
+        check_ts(ts, q_high)
+
+# Build curve: points at exactly the timestep voltages to avoid interpolation ambiguity
+# Must be strictly increasing voltage and monotonic non-increasing q
+curve = [
+    {"voltage_pu": 0.90, "q_fraction": round(q_low, 10)},
+    {"voltage_pu": 0.94, "q_fraction": round(q_low, 10)},
+    {"voltage_pu": 1.00, "q_fraction": 0.0},
+    {"voltage_pu": 1.07, "q_fraction": round(q_high, 10)},
+    {"voltage_pu": 1.10, "q_fraction": round(q_high, 10)},
+]
+
+# Check monotonicity
+q_vals = [p["q_fraction"] for p in curve]
+v_vals = [p["voltage_pu"] for p in curve]
+assert all(v_vals[i] < v_vals[i+1] for i in range(len(v_vals)-1)), "Voltages not strictly increasing"
+assert all(q_vals[i] >= q_vals[i+1] - 1e-12 for i in range(len(q_vals)-1)), "q not monotonic non-increasing"
+
+control_effort = abs(q_low * kva) + abs(q_mid * kva) + abs(q_high * kva)
+print(f"\nControl effort: {control_effort:.6f} kvar")
+
+# Write submission
+submission = {
+    "volt_var_curve": curve,
+    "rationale": "Minimal feasible Volt-VAR curve: at t_low (V=0.94) inject q=0.142857 to correct sag to 0.95 pu; at t_nom (V=1.00) zero control; at t_high (V=1.07) absorb q=-0.285714 to correct swell to 1.05 pu. All within inverter Q capability."
+}
+
+with open("/Users/Sergej/claude_code/energy_bench/workpack/power-systems-agent-benchmark/runs/agent_packets/opencode_20260611T063637Z_public41/pv_volt_var__public__case_001/submission.json", "w") as f:
+    json.dump(submission, f, indent=2)
+
+print("\nsubmission.json written successfully")
+print(json.dumps(submission, indent=2))
+PYEOF
+python3 /tmp/solve.py
+q_low  = 0.142857142857143
+q_mid  = 0.000000000000000
+q_high = -0.285714285714286
+
+t_low:
+  q=0.1428571429, Q=14.2857 kvar, |Q|=14.2857, Q_max=80.0000, in_limit=True
+  V_base=0.94, V_corr=0.950000, in_bounds=True
+
+t_nom:
+  q=0.0000000000, Q=0.0000 kvar, |Q|=0.0000, Q_max=60.0000, in_limit=True
+  V_base=1.0, V_corr=1.000000, in_bounds=True
+
+t_high:
+  q=-0.2857142857, Q=-28.5714 kvar, |Q|=28.5714, Q_max=80.0000, in_limit=True
+  V_base=1.07, V_corr=1.050000, in_bounds=True
+
+Control effort: 42.857143 kvar
+
+submission.json written successfully
+{
+  "volt_var_curve": [
+    {
+      "voltage_pu": 0.9,
+      "q_fraction": 0.1428571429
+    },
+    {
+      "voltage_pu": 0.94,
+      "q_fraction": 0.1428571429
+    },
+    {
+      "voltage_pu": 1.0,
+      "q_fraction": 0.0
+    },
+    {
+      "voltage_pu": 1.07,
+      "q_fraction": -0.2857142857
+    },
+    {
+      "voltage_pu": 1.1,
+      "q_fraction": -0.2857142857
+    }
+  ],
+  "rationale": "Minimal feasible Volt-VAR curve: at t_low (V=0.94) inject q=0.142857 to correct sag to 0.95 pu; at t_nom (V=1.00) zero control; at t_high (V=1.07) absorb q=-0.285714 to correct swell to 1.05 pu. All within inverter Q capability."
+}
+[0m
+[0m→ [0mRead submission.json
