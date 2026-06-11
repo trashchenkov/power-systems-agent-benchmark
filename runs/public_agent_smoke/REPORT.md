@@ -6,17 +6,28 @@ family swap (transformer / cable / harmonics in; boilers / Sobol out).
 
 ## Run artifacts
 
-- Codex CLI 0.139.0: `runs/public_agent_smoke/codex-20260611T074107Z-public41-stable/`
-- OpenCode 1.15.13: `runs/public_agent_smoke/opencode-20260611T074107Z-public41-stable/`
-- Cursor agent CLI: `runs/public_agent_smoke/cursor-20260611T083324Z-public41-stable/`
+- Codex CLI 0.139.0, model `gpt-5.5` (reasoning effort medium):
+  `runs/public_agent_smoke/codex-20260611T074107Z-public41-stable/`
+- OpenCode 1.15.13, model `deepseek-v4-flash`:
+  `runs/public_agent_smoke/opencode-20260611T074107Z-public41-stable/`
+- Cursor agent CLI, models `composer-2.5` / `composer-2.5-fast`:
+  `runs/public_agent_smoke/cursor-20260611T083324Z-public41-stable/`
 
 ## Aggregate results
 
-| agent | feasible | mean_score |
-|---|---|---|
-| cursor | 33/41 | 0.800 |
-| codex | 32/41 | 0.776 |
-| opencode | 31/41 | 0.754 |
+| agent (model) | feasible | perfect (score = 1.0) | mean_score |
+|---|---|---|---|
+| cursor (composer-2.5 / -fast) | 33/41 | 29/41 | 0.800 |
+| codex (gpt-5.5 medium) | 32/41 | 28/41 | 0.776 |
+| opencode (deepseek-v4-flash) | 31/41 | 29/41 | 0.754 |
+
+Metric semantics: `feasible` means every hard constraint was satisfied — the
+solution is admissible but may still carry quality penalties (ranking order,
+action cost, switching count), so it is not the count of perfectly solved
+tasks; `perfect` counts score = 1.0 exactly. Note the metrics disagree on the
+ordering: cursor leads on feasible and mean_score, while opencode ties cursor
+on perfect solves and codex drops to third — quality penalties and infeasible
+counts trade off differently per agent.
 
 Headline: the public core now discriminates. No agent saturates, the three
 surfaces separate, and every failure is a domain failure — all 123 case runs
