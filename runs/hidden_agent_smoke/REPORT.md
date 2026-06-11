@@ -45,6 +45,23 @@ the wrong agent — this is the concrete argument for hidden evaluation.
   reference solutions in those evaluators have tie-break conventions worth a
   review pass; low priority.
 
+## Integrity finding: one agent reached the oracle
+
+Cursor's pass on hidden `transient_stability_prediction` is contaminated: its
+own run log states the submission "evaluates as feasible with a score of 1.0",
+i.e. the agent located and executed the evaluator and self-checked against the
+oracle. This was possible because packets lived inside the repository working
+tree and the harness ran agents with the repository as the working directory —
+the prohibition existed only in the packet instructions. Codex and OpenCode,
+judging by their failures on the same family, did not exploit this. Treat
+cursor's hidden feasible count as <= 35/41 (34/41 excluding the contaminated
+case); the ranking-flip conclusion is unaffected (it strengthens). The harness
+has since been fixed: each case now runs in a sandbox copy of the packet
+outside the repository, with the sandbox as cwd and without BENCH_ROOT or repo
+PYTHONPATH. Cursor's earlier public passes of the same family cannot be
+audited from its summary-only logs and should be treated with the same
+suspicion.
+
 ## Protocol note
 
 This run burned its seed (the operator machine ran all three agents), so

@@ -33,17 +33,46 @@ def _close(n,a,e,viol,tol=0.01):
     if a is not None and abs(a-e)>tol: viol.append(f"{n}={a:.6g} differs from expected {e:.6g}")
 
 def evaluate_case(task, submission):
+    # The P/Q split is the decision; any dispatch satisfying balance, unit
+    # limits, the inverter capability circle, and voltage limits is admissible.
+    # Score compares achieved cost against the optimum (cost gap), so
+    # alternative dispatches are accepted instead of one hardcoded policy.
     viol=[]; allowed={"dispatch","voltage_pu","total_cost","rationale"}; extra=sorted(set(submission)-allowed)
     if extra: viol.append(f"unknown answer fields: {extra}")
-    exp=solve_core(task); disp=submission.get("dispatch")
+    c=task["islanded_pq_case"]; exp=solve_core(task)
+    disp=submission.get("dispatch")
     if not isinstance(disp,dict): viol.append("dispatch must be an object"); disp={}
+    vals={}
     for unit in ["diesel","inverter"]:
         obj=disp.get(unit)
         if not isinstance(obj,dict): viol.append(f"missing dispatch.{unit}"); obj={}
-        for k,e in exp["dispatch"][unit].items(): _close(f"dispatch.{unit}.{k}", _num(obj.get(k),f"dispatch.{unit}.{k}",viol), e, viol)
-    _close("voltage_pu", _num(submission.get("voltage_pu"),"voltage_pu",viol), exp["voltage_pu"], viol)
-    _close("total_cost", _num(submission.get("total_cost"),"total_cost",viol), exp["total_cost"], viol)
-    return {"task_id":task["task_id"],"feasible":not viol,"score":1.0 if not viol else 0.0,"study":exp,"violations":viol}
+        for k in ("p_mw","q_mvar"):
+            vals[(unit,k)]=_num(obj.get(k),f"dispatch.{unit}.{k}",viol)
+    cost=None
+    if all(v is not None for v in vals.values()):
+        pd, qd = vals[("diesel","p_mw")], vals[("diesel","q_mvar")]
+        pi, qi = vals[("inverter","p_mw")], vals[("inverter","q_mvar")]
+        diesel=c["diesel"]; inv=c["inverter"]; vm=c["voltage_model"]
+        tol=0.02
+        if abs(pd+pi-float(c["load"]["p_mw"]))>tol: viol.append("active power balance violated")
+        if abs(qd+qi-float(c["load"]["q_mvar"]))>tol: viol.append("reactive power balance violated")
+        if not (float(diesel["pmin_mw"])-tol <= pd <= float(diesel["pmax_mw"])+tol): viol.append("diesel active power outside limits")
+        if not (float(diesel["qmin_mvar"])-tol <= qd <= float(diesel["qmax_mvar"])+tol): viol.append("diesel reactive power outside limits")
+        if not (-tol <= pi <= float(inv["p_available_mw"])+tol): viol.append("inverter active power outside availability")
+        s=float(inv["s_rating_mva"])
+        if pi*pi+qi*qi > s*s+tol: viol.append("inverter dispatch outside apparent-power capability circle")
+        v=float(vm["base_voltage_pu"])+float(vm["sensitivity_pu_per_mvar"])*(qd+qi)
+        if not (float(vm["vmin_pu"])-1e-6 <= v <= float(vm["vmax_pu"])+1e-6): viol.append("voltage outside limits")
+        _close("voltage_pu", _num(submission.get("voltage_pu"),"voltage_pu",viol), _round(v), viol)
+        cost=pd*float(diesel["variable_cost_per_h"])+abs(qd-float(diesel["q_preferred_mvar"]))*float(diesel["q_deviation_penalty_per_mvar_h"])
+        _close("total_cost", _num(submission.get("total_cost"),"total_cost",viol), _round(cost), viol, tol=0.5)
+    feasible=not viol
+    if not feasible:
+        score=0.0; gap=None
+    else:
+        gap=round(max(0.0, cost-exp["total_cost"]),3)
+        score=1.0 if gap<=0.01 else round(max(0.0,1.0-gap/max(exp["total_cost"],1e-9)),6)
+    return {"task_id":task["task_id"],"feasible":feasible,"score":score,"cost_gap":gap,"optimal_cost":exp["total_cost"],"study":exp,"violations":viol}
 
 def evaluate(task_path: Path, submission_path: Path): return evaluate_case(_load_json(task_path), _load_json(submission_path))
 def main(argv=None):

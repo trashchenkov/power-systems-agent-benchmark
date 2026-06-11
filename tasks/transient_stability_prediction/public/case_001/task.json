@@ -14,8 +14,8 @@
       "ru": "Классификация исходов переходной устойчивости для аварий при высокой доле ВИЭ"
     },
     "instructions": {
-      "en": "Use the public executable inputs to compute the requested JSON submission. Do not copy an expected answer; derive all reported values from the calculation specification.",
-      "ru": "Используйте опубликованные исполняемые входные данные и вычислите требуемый JSON-ответ. Не копируйте ожидаемый ответ; выведите все значения из спецификации расчёта."
+      "en": "Use transient_stability_cases. For each case compute the margins: angle_margin = angle_limit_deg - max_rotor_angle_deg; voltage_margin = min_voltage_pu - voltage_floor_pu; clearing_margin_s = estimated_cct_s - fault_clearing_time_s; damping_margin = damping_ratio_pct - min_damping_pct. A case is 'stable' only if all four margins are >= 0. Risk score (use exactly this formula): risk_score = max(0, -angle_margin/60) + max(0, -voltage_margin/0.1) + max(0, -clearing_margin_s/0.1) + max(0, -damping_margin/5) + max(0, 1 - clearing_margin_s/0.2)*0.1, rounded to 3 decimals. Report per-case label, risk_score, and clearing_margin_s; stable_case_count; and highest_risk_case (the largest risk_score, ties broken by the lexicographically larger case_id).",
+      "ru": "Используйте transient_stability_cases. Для каждого кейса вычислите запасы: angle_margin = angle_limit_deg - max_rotor_angle_deg; voltage_margin = min_voltage_pu - voltage_floor_pu; clearing_margin_s = estimated_cct_s - fault_clearing_time_s; damping_margin = damping_ratio_pct - min_damping_pct. Кейс 'stable', только если все четыре запаса >= 0. Индекс риска (используйте ровно эту формулу): risk_score = max(0, -angle_margin/60) + max(0, -voltage_margin/0.1) + max(0, -clearing_margin_s/0.1) + max(0, -damping_margin/5) + max(0, 1 - clearing_margin_s/0.2)*0.1, округление до 3 знаков. Укажите по каждому кейсу label, risk_score и clearing_margin_s; stable_case_count; highest_risk_case (максимальный risk_score, при равенстве — лексикографически больший case_id)."
     }
   },
   "subdomain": "stability & dynamics",
@@ -53,7 +53,7 @@
     }
   },
   "submission_schema": {
-    "case_results": "object mapping case_id to label, risk_score, and clearing_margin_s",
+    "case_results": "object mapping case_id to {label, risk_score, clearing_margin_s}; risk_score per the normalized-margin formula given in the instructions",
     "stable_case_count": "number of stable cases",
     "highest_risk_case": "case_id with largest risk_score",
     "rationale": "optional string"

@@ -7,6 +7,7 @@ import json
 import os
 import shutil
 import subprocess
+import tempfile
 import sys
 import time
 from pathlib import Path
@@ -39,10 +40,12 @@ def run_agent_command(
 ) -> dict[str, Any]:
     """Run a shell command once per packet and evaluate produced submissions.
 
-    The command is intentionally agent-agnostic. It receives environment variables:
-    BENCH_ROOT, BENCH_AGENT, BENCH_FAMILY, BENCH_CASE_ID, BENCH_TASK_ID,
-    BENCH_PACKET_DIR, BENCH_TASK_PATH, BENCH_INSTRUCTIONS_PATH,
-    BENCH_SUBMISSION_PATH.
+    The command is intentionally agent-agnostic. It runs inside a per-case
+    sandbox copy of the packet (cwd = sandbox) and receives environment
+    variables: BENCH_AGENT, BENCH_FAMILY, BENCH_SPLIT, BENCH_CASE_ID,
+    BENCH_TASK_ID, BENCH_PACKET_DIR, BENCH_TASK_PATH,
+    BENCH_INSTRUCTIONS_PATH, BENCH_SUBMISSION_PATH. BENCH_ROOT is deliberately
+    not exposed.
     """
     manifest = _load_json(packets_dir / "manifest.json")
     submissions_dir = out_dir / "submissions"
@@ -58,24 +61,31 @@ def run_agent_command(
         packet_name = f"{family}__{split}__{case_id}"
         packet_dir = Path(packet["packet_dir"])
         source_task_path = root / "tasks" / family / split / case_id / "task.json"
-        packet_submission = packet_dir / "submission.json"
         final_submission = submissions_dir / f"{packet_name}.json"
-        if packet_submission.exists():
-            packet_submission.unlink()
+        # Isolation: the agent works on a copy of the packet in a temp dir
+        # OUTSIDE the repository, with the sandbox as cwd and no BENCH_ROOT /
+        # repo PYTHONPATH. A repo-relative path can no longer reach evaluator
+        # or baseline code (one agent previously self-evaluated against the
+        # leaked oracle). This is relocation, not a jail: adversarial agents
+        # need containers on the evaluation host.
+        sandbox = Path(tempfile.mkdtemp(prefix=f"bench_{packet_name}_"))
+        for item in packet_dir.iterdir():
+            if item.is_file():
+                shutil.copyfile(item, sandbox / item.name)
+        sandbox_submission = sandbox / "submission.json"
         env = os.environ.copy()
+        env.pop("BENCH_ROOT", None)
         env.update(
             {
-                "PYTHONPATH": str(root) + os.pathsep + env.get("PYTHONPATH", ""),
-                "BENCH_ROOT": str(root),
                 "BENCH_AGENT": agent_name,
                 "BENCH_FAMILY": family,
                 "BENCH_SPLIT": split,
                 "BENCH_CASE_ID": case_id,
                 "BENCH_TASK_ID": str(packet.get("task_id", "")),
-                "BENCH_PACKET_DIR": str(packet_dir),
-                "BENCH_TASK_PATH": str(packet_dir / "task.json"),
-                "BENCH_INSTRUCTIONS_PATH": str(packet_dir / "instructions.md"),
-                "BENCH_SUBMISSION_PATH": str(packet_submission),
+                "BENCH_PACKET_DIR": str(sandbox),
+                "BENCH_TASK_PATH": str(sandbox / "task.json"),
+                "BENCH_INSTRUCTIONS_PATH": str(sandbox / "instructions.md"),
+                "BENCH_SUBMISSION_PATH": str(sandbox_submission),
             }
         )
         started = time.time()
@@ -83,7 +93,7 @@ def run_agent_command(
             completed = subprocess.run(
                 command,
                 shell=True,
-                cwd=root,
+                cwd=sandbox,
                 env=env,
                 text=True,
                 capture_output=True,
@@ -106,7 +116,7 @@ def run_agent_command(
         elapsed_s = round(time.time() - started, 6)
         (logs_dir / f"{packet_name}.stdout.txt").write_text(stdout, encoding="utf-8")
         (logs_dir / f"{packet_name}.stderr.txt").write_text(stderr, encoding="utf-8")
-        if not packet_submission.exists():
+        if not sandbox_submission.exists():
             row = {
                 "agent": agent_name,
                 "family": family,
@@ -122,11 +132,12 @@ def run_agent_command(
                 },
             }
         else:
-            shutil.copyfile(packet_submission, final_submission)
+            shutil.copyfile(sandbox_submission, final_submission)
             result = evaluate_submission_file(source_task_path, final_submission)
             row = result_row(source_task_path, final_submission, result)
             row.update({"agent": agent_name, "returncode": returncode, "elapsed_s": elapsed_s})
         rows.append(row)
+        shutil.rmtree(sandbox, ignore_errors=True)
 
     results_path = out_dir / "results.jsonl"
     with results_path.open("w", encoding="utf-8") as f:

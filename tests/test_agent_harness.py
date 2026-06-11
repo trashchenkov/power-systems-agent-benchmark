@@ -184,13 +184,16 @@ class AgentHarnessTests(unittest.TestCase):
             packets_dir = tmp / "packets"
             run_dir = tmp / "run"
             prepare_agent_tasks(ROOT, packets_dir)
+            # The fake agent injects the repo root itself: the harness no longer
+            # exposes BENCH_ROOT or repo PYTHONPATH inside the sandbox.
             command = (
-                f"{sys.executable} -c \""
+                f"PYTHONPATH={ROOT} {sys.executable} -c \""
                 "import json, os; "
                 "from pathlib import Path; "
                 "from scripts.run_public_baselines import solve_with_baseline; "
+                "assert 'BENCH_ROOT' not in os.environ, 'sandbox must not expose the repo root'; "
+                f"source=Path('{ROOT}')/'tasks'/os.environ['BENCH_FAMILY']/os.environ['BENCH_SPLIT']/os.environ['BENCH_CASE_ID']/'task.json'; "
                 "packet_task=json.loads(Path(os.environ['BENCH_TASK_PATH']).read_text()); "
-                "source=Path(os.environ['BENCH_ROOT'])/'tasks'/os.environ['BENCH_FAMILY']/os.environ['BENCH_SPLIT']/os.environ['BENCH_CASE_ID']/'task.json'; "
                 "task=json.loads(source.read_text()) if source.exists() else packet_task; "
                 "submission=solve_with_baseline(os.environ['BENCH_FAMILY'], task); "
                 "Path(os.environ['BENCH_SUBMISSION_PATH']).write_text(json.dumps(submission))"
