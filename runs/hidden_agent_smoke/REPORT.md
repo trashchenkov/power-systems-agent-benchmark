@@ -79,7 +79,16 @@ deferred — its CLI is slow and the operator session ended):
 - `pv_volt_var` hidden: codex and opencode fail on voltage limits again —
   a stable, genuine capability failure.
 
-Artifacts: runs/hidden_agent_smoke/{codex,opencode}-hidden-revision1/
+Cursor's deferred revision run completed the next day under the sandboxed
+runner: `islanded_microgrid_pq_dispatch` 1.0, `transient_stability_prediction`
+1.0 (solved without any oracle reachable from the sandbox — consistent with
+the formula now being part of the task), and hidden `pv_volt_var` feasible at
+0.968 in 182 s — the previous 600 s timeout did not reproduce. All three
+agents therefore pass both fixed families, and hidden pv_volt_var remains a
+genuine discriminator, now separating cursor (passes) from codex and opencode
+(voltage-limit violations).
+
+Artifacts: runs/hidden_agent_smoke/{codex,opencode,cursor}-hidden-revision1/
 (opencode evaluated from its written submissions; its chain was stopped
 before summary generation).
 
