@@ -6,8 +6,10 @@
 > Примечание о PowerAgentBench: существует как GitHub-репозиторий
 > (github.com/Power-Agent/PowerAgentBench) без сопутствующей публикации,
 > поэтому не индексируется arXiv/Semantic Scholar и был ошибочно помечен как
-> несуществующий в первой версии этой библиографии. Включён в раздел 3 как
-> ближайшая по концепции работа.
+> несуществующий в первой версии этой библиографии. Это компонент
+> экосистемы PowerAgent (Harvard SEAS, лаборатория Le Xie); включён в раздел
+> 3 как ближайшая по концепции работа вместе с зонтичной статьёй IEEE P&E
+> Magazine 2025.
 
 ---
 
@@ -84,8 +86,11 @@
     Connection Impact Assessment.** 2026. arXiv:2602.20683. — Оркестрация
     мультифидельных симуляций агентом; пример будущего потребителя
     simulator-backed проверок.
-17a. **PowerAgentBench.** GitHub: Power-Agent/PowerAgentBench (без
-    публикации, 2025–2026). — Ближайшая по концепции работа: три уровня
+17a. **PowerAgentBench.** GitHub: Power-Agent/PowerAgentBench. Проект
+    PowerAgent (Harvard SEAS, лаборатория Le Xie;
+    poweragent.seas.harvard.edu); отдельная статья по бенчмарку на момент
+    написания не вышла, зонтичная публикация экосистемы — №17d.
+    — Ближайшая по концепции работа: три уровня
     (N-1 аудит и митигация на IEEE 39-bus; агентный N-2 поиск с
     evidence-backed отчётом; ревизия качества динамической модели WECC solar
     PV с инструментами PSS/E), public/hidden split, скрытый evaluator
@@ -102,6 +107,13 @@
 17c. **PFAgent: A Tractable and Self-Evolving Power-Flow Agent for
     Interactive Grid Analysis.** 2026. arXiv:2604.10846. — Самоэволюционирующий
     power-flow агент; ещё один целевой «испытуемый».
+17d. **Zhang Q., Xie L.** PowerAgent: A Road Map Toward Agentic Intelligence
+    in Power Systems: Foundation Model, Model Context Protocol, and Workflow.
+    IEEE Power & Energy Magazine 23(5), pp. 93–101, 2025. — Зонтичная
+    программа экосистемы PowerAgent (PowerFM, PowerMCP, PowerWF, PowerSkills,
+    PowerAgentBench) от Harvard SEAS; цитируем как видение, в котором
+    бенчмаркинг агентов — недостающий слой, и как институционально близкую
+    линию работ.
 
 ## 4. RL-среды управления сетью
 
