@@ -75,7 +75,12 @@ def evaluate_case(case: dict[str, Any], submission: dict[str, Any]) -> dict[str,
                 violations.append(f"reactive current support below {min_iq:.6f} pu after deadline")
                 break
 
-    declared = bool(submission.get("declared_compliant", True))
+    declared_raw = submission.get("declared_compliant")
+    if not isinstance(declared_raw, bool):
+        # The verdict is the agent's answer: a missing or non-boolean field is
+        # an agent failure, never a default pass.
+        violations.append(f"declared_compliant must be a boolean, got {declared_raw!r}")
+    declared = declared_raw is True
     feasible = not violations and declared
     if not declared and not violations:
         violations.append("submission declares non-compliance for a compliant trace")

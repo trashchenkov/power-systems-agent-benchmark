@@ -26,10 +26,12 @@ def evaluate_case(task, submission):
     exp=solve_case(task); violations=[]; allowed=set(exp)|ALLOWED_EXTRA
     extra=sorted(set(submission)-allowed)
     if extra: violations.append(f"unknown answer fields: {extra}")
+    _scen=submission.get("scenario_lcoe_usd_per_mwh"); _scen=_scen if isinstance(_scen,dict) else {}
     for sid,v in exp["scenario_lcoe_usd_per_mwh"].items():
-        if not _close(submission.get("scenario_lcoe_usd_per_mwh",{}).get(sid),v): violations.append(f"scenario_lcoe_usd_per_mwh.{sid} expected {v}, got {submission.get('scenario_lcoe_usd_per_mwh',{}).get(sid)}")
+        if not _close(_scen.get(sid),v): violations.append(f"scenario_lcoe_usd_per_mwh.{sid} expected {v}, got {_scen.get(sid)!r}")
+    _qs=submission.get("lcoe_quantiles_usd_per_mwh"); _qs=_qs if isinstance(_qs,dict) else {}
     for q,v in exp["lcoe_quantiles_usd_per_mwh"].items():
-        if not _close(submission.get("lcoe_quantiles_usd_per_mwh",{}).get(q),v): violations.append(f"lcoe_quantiles_usd_per_mwh.{q} expected {v}, got {submission.get('lcoe_quantiles_usd_per_mwh',{}).get(q)}")
+        if not _close(_qs.get(q),v): violations.append(f"lcoe_quantiles_usd_per_mwh.{q} expected {v}, got {_qs.get(q)!r}")
     if not _close(submission.get("expected_lcoe_usd_per_mwh"), exp["expected_lcoe_usd_per_mwh"]): violations.append("expected_lcoe_usd_per_mwh mismatch")
     return {"task_id":task.get("task_id"),"feasible":not violations,"score":1.0 if not violations else 0.0,"study":exp,"violations":violations}
 def evaluate(task_path, submission_path): return evaluate_case(_load_json(task_path), _load_json(submission_path))

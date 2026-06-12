@@ -104,7 +104,8 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     for key in ["percent_within_normal_band", "min_voltage_pu", "max_voltage_pu", "recommended_tap_change_pu"]:
         _close(key, _num(submission.get(key), key, violations), expected[key], violations)
     for key in ["below_normal_timestamps", "above_normal_timestamps"]:
-        if sorted(submission.get(key, [])) != sorted(expected[key]):
+        _got = submission.get(key)
+        if sorted(_got if isinstance(_got, list) else []) != sorted(expected[key]):
             violations.append(f"{key} must be {expected[key]}")
     feasible = not violations
     return {"task_id": task["task_id"], "feasible": feasible, "score": 1.0 if feasible else 0.0, "study": expected, "violations": violations}

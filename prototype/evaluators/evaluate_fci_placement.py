@@ -37,11 +37,13 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     expected=solve_case(task); violations=[]; allowed=set(expected)|ALLOWED_EXTRA
     extra=sorted(set(submission)-allowed)
     if extra: violations.append(f"unknown answer fields: {extra}")
-    if sorted(submission.get("selected_locations", []))!=expected["selected_locations"]:
+    _sel=submission.get("selected_locations")
+    if sorted(_sel if isinstance(_sel, list) else [])!=expected["selected_locations"]:
         violations.append(f"selected_locations expected {expected['selected_locations']!r}, got {submission.get('selected_locations')!r}")
     if not _close(submission.get("expected_customer_minutes_saved"), expected["expected_customer_minutes_saved"], 1e-3):
         violations.append(f"expected_customer_minutes_saved expected {expected['expected_customer_minutes_saved']}, got {submission.get('expected_customer_minutes_saved')}")
-    got=submission.get("section_patrol_time_reduction_min", {})
+    got=submission.get("section_patrol_time_reduction_min")
+    got=got if isinstance(got,dict) else {}
     for sid,val in expected["section_patrol_time_reduction_min"].items():
         if not _close(got.get(sid), val, 1e-3): violations.append(f"section_patrol_time_reduction_min.{sid} expected {val}, got {got.get(sid)}")
     feasible=not violations

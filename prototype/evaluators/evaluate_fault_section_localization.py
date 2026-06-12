@@ -57,7 +57,8 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     if extra: violations.append(f"unknown answer fields: {extra}")
     if submission.get("faulted_section")!=expected["faulted_section"]:
         violations.append(f"faulted_section expected {expected['faulted_section']!r}, got {submission.get('faulted_section')!r}")
-    if sorted(submission.get("affected_customer_nodes", []))!=expected["affected_customer_nodes"]:
+    _aff=submission.get("affected_customer_nodes")
+    if sorted(_aff if isinstance(_aff, list) else [])!=expected["affected_customer_nodes"]:
         violations.append(f"affected_customer_nodes expected {expected['affected_customer_nodes']!r}, got {submission.get('affected_customer_nodes')!r}")
     feasible=not violations
     return {"task_id": task.get("task_id"), "feasible": feasible, "score": 1.0 if feasible else 0.0, "study": expected, "violations": violations}

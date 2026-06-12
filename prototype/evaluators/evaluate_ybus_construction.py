@@ -61,6 +61,8 @@ def compute_ybus(task: dict[str, Any]) -> dict[str, Any]:
 def _shape_violation(submission: dict[str, Any], buses: list[str]) -> str | None:
     if "buses" not in submission or "ybus" not in submission:
         return "submission must contain buses and ybus"
+    if not isinstance(submission["buses"], list):
+        return "buses must be a list of bus ids"
     if [str(bus) for bus in submission["buses"]] != buses:
         return "submission buses must match task bus order"
     matrix = submission["ybus"]

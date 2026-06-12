@@ -133,7 +133,15 @@ def run_agent_command(
             }
         else:
             shutil.copyfile(sandbox_submission, final_submission)
-            result = evaluate_submission_file(source_task_path, final_submission)
+            try:
+                result = evaluate_submission_file(source_task_path, final_submission)
+            except Exception as exc:  # an evaluator crash must not kill the run
+                result = {
+                    "feasible": False,
+                    "score": 0.0,
+                    "violations": [f"evaluator exception: {type(exc).__name__}: {exc}"],
+                    "evaluator_exception": True,
+                }
             row = result_row(source_task_path, final_submission, result)
             row.update({"agent": agent_name, "returncode": returncode, "elapsed_s": elapsed_s})
         rows.append(row)

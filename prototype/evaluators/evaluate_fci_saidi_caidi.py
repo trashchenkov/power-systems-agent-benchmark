@@ -37,7 +37,8 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     extra=sorted(set(submission)-allowed)
     if extra: violations.append(f"unknown answer fields: {extra}")
     for group in ["baseline","with_fci"]:
-        got=submission.get(group,{})
+        got=submission.get(group)
+        got=got if isinstance(got,dict) else {}
         for k,v in expected[group].items():
             if not _close(got.get(k), v): violations.append(f"{group}.{k} expected {v}, got {got.get(k)}")
     for k in ["saidi_improvement_min_per_customer_year","caidi_improvement_min_per_interruption"]:

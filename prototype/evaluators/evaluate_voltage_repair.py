@@ -31,6 +31,9 @@ def evaluate_case(case: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     violations: list[str] = []
     action_cost = 0.0
 
+    if not isinstance(actions, dict):
+        violations.append("actions must be an object keyed by bus id")
+        actions = {}
     for bus, bus_actions in actions.items():
         if bus not in final_voltage:
             violations.append(f"unknown bus: {bus}")

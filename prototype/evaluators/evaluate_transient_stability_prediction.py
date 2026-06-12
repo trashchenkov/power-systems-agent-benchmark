@@ -23,7 +23,11 @@ def _expected(task):
     stable_count=sum(1 for r in results.values() if r["label"]=="stable")
     high=max(results, key=lambda k:(results[k]["risk_score"], k))
     return {"case_results":results,"stable_case_count":stable_count,"highest_risk_case":high}
-def _num(a,b,tol=TOL): return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+def _num(a,b,tol=TOL):
+    try:
+        return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+    except (TypeError, ValueError):
+        return False
 def evaluate_case(task, submission):
     exp=_expected(task); violations=[]
     extra=set(submission)-ALLOWED

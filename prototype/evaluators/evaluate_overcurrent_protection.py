@@ -24,8 +24,15 @@ def _range_violation(value: float, limits: dict[str, Any], name: str, unit: str)
 
 def evaluate_case(case: dict[str, Any], submission: dict[str, Any]) -> dict[str, Any]:
     violations: list[str] = []
-    pickup = float(submission.get("pickup_current_a", 0.0))
-    time_delay = float(submission.get("time_delay_s", 0.0))
+    def _coerce(name: str) -> float:
+        try:
+            return float(submission.get(name, 0.0))
+        except (TypeError, ValueError):
+            violations.append(f"{name} must be numeric, got {submission.get(name)!r}")
+            return 0.0
+
+    pickup = _coerce("pickup_current_a")
+    time_delay = _coerce("time_delay_s")
 
     max_load = float(case["max_load_current_a"])
     min_fault = float(case["min_fault_current_a"])

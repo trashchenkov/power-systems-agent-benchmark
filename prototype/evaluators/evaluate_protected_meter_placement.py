@@ -17,7 +17,11 @@ def _expected(task):
 
 ALLOWED = set()
 TOL=1e-3
-def _num(a,b): return math.isclose(float(a),float(b),rel_tol=0,abs_tol=TOL)
+def _num(a,b):
+    try:
+        return math.isclose(float(a), float(b),rel_tol=0,abs_tol=TOL)
+    except (TypeError, ValueError):
+        return False
 def _cmp(path, got, exp, violations):
     if isinstance(exp, dict):
         if not isinstance(got, dict): violations.append(f"{path} expected object got {type(got).__name__}"); return

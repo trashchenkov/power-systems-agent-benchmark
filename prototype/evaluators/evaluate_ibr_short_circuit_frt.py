@@ -24,7 +24,11 @@ def _expected(task):
         min_iq=min(min_iq, iq); max_itot=max(max_itot,it)
         prof[s["sample_id"]]={"id_pu":_round(idc),"iq_pu":_round(iq),"total_current_pu":_round(it)}
     return {"current_profile_pu":prof,"min_reactive_current_pu":_round(min_iq),"max_total_current_pu":_round(max_itot),"frt_compliant":compliant}
-def _num(a,b,tol=TOL): return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+def _num(a,b,tol=TOL):
+    try:
+        return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+    except (TypeError, ValueError):
+        return False
 def evaluate_case(task, submission):
     exp=_expected(task); violations=[]
     extra=set(submission)-ALLOWED

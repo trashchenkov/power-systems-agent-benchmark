@@ -110,7 +110,9 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     _close("minimum_ampacity_a", _num(submission.get("minimum_ampacity_a"), "minimum_ampacity_a", violations), expected["minimum_ampacity_a"], violations)
     if submission.get("limiting_timestamp") != expected["limiting_timestamp"]:
         violations.append(f"limiting_timestamp must be {expected['limiting_timestamp']}")
-    if sorted(submission.get("overload_timestamps", [])) != sorted(expected["overload_timestamps"]):
+    got_overload = submission.get("overload_timestamps")
+    if not isinstance(got_overload, list): got_overload = []
+    if sorted(got_overload) != sorted(expected["overload_timestamps"]):
         violations.append(f"overload_timestamps must be {expected['overload_timestamps']}")
     feasible = not violations
     return {"task_id": task["task_id"], "feasible": feasible, "score": 1.0 if feasible else 0.0, "study": expected, "violations": violations}

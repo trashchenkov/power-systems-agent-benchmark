@@ -42,7 +42,11 @@ def _expected(task):
         "critical_clearing_time_s":_round(t_cr),
     }
 
-def _num(a,b,tol): return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+def _num(a,b,tol):
+    try:
+        return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+    except (TypeError, ValueError):
+        return False
 def evaluate_case(task, submission):
     exp=_expected(task); violations=[]
     extra=set(submission)-ALLOWED

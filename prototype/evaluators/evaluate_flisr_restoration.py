@@ -126,7 +126,11 @@ def evaluate_case(case: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     restored_load_kw = sum(float(buses[bus_id].get("load_kw", 0.0)) for bus_id in restored_buses)
     priority_restored = sum(float(buses[bus_id].get("priority", 1.0)) for bus_id in restored_buses)
     total_priority = sum(float(bus.get("priority", 1.0)) for bus in buses.values() if float(bus.get("load_kw", 0.0)) > 0.0)
-    switch_count = len(set(submission.get("open_switches", []))) + len(set(submission.get("close_switches", [])))
+    _open = submission.get("open_switches")
+    _close_sw = submission.get("close_switches")
+    switch_count = len(set(_open if isinstance(_open, list) else [])) + len(
+        set(_close_sw if isinstance(_close_sw, list) else [])
+    )
 
     min_priority = float(case.get("min_priority_restored", total_priority))
     if priority_restored < min_priority:
