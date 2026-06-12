@@ -132,6 +132,22 @@ python scripts/run_agent_command.py \
   --command '<agent command that writes $BENCH_SUBMISSION_PATH>'
 ```
 
+## Retry policy for agent runs
+
+`run_agent_command.py` defaults to a single attempt per case (raw protocol).
+With `--max-attempts 2..3` it retries **only transient infrastructure
+failures** — provider/transport signatures (RemoteException, ServerError,
+ReadTimeout, RemoteProtocolError, HTTP 5xx/429, rate limits) and early silent
+transport aborts. Quality failures, contract violations (submission not
+written by a healthy agent), and per-case budget timeouts are never retried:
+that would silently turn the benchmark into best-of-N. All attempt logs are
+preserved (`*.attemptN.stdout.txt`), every result row records
+`attempt_count` / `failure_class_initial` / `selected_attempt` /
+`raw_first_attempt`, and the summary reports both raw
+(`raw_feasible_count`, `raw_mean_score`) and retry-normalized
+(`feasible_count`, `mean_score`) metrics plus `infra_unresolved_count`, so
+provider reliability never masquerades as agent capability.
+
 ## First agent smoke results
 
 Latest historical local report: `runs/public_agent_smoke/REPORT.md`.
