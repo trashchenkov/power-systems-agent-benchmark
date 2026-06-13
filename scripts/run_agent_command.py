@@ -43,6 +43,11 @@ TRANSIENT_PATTERNS = (
     "rate limit",
     "connection reset",
     "connection refused",
+    "spend limit",
+    "usage limit",
+    "quota exceeded",
+    "insufficient credit",
+    "billing",
 )
 RETRYABLE_CLASSES = {"provider_transient", "early_transport_abort"}
 EARLY_ABORT_S = 30.0

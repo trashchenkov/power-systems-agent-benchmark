@@ -49,7 +49,7 @@ def _flaky_command(marker: Path) -> str:
 
 class ClassifyFailureTests(unittest.TestCase):
     def test_provider_signatures_are_transient(self):
-        for sig in ("RemoteException", "ServerError: boom", "httpx.ReadTimeout", "RemoteProtocolError", "HTTP 503", "rate limit exceeded"):
+        for sig in ("RemoteException", "ServerError: boom", "httpx.ReadTimeout", "RemoteProtocolError", "HTTP 503", "rate limit exceeded", "You've hit your monthly spend limit", "quota exceeded"):
             self.assertEqual(classify_failure(1, "", sig, 5.0, 600), "provider_transient", sig)
 
     def test_budget_timeout_is_not_retryable(self):
