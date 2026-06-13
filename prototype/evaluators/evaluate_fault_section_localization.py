@@ -28,8 +28,12 @@ def solve_case(task: dict[str, Any]) -> dict[str, Any]:
     scores=[]
     for sid,sec in sections.items():
         fault_child=sec["to"]
-        fault_path=set(_path_to_source(fault_child,parent))
-        expected_fci={f: (case["fci_locations"][f] in fault_path) for f in case["fci_locations"]}
+        # A fault-current indicator sees fault current iff the fault is strictly
+        # downstream of it, i.e. the indicator lies on the source-to-upstream-node
+        # path of the faulted section. Including the section's downstream node was
+        # an off-by-one that made an FCI at that node falsely register the fault.
+        upstream_path=set(_path_to_source(sec["from"],parent))
+        expected_fci={f: (case["fci_locations"][f] in upstream_path) for f in case["fci_locations"]}
         fci_mismatch=sum(1 for f,state in fci_states.items() if bool(state)!=expected_fci[f])
         # downstream customers of the candidate faulted section are de-energized.
         downstream=set()

@@ -343,11 +343,28 @@ def gen_flisr_restoration(task, rng):
 
 def gen_frt_compliance(task, rng):
     trace = _case(task, "event_trace")
-    depth = _pick(rng, 0.3, 0.75, 2)
-    iq = _pick(rng, 0.1, 0.3, 2)
-    times = [0.0, 0.05, round(rng.uniform(0.1, 0.2), 2), round(rng.uniform(0.4, 0.6), 2), 0.8]
-    voltages = [1.0, depth, depth, round(min(1.0, depth + rng.uniform(0.2, 0.45)), 2), 1.0]
-    iqs = [0.0, round(iq * rng.uniform(0.3, 0.6), 2), iq, round(iq * rng.uniform(0.7, 1.0), 2), 0.0]
+    req = task["reactive_current_requirement"]
+    min_iq = float(req["min_iq_pu"])
+    deadline = float(req["response_deadline_s"])
+    # Keep the sag inside the ride-through envelope (depth >= 0.5 so the >=0.15 s
+    # samples never violate the 0.5-pu floor) and place an enforced sample that
+    # is clearly past the response deadline. The reactive verdict is then decided
+    # by a single unambiguous current value with a clear margin from min_iq —
+    # avoiding borderline iq-just-under-threshold cases that read as
+    # non-compliant to humans while a timing technicality would exempt them.
+    # The generation pipeline only accepts draws the baseline solves and the
+    # evaluator confirms (i.e. compliant traces); non-compliant draws are
+    # redrawn away. So a compliant case must also *read* as clearly compliant:
+    # reactive current sits well above min_iq for every enforced sample, with
+    # the sag comfortably inside the ride-through envelope.
+    depth = _pick(rng, 0.55, 0.7, 2)
+    sag_start = 0.05
+    enforced_t = round(sag_start + deadline + rng.uniform(0.04, 0.12), 2)
+    recover_t = round(enforced_t + rng.uniform(0.2, 0.4), 2)
+    iq_floor = round(min_iq + rng.uniform(0.08, 0.18), 2)
+    times = [0.0, sag_start, enforced_t, recover_t, round(recover_t + 0.25, 2)]
+    voltages = [1.0, depth, depth, round(min(1.0, max(0.95, depth + rng.uniform(0.3, 0.45))), 2), 1.0]
+    iqs = [0.0, iq_floor, round(iq_floor + rng.uniform(0.0, 0.06), 2), round(iq_floor + rng.uniform(0.0, 0.04), 2), 0.0]
     trace[:] = [
         {"time_s": t, "voltage_pu": v, "iq_pu": q, "connected": True}
         for t, v, q in zip(times, voltages, iqs)
