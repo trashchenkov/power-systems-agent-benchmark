@@ -268,11 +268,10 @@ satisfy three properties beyond merely invoking each agent on each task. The fir
 is isolation: an agent must not be able to read the evaluator or any stored answer.
 Each task is therefore packaged with its answer key and evaluator internals removed,
 and is executed in a sandbox that has no path back to the benchmark's own code. This
-is not a precaution in the abstract. An agent granted autonomous filesystem access
-will, if the evaluator is reachable, consult it: in the course of this study one
-agent located the checker for a task and graded itself against it, a behavior whose
-only barrier had been a sentence of instruction. Instruction-level prohibition is
-not isolation for such an agent, and genuine isolation must be structural.
+matters because an agent with autonomous filesystem access can, in principle, reach
+an evaluator that is within reach and grade itself against it; a written instruction
+not to do so is no safeguard, since nothing compels the agent to honor it. Isolation
+must therefore be structural rather than instructional.
 
 The second property is robustness to malformed output. An agent may return a
 solution that is syntactically valid but meaningless — null values, text where a
@@ -303,7 +302,11 @@ scenario suite. The evaluators presented here occupy the first two rungs. The
 contract of Section 4.1 is what makes the ladder usable: because the task and
 solution formats are fixed independently of how a check is computed, the internal
 step of replacing, say, a linearized power-flow surrogate with a full AC solution
-upgrades an evaluator without altering anything an agent sees.
+upgrades an evaluator without altering anything an agent sees. The ladder describes
+how a check is computed, but the contract is symmetric in the tools it admits:
+nothing stops an agent, on its side, from invoking the same kind of software to
+produce a solution — a possibility today's tasks do not yet exercise but later ones
+will (Section 10).
 
 ### 4.4 The held-out split as a generator
 
@@ -318,7 +321,10 @@ solution feasible, with a deterministic redraw otherwise. Whoever operates a
 leaderboard keeps the seed private; anyone else can read exactly how held-out cases
 are constructed without learning the particular instances of any round. This makes
 the held-out set, normally the most leak-prone component of a benchmark, auditable
-in mechanism and private in content at the same time.
+in mechanism and private in content at the same time. The same discipline extends to
+the records of evaluation runs: an agent's solution to a held-out case, and the
+evaluator's per-case output, each disclose that case's answer, so only aggregate run
+summaries are published — never the per-case held-out submissions, results, or logs.
 
 ## 5. Task Set
 
@@ -521,7 +527,11 @@ a method, not whether it scales to industrial data volumes. The evaluators are
 deterministic surrogates, and no claim of industrial AC accuracy is warranted until
 simulator-backed checkers are in place. With one case per family per split, a ranking
 over 41 points is statistically fragile, though the generator makes enlarging the
-sample inexpensive. The reference solver's perfect public score is a self-consistency
+sample inexpensive. The tasks are also self-contained: an agent computes each answer
+directly and is never required to operate professional power-system software, so the
+benchmark does not yet measure mastery of the simulators and tools that much real
+engineering work depends on. The reference solver's perfect public score is a
+self-consistency
 check on the contract, not a lower bound on difficulty, and cannot validate the
 evaluator. The seed of a held-out round is spent once the round is disclosed, so a
 citable leaderboard requires a fresh seed on an isolated host. The sandbox isolates by
@@ -547,9 +557,24 @@ that the benchmark could not have caught by self-consistency alone — a reminde
 reference answer derived from an evaluator cannot certify it. The lasting value of the
 artifact lies in the contract, the domain-grounded task set, the evaluators, the
 seed-driven held-out generator with its prospective resistance to contamination, the
-isolated harness, and the reproducible quality-control procedure; the work ahead is to
-fill the evaluators with simulator-backed implementations without disturbing the
-contract that holds them together.
+isolated harness, and the reproducible quality-control procedure; one line of work
+ahead is to fill the evaluators with simulator-backed implementations without
+disturbing the contract that holds them together.
+
+A second axis of growth concerns the agent rather than the evaluator. The tasks
+presented here are self-contained: an agent reads a case and computes an answer, and
+while it may write and run scratch code, no task yet requires it to operate
+professional power-system software. Yet much of real engineering work is exactly
+that — driving a load-flow package, a short-circuit tool, or a dynamic simulator — and
+the production agents now emerging in the domain already orchestrate such tools. The
+contract imposes no limit here: an agent is free to invoke whatever tools its sandbox
+provides to produce a solution. A natural next generation of tasks would therefore
+measure not closed-form competence but mastery of these specialized environments, with
+the simulator serving as the agent's instrument rather than the evaluator's. The
+duality is worth naming: the same simulator can sit on either side of the contract —
+the agent's tool for solving, or the evaluator's backend for checking — and the
+isolation of Section 4.2 is exactly what must keep the two apart, so that an agent can
+never reach the checking instance as an oracle.
 
 ## Appendix A. Task Catalog
 
