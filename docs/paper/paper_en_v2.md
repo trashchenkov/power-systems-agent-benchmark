@@ -500,17 +500,15 @@ analysis available, because the failures separate into two kinds. When agents fa
 task in different ways — one breaching a voltage limit where the others hold it, one
 returning a wrong ride-through verdict, one inverting a sign — the disagreement is
 signal, and it is what a leaderboard should reward. But when every agent fails a task
-in the same way, the more likely explanation is that the task, not the agents, is at
-fault. Treating that pattern as a diagnostic surfaced ten defects in the
-specifications: a field whose description contradicted its name, so that two agents
-correctly computed a fraction where the evaluator expected a percentage; nested keys
-that did not match the checker; a semantically empty zero entry that was nonetheless
-rejected; a demand for an exact match to one of several optima of equal cost;
-unstated conventions for a power curve, for quantiles, and for the terms of a heat
-balance; a hardcoded dispatch policy; and an underspecified scoring formula. Each
-correction was confirmed by re-evaluating the affected family and observing the
-agents recover. We propose the underlying rule — a unanimous failure should be
-suspected as a defect in the specification or the evaluator — as a routine
+in the same way, the task itself, rather than the agents, is the first thing to
+suspect. Treating that pattern as a diagnostic during construction surfaced a series
+of specification defects — mismatches between a field's description and the value the
+evaluator expected, unstated conventions, and over-strict comparisons that rejected
+admissible answers — each confirmed by correcting the specification and watching the
+agents recover. The pattern is a suspicion, not a verdict: a unanimous failure is
+sometimes a shared blind spot rather than a defect, so it should be confirmed by
+inspection. We propose this rule — treat a unanimous failure as a likely defect in the
+specification or the evaluator, then confirm or dismiss it — as a routine
 quality-control step for executable benchmarks.
 
 The most consequential instance pointed not at a task but at an evaluator, and is
@@ -575,8 +573,9 @@ held-out splits. Its most transferable contribution is not any single task but a
 method: reading a unanimous failure as a defect signal, which over the course of this
 work repeatedly uncovered specification defects and even a latent error in an
 evaluator's own physics that the benchmark could not have caught by self-consistency
-alone — a reminder that a reference answer derived from an evaluator cannot certify it. The lasting value of the
-artifact lies in the contract, the domain-grounded task set, the evaluators, the
+alone — a reminder that a reference answer derived from an evaluator cannot certify
+it. The lasting value of the artifact lies in the contract, the domain-grounded task
+set, the evaluators, the
 seed-driven held-out generator with its prospective resistance to contamination, the
 isolated runner, and the reproducible quality-control procedure; one line of work
 ahead is to fill the evaluators with simulator-backed implementations without
