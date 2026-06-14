@@ -4,17 +4,23 @@
 
 - Family: `dynamic_thermal_rating`
 - Candidate: `REL-TASK-014`
-- Subdomain: transmission operations & asset ratings
 - Current implementation: executable public task with deterministic evaluator
 
 ## Primary source grounding
 
-- Primary source: Advanced Prediction Techniques Applied to Smart Grids
-- Locator: local archive dynamic-line-rating / weather-uncertainty sections
+- Primary source: N. Safari, S. M. Mazhari, C. Y. Chung, S. B. Ko, Secure Probabilistic Prediction of Dynamic Thermal Line Rating, Journal of Modern Power Systems and Clean Energy, 2022
+- Locator: DOI:10.35833/mpce.2020.000641; local OCR Advanced Prediction... lines 640-749 cites RTTR heat balance/weather factors and this paper
 - Confidence: `medium`
-- Private-library check: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
+- Verification status: `doi_resolved_crossref; local slides cite the resolved source`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
 
-Grounds weather-dependent rating and operational uncertainty; the task implements an IEEE-738-style heat-balance surrogate.
+Replaces vague dynamic-line-rating slide locator with a DOI-resolved MPCE article plus local slide cross-reference; benchmark remains a compact heat-balance surrogate.
+
+## DOI / locator verification
+
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 

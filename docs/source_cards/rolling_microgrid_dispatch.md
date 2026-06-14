@@ -4,17 +4,23 @@
 
 - Family: `rolling_microgrid_dispatch`
 - Candidate: `REL-TASK-026`
-- Subdomain: microgrids & DER dispatch
 - Current implementation: executable public task with deterministic evaluator
 
 ## Primary source grounding
 
-- Primary source: Microgrid rolling dispatch source from local archive
-- Locator: local archive fmincon / microgrid dispatch source
+- Primary source: Nohora España, John Barco-Jiménez, Andrés Pantoja, Nicanor Quijano, Distributed population dynamics for active and reactive power dispatch in islanded microgrids, International Journal of Electrical Power & Energy Systems, 2021
+- Locator: DOI:10.1016/j.ijepes.2020.106407; local OCR fmincon_78640f47.txt lines 42-65, 853-957
 - Confidence: `medium`
-- Private-library check: `local_archive_extracted/local_lit/power_engineering/fmincon.pdf`
+- Verification status: `doi_resolved_crossref; found in private library`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/fmincon.pdf`
 
-Grounds short-horizon renewable microgrid dispatch; the case uses explicit five-minute-style rolling-horizon constraints.
+Resolved local fmincon file to the underlying microgrid dispatch article; rolling-horizon framing remains a compact benchmark adaptation.
+
+## DOI / locator verification
+
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 

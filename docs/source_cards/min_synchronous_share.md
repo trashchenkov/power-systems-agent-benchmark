@@ -4,17 +4,23 @@
 
 - Family: `min_synchronous_share`
 - Candidate: `REL-TASK-007`
-- Subdomain: converter-dominated grids & storage
 - Current implementation: executable public task with deterministic evaluator
 
 ## Primary source grounding
 
-- Primary source: Advanced Prediction Techniques Applied to Smart Grids
-- Locator: local archive; minimum synchronous-generator share and converter-dominated stability sections
-- Confidence: `medium`
-- Private-library check: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
+- Primary source: Yunfeng Wen, Rongzhen Zhao, Mingzeng Huang, Chuangxin Guo, Data-driven transient frequency stability assessment: A deep learning method with combined estimation-correction framework, Energy Conversion and Economics, 2020
+- Locator: DOI:10.1049/enc2.12015; local OCR Advanced Prediction... lines 24128-24220 discuss low inertia / renewable replacement of synchronous units, but not SCR/minimum-share optimization
+- Confidence: `low`
+- Verification status: `doi_resolved_but_partial_match_only`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
 
-Grounds converter-dominated stability / synchronous-share analysis; evaluator recomputes RoCoF with explicit swing-equation formula.
+Resolved a related low-inertia frequency-stability source, but it does not fully ground the benchmark’s minimum synchronous-share plus SCR formulation; kept low per provenance criterion.
+
+## DOI / locator verification
+
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 

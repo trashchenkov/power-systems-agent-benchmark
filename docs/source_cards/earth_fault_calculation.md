@@ -4,17 +4,23 @@
 
 - Family: `earth_fault_calculation`
 - Candidate: `REL-TASK-034`
-- Subdomain: protection, faults & relay engineering
 - Current implementation: executable public task with deterministic evaluator
 
 ## Primary source grounding
 
-- Primary source: Релейная защита в задачах с решениями и примерами
-- Locator: local archive; symmetrical components and earth-fault calculation sections
+- Primary source: Авербух А. М. Релейная защита в задачах с решениями и примерами. Л.: Энергия, 1975
+- Locator: local OCR РЕЛЕЙНАЯ ЗАЩИТА..._bed306ea.txt, title/bibliography lines 3-15; earth-fault / zero-sequence TOC lines 536-568
 - Confidence: `medium`
-- Private-library check: `local_archive_extracted/local_lit/power_engineering/РЕЛЕЙНАЯ ЗАЩИТА В ЗАДАЧАХ С РЕШЕНИЯМИ И ПРИМЕРАМИ.pdf`
+- Verification status: `found in private library`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/РЕЛЕЙНАЯ ЗАЩИТА В ЗАДАЧАХ С РЕШЕНИЯМИ И ПРИМЕРАМИ.pdf`
 
-Grounds unsymmetrical/earth-fault calculations; the executable case follows standard sequence-network equations.
+Resolved to an author/title/year relay-protection worked-example book; supports earth-fault and zero-sequence protection calculations at medium confidence.
+
+## DOI / locator verification
+
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 

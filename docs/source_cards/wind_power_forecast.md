@@ -4,17 +4,23 @@
 
 - Family: `wind_power_forecast`
 - Candidate: `REL-TASK-009`
-- Subdomain: forecasting & uncertainty
 - Current implementation: executable public task with deterministic evaluator
 
 ## Primary source grounding
 
-- Primary source: LoRA-Finetuned LLM for Multi-Step Wind Power Forecasting
-- Locator: DOI:10.13140/RG.2.2.33696.34561
+- Primary source: Nima Safari, C. Y. Chung, G. C. D. Price, Novel Multi-Step Short-Term Wind Power Prediction Framework Based on Chaotic Time Series Analysis and Singular Spectrum Analysis, IEEE Transactions on Power Systems, 2018
+- Locator: DOI:10.1109/TPWRS.2017.2694705; RG DOI 10.13140/RG.2.2.33696.34561 was checked via DataCite/OpenAlex and is an Unpublished/ResearchGate preprint, not used as primary
 - Confidence: `medium`
-- Private-library check: `local_archive_extracted/local_lit/power_engineering/LoRA-Finetuned-LLM-for-Multi-Step-Wind-Power-Forecasting.pdf`
+- Verification status: `doi_resolved_crossref; weak_rg_doi_demoted_from_primary`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/LoRA-Finetuned-LLM-for-Multi-Step-Wind-Power-Forecasting.pdf`
 
-Grounds multi-step wind-power forecasting; the case uses deterministic power-curve and residual-bias calculations.
+Replaces the weak ResearchGate DOI with a DOI-resolved peer-reviewed multi-step wind-power forecasting source; the RG locator remains only a checked/demoted breadcrumb.
+
+## DOI / locator verification
+
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 

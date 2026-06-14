@@ -4,17 +4,23 @@
 
 - Family: `wind_prediction_interval`
 - Candidate: `REL-TASK-012`
-- Subdomain: forecasting & uncertainty
 - Current implementation: executable public task with deterministic evaluator
 
 ## Primary source grounding
 
-- Primary source: Advanced Prediction Techniques Applied to Smart Grids
-- Locator: local archive prediction-interval reliability/sharpness sections
+- Primary source: Benyamin Khorramdel, C. Y. Chung, Nima Safari, G. C. D. Price, A Fuzzy Adaptive Probabilistic Wind Power Prediction Framework Using Diffusion Kernel Density Estimators, IEEE Transactions on Power Systems, 2018
+- Locator: DOI:10.1109/TPWRS.2018.2848207; local OCR Advanced Prediction... lines 603-633 cite PI reliability/sharpness and this paper
 - Confidence: `medium`
-- Private-library check: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
+- Verification status: `doi_resolved_crossref; local slides cite the resolved source`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
 
-Grounds prediction-interval coverage and sharpness; the case computes empirical wind-power quantiles.
+Replaces vague prediction-interval slide locator with DOI-resolved IEEE TPWRS source for wind-power probabilistic prediction intervals.
+
+## DOI / locator verification
+
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 

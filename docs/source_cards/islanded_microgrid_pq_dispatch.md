@@ -4,17 +4,23 @@
 
 - Family: `islanded_microgrid_pq_dispatch`
 - Candidate: `REL-TASK-022`
-- Subdomain: microgrids & DER dispatch
 - Current implementation: executable public task with deterministic evaluator
 
 ## Primary source grounding
 
-- Primary source: Distributed active/reactive dispatch in isolated microgrids
-- Locator: local archive fmincon / microgrid dispatch source
+- Primary source: Nohora España, John Barco-Jiménez, Andrés Pantoja, Nicanor Quijano, Distributed population dynamics for active and reactive power dispatch in islanded microgrids, International Journal of Electrical Power & Energy Systems, 2021
+- Locator: DOI:10.1016/j.ijepes.2020.106407; local OCR fmincon_78640f47.txt lines 42-65, 110-118
 - Confidence: `medium`
-- Private-library check: `local_archive_extracted/local_lit/power_engineering/fmincon.pdf`
+- Verification status: `doi_resolved_crossref; found in private library`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/fmincon.pdf`
 
-Grounds joint P/Q dispatch with inverter capability; the task uses explicit balance, voltage-sensitivity and capability constraints.
+Replaces vague fmincon/local-archive wording with the resolved Elsevier article on joint active/reactive dispatch in isolated microgrids.
+
+## DOI / locator verification
+
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 

@@ -4,17 +4,23 @@
 
 - Family: `overcurrent_protection`
 - Candidate: `REL-TASK-036`
-- Subdomain: 
 - Current implementation: executable public task with deterministic evaluator
 
 ## Primary source grounding
 
-- Primary source: Релейная защита в задачах с решениями и примерами; Релейная защита. Томск
-- Locator: local archive protection-setting sections for maximum-current protection and CT/selectivity checks
+- Primary source: Авербух А. М. Релейная защита в задачах с решениями и примерами. Л.: Энергия, 1975; Копьев В. Н. Релейная защита, Томск, 2011
+- Locator: local OCR РЕЛЕЙНАЯ ЗАЩИТА..._bed306ea.txt lines 3-15 and maximum-current protection TOC lines 548-557; Релейная защита. Томск_3f3d000a.txt title/author/year metadata
 - Confidence: `medium`
-- Private-library check: `local_archive_extracted/local_lit/power_engineering/РЕЛЕЙНАЯ ЗАЩИТА В ЗАДАЧАХ С РЕШЕНИЯМИ И ПРИМЕРАМИ.pdf; local_archive_extracted/local_lit/power_engineering/Релейная защита. Томск.pdf`
+- Verification status: `found in private library`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/РЕЛЕЙНАЯ ЗАЩИТА В ЗАДАЧАХ С РЕШЕНИЯМИ И ПРИМЕРАМИ.pdf; local_archive_extracted/local_lit/power_engineering/Релейная защита. Томск.pdf`
 
-Grounds line overcurrent pickup, sensitivity and selectivity requirements; the task is a compact relay-setting calculation.
+Resolved vague protection-setting locator to bibliographic relay-protection sources and OCR TOC evidence for maximum-current protection.
+
+## DOI / locator verification
+
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 
