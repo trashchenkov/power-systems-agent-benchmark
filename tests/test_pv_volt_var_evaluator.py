@@ -83,6 +83,41 @@ class PVVoltVarEvaluatorTests(unittest.TestCase):
         self.assertTrue(result["feasible"], result["violations"])
         self.assertEqual(result["voltage_violation_timesteps"], [])
 
+    def test_baseline_is_the_least_effort_optimum(self):
+        # The reference solver must return the true minimum-effort curve, since
+        # the score is normalized against it. Guards against regressing to a
+        # heuristic curve that an agent could beat.
+        case = self.small_case()
+        baseline_score = evaluate_case(case, solve_case(case))["score"]
+
+        # Exhaustive monotone search over a fine q_fraction grid: nothing beats it.
+        from prototype.evaluators.evaluate_pv_volt_var import _available_q_kvar
+
+        steps = sorted(case["timesteps"], key=lambda s: s["base_voltage_pu"])
+        vmin, vmax = 0.95, 1.05
+        grid = [i / 80 * 2 - 1 for i in range(81)]
+        feasible_per_step = []
+        for s in steps:
+            v = float(s["base_voltage_pu"])
+            sens = float(s["voltage_sensitivity_pu_per_kvar"])
+            cap = _available_q_kvar(s)
+            feasible_per_step.append([f for f in grid if vmin - 1e-9 <= v + sens * f * cap <= vmax + 1e-9])
+
+        best = {"score": 0.0}
+
+        def search(i, prev, effort):
+            if i == len(steps):
+                score = max(0.0, 1.0 - min(20.0, 0.02 * effort) / 100.0)
+                best["score"] = max(best["score"], score)
+                return
+            cap = _available_q_kvar(steps[i])
+            for f in feasible_per_step[i]:
+                if f <= prev + 1e-9:
+                    search(i + 1, f, effort + abs(f * cap))
+
+        search(0, 1.0, 0.0)
+        self.assertGreaterEqual(baseline_score + 1e-4, best["score"])
+
 
 if __name__ == "__main__":
     unittest.main()
