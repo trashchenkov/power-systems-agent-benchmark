@@ -396,10 +396,14 @@ a measured quantity, and we assign it by a fixed rubric so that it is reproducib
 - **low** — no single primary document is pinned: the method is standard but the
   task is an adaptation in its spirit rather than a reproduction of a specific source.
 
-We regard this scheme as a floor on transparency rather than a guarantee of fidelity:
-it lets a reader trace any task to its origin and see at a glance how tightly it is
-bound there, and it makes explicit which tasks are faithful renderings of a standard
-and which are looser adaptations of common practice.
+Under this rubric, of the 41 families 11 are rated high, 28 medium, and 2 low; the
+two low cases (uncertainty-aware dispatch and minimum synchronous share) keep that
+rating because no single source we could verify fully grounds their exact
+formulation, and we prefer to say so than to inflate the label. We regard the scheme
+as a floor on transparency rather than a guarantee of fidelity: it lets a reader
+trace any task to its origin and see at a glance how tightly it is bound there, and
+it makes explicit which tasks are faithful renderings of a standard and which are
+looser adaptations of common practice.
 
 ## 6. Evaluators and Metrics
 
