@@ -1,73 +1,36 @@
-# Source card: distance protection settings
+# Source card: distance_protection_settings
 
 ## Benchmark family
 
 - Family: `distance_protection_settings`
 - Candidate: `REL-TASK-039`
-- Subdomain: protection, faults, and relay engineering
-- Current implementation: executable public task with deterministic reach/time coordination evaluator
+- Current implementation: executable public task with deterministic evaluator
 
-## Source grounding
+## Primary source grounding
 
-Primary local provenance:
+- Primary source: Авербух А. М. Релейная защита в задачах с решениями и примерами. Л.: Энергия, 1975
+- Locator: local OCR РЕЛЕЙНАЯ ЗАЩИТА..._bed306ea.txt, title/bibliography lines 3-15; TOC distance-protection chapter line 582
+- Confidence: `medium`
+- Verification status: `found in private library`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/РЕЛЕЙНАЯ ЗАЩИТА В ЗАДАЧАХ С РЕШЕНИЯМИ И ПРИМЕРАМИ.pdf`
 
-- `literature/metadata/v4_balanced_core_shortlist.md`
-- `literature/task_bank_v4_gap_fill_balanced.md#rel-task-039`
+Resolved from a vague local-archive locator to a bibliographic Russian relay-protection source; OCR confirms title/author/year and distance-protection chapter, but not a DOI-level source.
 
-The selected task corresponds to the common relay-engineering operation of choosing distance protection zones for medium/high-voltage lines. Standard practice uses an instantaneous underreaching Zone 1, delayed Zone 2 for protected-line plus adjacent-line backup, and delayed Zone 3 for remote backup while avoiding load encroachment.
+## DOI / locator verification
 
-## Operational problem extracted
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
-Given:
+## Derived traceability
 
-- protected-line positive-sequence impedance per km and length;
-- adjacent remote backup line impedances;
-- maximum load apparent power;
-- configurable reach and delay coordination windows.
-
-The solver must return:
-
-- `zone1_ohm`, `zone2_ohm`, `zone3_ohm` in primary ohms;
-- `zone1_delay_s`, `zone2_delay_s`, `zone3_delay_s` in seconds.
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-039`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
 ## Benchmark adaptation
 
-The public case uses a 110 kV protected line with two downstream/remote backup lines. The evaluator uses impedance magnitudes rather than a full R-X polygon/mho characteristic. This keeps the MVP dependency-free while still requiring actual relay-setting calculations rather than copying a stored answer.
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
 
-## Evaluator
+## Licensing note
 
-Evaluator module:
-
-- `prototype/evaluators/evaluate_distance_protection_settings.py`
-
-The evaluator independently computes:
-
-- protected-line impedance magnitude;
-- shortest and longest backup-line impedance magnitudes;
-- Zone 1 underreach window;
-- Zone 2 backup-reach window;
-- Zone 3 remote-backup window;
-- load-encroachment ceiling using `V_kV^2 / S_MVA`;
-- timing coordination windows.
-
-It checks:
-
-- all fields present and numeric;
-- Zone 1/2/3 reach windows;
-- strictly increasing reaches;
-- delay windows;
-- nondecreasing time coordination.
-
-## Baseline
-
-Baseline module:
-
-- `baselines/distance_protection_settings/baseline.py`
-
-The baseline selects midpoint reach values inside each allowed window and minimum coordinated delays.
-
-## Limitations and next upgrades
-
-- Current public case uses scalar impedance magnitude, not directional/mho/quadrilateral R-X characteristics.
-- Mutual coupling, infeed, fault resistance, CT/VT errors, and zero-sequence compensation are not modelled yet.
-- Hidden cases should add multi-terminal lines, infeed factors, zero-sequence compensation, and explicit R-X load-encroachment checks.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

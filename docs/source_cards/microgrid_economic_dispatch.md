@@ -1,22 +1,36 @@
-# Source card: microgrid economic dispatch
+# Source card: microgrid_economic_dispatch
 
 ## Benchmark family
 
 - Family: `microgrid_economic_dispatch`
 - Candidate: `REL-TASK-024`
-- Subdomain: microgrids and DER dispatch
-- Public case: `tasks/microgrid_economic_dispatch/public/case_001/task.json`
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on standard microgrid economic dispatch: serve load using diesel generation, PV, and a battery while respecting generator and storage constraints and minimizing fuel/variable cost.
+- Primary source: Nohora España, John Barco-Jiménez, Andrés Pantoja, Nicanor Quijano, Distributed population dynamics for active and reactive power dispatch in islanded microgrids, International Journal of Electrical Power & Energy Systems, 2021
+- Locator: DOI:10.1016/j.ijepes.2020.106407; local OCR fmincon_78640f47.txt lines 42-65, 110-118
+- Confidence: `medium`
+- Verification status: `doi_resolved_crossref; found in private library`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/fmincon.pdf`
 
-Representative references:
+Resolved fmincon.pdf to the underlying microgrid dispatch paper; public case is a compact cost-minimization adaptation.
 
-- Microgrid economic dispatch with DER and battery SOC constraints.
-- Active-power balance and PV curtailment models used in microgrid scheduling.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-024`.
+## DOI / locator verification
 
-## Evaluation logic
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
-The evaluator independently enumerates feasible battery setpoints, simulates SOC and balance constraints, selects the least-cost diesel schedule, and checks submitted per-period dispatch and total cost.
+## Derived traceability
+
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-024`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
+
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

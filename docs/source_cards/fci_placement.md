@@ -1,22 +1,30 @@
-# Source card: FCI placement for patrol-time reduction
+# Source card: fci_placement
 
 ## Benchmark family
 
 - Family: `fci_placement`
 - Candidate: `REL-TASK-051`
-- Subdomain: distribution reliability and outage management
-- Public case: `tasks/fci_placement/public/case_001/task.json`
+- Subdomain: distribution reliability & outage management
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-This task models FCI planning as a budgeted placement problem that maximizes expected customer-weighted patrol-time savings across feeder fault sections.
+- Primary source: Brown, Faulted Circuit Indicators and System Reliability
+- Locator: DOI:10.1109/REPCON.2000.848037
+- Confidence: `medium`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/faulted-circuit-indicators-and-system-reliability.pdf`
 
-Representative references:
+Grounds placement of FCIs to reduce patrol time; the case implements a small budgeted placement problem.
 
-- Distribution fault indicator placement for reliability improvement.
-- Customer-interruption-minute objective functions for outage management investments.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-051`.
+## Derived traceability
 
-## Evaluation logic
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-051`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The evaluator enumerates all candidate sets of the requested size, computes each section's best patrol-time reduction from selected devices, maximizes annual fault-rate × customers × minutes saved, and checks the selected set and objective accounting.
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

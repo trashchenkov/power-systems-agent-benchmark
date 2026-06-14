@@ -1,26 +1,36 @@
-# Source card: wind-power point forecast
+# Source card: wind_power_forecast
 
 ## Benchmark family
 
 - Family: `wind_power_forecast`
 - Candidate: `REL-TASK-009`
-- Subdomain: forecasting and uncertainty
-- Public case: `tasks/wind_power_forecast/public/case_001/task.json`
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on wind-power forecasting practice: weather forecasts, especially wind speed and air density, are transformed into generation estimates through a turbine power curve. Recent measured production can be used to estimate a simple residual bias.
+- Primary source: Nima Safari, C. Y. Chung, G. C. D. Price, Novel Multi-Step Short-Term Wind Power Prediction Framework Based on Chaotic Time Series Analysis and Singular Spectrum Analysis, IEEE Transactions on Power Systems, 2018
+- Locator: DOI:10.1109/TPWRS.2017.2694705; RG DOI 10.13140/RG.2.2.33696.34561 was checked via DataCite/OpenAlex and is an Unpublished/ResearchGate preprint, not used as primary
+- Confidence: `medium`
+- Verification status: `doi_resolved_crossref; weak_rg_doi_demoted_from_primary`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/LoRA-Finetuned-LLM-for-Multi-Step-Wind-Power-Forecasting.pdf`
 
-Representative references:
+Replaces the weak ResearchGate DOI with a DOI-resolved peer-reviewed multi-step wind-power forecasting source; the RG locator remains only a checked/demoted breadcrumb.
 
-- Wind-turbine power-curve forecasting practice used in operational renewable forecasting.
-- Density-corrected speed-to-power conversion for wind turbines.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-009`.
+## DOI / locator verification
 
-## Operational instance
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
-The public case gives turbine count, rated power, cut-in/rated/cut-out speeds, historical weather and actual power, and a four-step weather forecast. The agent must compute a bias-corrected MW forecast, total forecast energy, and the peak timestamp.
+## Derived traceability
 
-## Evaluation logic
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-009`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The evaluator independently applies the power curve, computes the historical residual bias, clamps forecasts to the physical farm capacity, and checks submitted values within tolerance.
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

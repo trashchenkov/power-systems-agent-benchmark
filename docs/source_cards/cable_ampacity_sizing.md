@@ -1,22 +1,30 @@
-# Source card: cable cross-section selection
+# Source card: cable_ampacity_sizing
 
-Family `cable_ampacity_sizing` (`CORE-SWAP-002`) models routine LV feeder design:
-choose the smallest catalog cable cross-section that passes three independent
-checks —
+## Benchmark family
 
-1. continuous current: catalog ampacity derated by ambient and grouping
-   correction factors must cover the design current (IEC 60364-5-52 practice);
-2. voltage drop: `dU = sqrt(3) * I * L * (R*cos(phi) + X*sin(phi))` within a
-   percentage limit of system voltage;
-3. short-circuit withstand: the adiabatic criterion `k*S >= I_fault*sqrt(t)`
-   (IEC 60949), i.e. `S_min = I_fault*sqrt(t)/k`, with k = 143 A·sqrt(s)/mm2 for
-   copper/XLPE.
+- Family: `cable_ampacity_sizing`
+- Candidate: `CORE-SWAP-002`
+- Subdomain: distribution systems & DER/EV
+- Current implementation: executable public task with deterministic evaluator
 
-The public case is constructed so the checks interact: the 70 mm2 candidate
-passes derated ampacity but fails the 5 % voltage-drop limit on a 250 m run, so
-the correct selection is 95 mm2. Catalog ampacities and impedances are
-representative copper/XLPE values.
+## Primary source grounding
 
-Replacement note: this family replaces `electric_boiler_step_control` in the
-41-task balanced core; cable design had no coverage while boiler staging sat
-outside the power-systems scope.
+- Primary source: IEC 60364-5-52 / IEC 60949 cable-selection practice
+- Locator: IEC 60364-5-52 ampacity and voltage-drop checks; IEC 60949 adiabatic short-circuit withstand
+- Confidence: `high`
+- Private-library check: `standard_not_redistributed`
+
+The executable case follows standard derated ampacity, voltage-drop and adiabatic withstand checks; standards are cited, not redistributed.
+
+## Derived traceability
+
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#core-swap-002`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
+
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

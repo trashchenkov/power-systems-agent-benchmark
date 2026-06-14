@@ -1,26 +1,36 @@
-# Source card: scenario dispatch under uncertainty
+# Source card: dispatch_uncertainty
 
 ## Benchmark family
 
 - Family: `dispatch_uncertainty`
 - Candidate: `REL-TASK-015`
-- Subdomain: market and dispatch planning under uncertainty
-- Public case: `tasks/dispatch_uncertainty/public/case_001/task.json`
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on robust/scenario economic dispatch: generation is scheduled against uncertain load and renewable output, with a reserve margin maintained for the worst net-load scenario.
+- Primary source: Prof. C.Y. Chung, Advanced Prediction Techniques Applied to Smart Grids, keynote slides, University of Saskatchewan/SaskPower, c. 2019-2020
+- Locator: local OCR Advanced Prediction Techniques Applied to Smart Grids_1f598a10.txt, pp. 10-12 / lines 139-220; broad decision-making slide only, no resolved peer-reviewed dispatch source
+- Confidence: `low`
+- Verification status: `local_slides_broad_match_unresolved_primary`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
 
-Representative references:
+Broadly mentions uncertainty management, economic dispatch, OPF and unit commitment; not a specific verifiable primary source for the robust-dispatch formulation, so confidence is intentionally low.
 
-- Scenario robust economic dispatch and reserve scheduling.
-- Unit/economic dispatch practice with generator bounds and variable costs.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-015`.
+## DOI / locator verification
 
-## Operational instance
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
-The public case gives two thermal generators, three time periods, and three load/renewable scenarios. The agent must schedule generator outputs that cover maximum net load plus reserve in every period while minimizing variable cost.
+## Derived traceability
 
-## Evaluation logic
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-015`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The evaluator independently computes the worst-case net load by period, constructs the least-cost dispatch from the listed generators, verifies generator bounds and reserve margins, and checks the submitted dispatch, margins, and total cost.
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

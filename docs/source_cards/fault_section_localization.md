@@ -1,22 +1,30 @@
-# Source card: fault-section localization from FCI states
+# Source card: fault_section_localization
 
 ## Benchmark family
 
 - Family: `fault_section_localization`
 - Candidate: `REL-TASK-052`
-- Subdomain: distribution reliability and outage management
-- Public case: `tasks/fault_section_localization/public/case_001/task.json`
+- Subdomain: distribution reliability & outage management
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-This task models standard outage-management reasoning on radial feeders: upstream fault-current indicators identify the path to the fault, and downstream outage complaints identify the de-energized customer set.
+- Primary source: Brown, Faulted Circuit Indicators and System Reliability
+- Locator: DOI:10.1109/REPCON.2000.848037
+- Confidence: `medium`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/faulted-circuit-indicators-and-system-reliability.pdf`
 
-Representative references:
+Grounds FCI indications, patrol direction and outage localization; the case is a compact radial-feeder graph instance.
 
-- FCI-assisted fault section localization in radial distribution feeders.
-- Outage-management systems that combine device telemetry and customer calls.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-052`.
+## Derived traceability
 
-## Evaluation logic
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-052`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The evaluator tests every candidate section against observed FCI states and complaint nodes, selects the minimum-mismatch section, derives downstream affected customers, and checks the submitted structured answer.
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

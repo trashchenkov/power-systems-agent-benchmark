@@ -1,22 +1,30 @@
-# Source card: BESS ancillary response
+# Source card: bess_ancillary_response
 
 ## Benchmark family
 
 - Family: `bess_ancillary_response`
 - Candidate: `REL-TASK-004`
-- Subdomain: converter-dominated grids and storage
-- Public case: `tasks/bess_ancillary_response/public/case_001/task.json`
+- Subdomain: converter-dominated grids & storage
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-This task models standard battery energy storage ancillary response: frequency-watt active-power droop and volt-var reactive-power droop, with inverter apparent-power capability and SOC update.
+- Primary source: Gonzalez-Longatt and Rueda Torres, Modelling and Simulation of Power Electronic Converter Dominated Power Systems in PowerFactory
+- Locator: DOI:10.1007/978-3-030-54124-8
+- Confidence: `medium`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/(Power Systems) Francisco M. Gonzalez-Longatt, José Luis Rueda Torres - Modelling and Simulation of Powe__4fd95b17.pdf`
 
-Representative references:
+Grounds converter/BESS ancillary-response modelling; the benchmark uses a compact droop-response instance.
 
-- Grid-forming/grid-following storage ancillary-service response models.
-- Frequency-watt and volt-var controls with inverter capability constraints.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-004`.
+## Derived traceability
 
-## Evaluation logic
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-004`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The evaluator independently applies the public droop coefficients to each measurement, clips active power by charge/discharge limits, clips reactive power by remaining apparent-power capability, simulates SOC, and checks submitted P/Q traces and final SOC.
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

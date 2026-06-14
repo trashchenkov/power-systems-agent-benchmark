@@ -1,5 +1,36 @@
-# Source card: minimum synchronous-machine share
+# Source card: min_synchronous_share
 
-Family `min_synchronous_share` (`REL-TASK-007`) models converter-dominated grid adequacy. The executable case enumerates synchronous unit commitments and selects the minimum online synchronous share satisfying RoCoF and short-circuit-ratio constraints.
+## Benchmark family
 
-RoCoF is recomputed from the swing equation, `|df/dt| = dP * f0 / (2 * E_kinetic)` with `E_kinetic = sum(H_i * S_i)` in MW·s (the surrogate uses unit `p_mw` as the MVA base). The 2.0 Hz/s limit follows the ENTSO-E RfG rate-of-change-of-frequency withstand requirement and suits this island-style case where the dimensioning loss is large relative to system kinetic energy.
+- Family: `min_synchronous_share`
+- Candidate: `REL-TASK-007`
+- Current implementation: executable public task with deterministic evaluator
+
+## Primary source grounding
+
+- Primary source: Yunfeng Wen, Rongzhen Zhao, Mingzeng Huang, Chuangxin Guo, Data-driven transient frequency stability assessment: A deep learning method with combined estimation-correction framework, Energy Conversion and Economics, 2020
+- Locator: DOI:10.1049/enc2.12015; local OCR Advanced Prediction... lines 24128-24220 discuss low inertia / renewable replacement of synchronous units, but not SCR/minimum-share optimization
+- Confidence: `low`
+- Verification status: `doi_resolved_but_partial_match_only`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
+
+Resolved a related low-inertia frequency-stability source, but it does not fully ground the benchmark’s minimum synchronous-share plus SCR formulation; kept low per provenance criterion.
+
+## DOI / locator verification
+
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
+
+## Derived traceability
+
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-007`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
+
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

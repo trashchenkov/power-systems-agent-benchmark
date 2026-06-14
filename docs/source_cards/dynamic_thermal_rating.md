@@ -1,30 +1,36 @@
-# Source card: dynamic thermal rating of overhead lines
+# Source card: dynamic_thermal_rating
 
 ## Benchmark family
 
 - Family: `dynamic_thermal_rating`
 - Candidate: `REL-TASK-014`
-- Subdomain: transmission operations and asset ratings
-- Public case: `tasks/dynamic_thermal_rating/public/case_001/task.json`
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on standard overhead-conductor dynamic thermal rating practice. A conductor current limit is obtained from a steady-state heat balance: Joule heating and solar heating must not exceed convective and radiative cooling at the maximum allowed conductor temperature.
+- Primary source: N. Safari, S. M. Mazhari, C. Y. Chung, S. B. Ko, Secure Probabilistic Prediction of Dynamic Thermal Line Rating, Journal of Modern Power Systems and Clean Energy, 2022
+- Locator: DOI:10.35833/mpce.2020.000641; local OCR Advanced Prediction... lines 640-749 cites RTTR heat balance/weather factors and this paper
+- Confidence: `medium`
+- Verification status: `doi_resolved_crossref; local slides cite the resolved source`
+- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
 
-Representative engineering references:
+Replaces vague dynamic-line-rating slide locator with a DOI-resolved MPCE article plus local slide cross-reference; benchmark remains a compact heat-balance surrogate.
 
-- IEEE 738 style heat-balance methods for calculating current-temperature relationships of bare overhead conductors.
-- CIGRE/utility dynamic line rating practice using weather-dependent wind speed, ambient temperature, and solar radiation.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-014`.
+## DOI / locator verification
 
-## Operational instance
+- DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
+- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
+- If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
-The public case gives conductor diameter, resistance, emissivity, absorptivity, maximum conductor temperature, scheduled current, and a four-point weather series. The agent must compute ampacity at each timestamp, identify the limiting timestamp, and list timestamps where the scheduled current exceeds the dynamic rating.
+## Derived traceability
 
-## Evaluation logic
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-014`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The evaluator independently solves the compact heat balance for each weather point. It checks all timestamp ampacities, the minimum rating, the limiting timestamp, and overload timestamps. The public task no longer exposes an expected answer.
+## Benchmark adaptation
 
-## Limitations
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
 
-The instance is intentionally compact and omits conductor heat capacity, wind angle, detailed air-property corrections, and full IEEE/CIGRE parameterization. Those can be added in hidden or larger cases.
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

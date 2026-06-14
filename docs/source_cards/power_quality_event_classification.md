@@ -1,30 +1,30 @@
-# Source card: power-quality event classification
+# Source card: power_quality_event_classification
 
 ## Benchmark family
 
 - Family: `power_quality_event_classification`
 - Candidate: `GAP-TASK-008`
-- Subdomain: power quality and standards
-- Public case: `tasks/power_quality_event_classification/public/case_001/task.json`
+- Subdomain: power quality & standards
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on common power-quality monitoring practice: RMS voltage traces are classified into normal operation, voltage sag, voltage swell, or interruption according to threshold bands. Event start/end times are obtained from the contiguous interval where voltage leaves the normal band.
+- Primary source: IEC 61000-4-30 / power-quality RMS event classification practice
+- Locator: IEC 61000-4-30 measurement classes; sag/swell/interruption RMS thresholds
+- Confidence: `high`
+- Private-library check: `standard_not_redistributed`
 
-Representative engineering references:
+The executable case directly applies standard power-quality event threshold categories to RMS windows.
 
-- IEC 61000-4-30 style measurement of power-quality events.
-- IEEE/IEC power-quality terminology for sags, swells, and interruptions.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#gap-task-008`.
+## Derived traceability
 
-## Operational instance
+- Task-bank entry: `literature/task_bank_v4_gap_fill_balanced.md#gap-task-008`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The public case gives a short RMS voltage/current trace and explicit classification thresholds. The agent must identify the non-normal interval, classify the event, and report duration, minimum voltage, and maximum current.
+## Benchmark adaptation
 
-## Evaluation logic
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
 
-The evaluator independently classifies every timestamp by the published thresholds, determines the event interval, and checks the submitted class and numeric summaries. Unknown answer fields are rejected.
+## Licensing note
 
-## Limitations
-
-The public instance uses RMS samples rather than raw waveform windows, so it does not test harmonic analysis, flicker, notching, or transient waveform feature extraction. Those are natural extensions for hidden cases.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

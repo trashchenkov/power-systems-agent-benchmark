@@ -1,30 +1,30 @@
-# Source card: EN 50160 voltage compliance
+# Source card: en50160_voltage_compliance
 
 ## Benchmark family
 
 - Family: `en50160_voltage_compliance`
 - Candidate: `REL-TASK-021`
-- Subdomain: distribution systems and power quality
-- Public case: `tasks/en50160_voltage_compliance/public/case_001/task.json`
+- Subdomain: distribution systems & DER/EV
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on voltage-quality compliance practice inspired by EN 50160: supply voltage is assessed over RMS measurement intervals, with most values expected to remain within a normal band around nominal voltage and no values breaching broader absolute limits.
+- Primary source: EN 50160 voltage-characteristics compliance practice
+- Locator: EN 50160 supply-voltage characteristics; 10-minute RMS voltage limits
+- Confidence: `high`
+- Private-library check: `standard_not_redistributed`
 
-Representative engineering references:
+The executable case directly applies EN-50160-style voltage compliance thresholds; the standard itself is not redistributed.
 
-- EN 50160 voltage characteristics of electricity supplied by public distribution systems.
-- Utility voltage-quality monitoring practice using 10-minute RMS values.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-021`.
+## Derived traceability
 
-## Operational instance
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-021`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The public case gives a short series of per-unit voltages, normal and absolute limits, and a list of candidate tap changes. The agent must decide whether the unmitigated series is compliant, report out-of-band timestamps, summarize minimum/maximum voltage, and select the best listed tap correction.
+## Benchmark adaptation
 
-## Evaluation logic
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
 
-The evaluator independently counts values inside the normal band, checks absolute-limit violations, and recomputes the best tap change. It checks the submitted decision, percentages, timestamp lists, and tap recommendation.
+## Licensing note
 
-## Limitations
-
-The public case uses a compact ten-point trace rather than a full weekly EN 50160 assessment. It is intended to test whether the agent can apply the threshold logic and mitigation selection without copying an exposed answer.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

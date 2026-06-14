@@ -1,20 +1,30 @@
-# Source card: critical clearing time
+# Source card: critical_clearing_time
 
-Family `critical_clearing_time` (`REL-TASK-048`) models first-swing transient
-stability for a single machine connected to an infinite bus. The executable case
-publishes machine data only (H, f0, Pm, pre-/during-/post-fault transfer
-capability); the agent computes the critical clearing angle from the equal-area
-criterion and the critical clearing time from the closed-form swing-equation
-solution valid for zero during-fault power transfer:
+## Benchmark family
 
-    delta_0   = asin(Pm / Pmax_pre)
-    delta_max = pi - asin(Pm / Pmax_post)
-    cos(delta_cr) = (Pm * (delta_max - delta_0) + Pmax_post * cos(delta_max)) / Pmax_post
-    t_cr = sqrt(4 * H * (delta_cr - delta_0) / (2 * pi * f0 * Pm))
+- Family: `critical_clearing_time`
+- Candidate: `REL-TASK-048`
+- Subdomain: stability & dynamics
+- Current implementation: executable public task with deterministic evaluator
 
-Method reference: standard textbook treatment (e.g. Kundur, *Power System
-Stability and Control*). This replaces the earlier sweep-table surrogate whose
-inputs carried precomputed stable/unstable labels and reduced the task to table
-lookup; the agent now performs the stability computation itself. Multi-machine
-or non-zero during-fault transfer variants require numerical integration and are
-candidates for simulator-backed hidden cases.
+## Primary source grounding
+
+- Primary source: Equal-area criterion for first-swing transient stability
+- Locator: Kundur, Power System Stability and Control; also supported by Glover/Overbye/Sarma stability-program discussion
+- Confidence: `high`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/J. Duncan Glover, Thomas J. Overbye, Mulukutla S. Sarma - Power System Analysis and Design-Cengage Learning (2017).pdf`
+
+Canonical equal-area method; the executable case directly computes critical angle/time from the stated swing-equation parameters.
+
+## Derived traceability
+
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-048`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
+
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.
