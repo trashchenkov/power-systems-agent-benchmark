@@ -1,21 +1,30 @@
-# Source card: transformer thermal loading (IEC 60076-7)
+# Source card: transformer_thermal_loading
 
-Family `transformer_thermal_loading` (`CORE-SWAP-001`) models the loading-guide
-thermal calculation for an ONAN transformer over a stepwise load cycle:
+## Benchmark family
 
-- steady-state top-oil rise `dTheta_or * ((1 + R*K^2)/(1 + R))^x`;
-- exponential top-oil response between steps with time constant `tau_oil`;
-- hot-spot temperature as top-oil plus the rated gradient times `K^y`;
-- relative insulation ageing rate `2^((theta_hs - 98)/6)` for non-thermally
-  upgraded paper, accumulated into equivalent ageing hours;
-- an admissibility verdict against the hot-spot limit (120 C, the IEC 60076-7
-  normal-cyclic-loading hot-spot ceiling).
+- Family: `transformer_thermal_loading`
+- Candidate: `CORE-SWAP-001`
+- Subdomain: transmission operations & asset ratings
+- Current implementation: executable public task with deterministic evaluator
 
-Method reference: IEC 60076-7 loading guide (equivalently IEEE C57.91). Compact
-simplifications, stated in the evaluator: end-of-step reporting and a neglected
-winding time constant (the hot-spot gradient follows the load instantly).
+## Primary source grounding
 
-Replacement note: this family replaces `electric_boiler_capacity_sizing` in the
-41-task balanced core. Transformers — the most loaded-and-aged asset class in
-any utility — previously had zero coverage, while building-heat boiler sizing
-sat outside the power-systems scope of the benchmark.
+- Primary source: IEC 60076-7 transformer loading guide
+- Locator: IEC 60076-7 top-oil / hot-spot exponential thermal model; IEEE C57.91 comparable practice
+- Confidence: `high`
+- Private-library check: `standard_not_redistributed`
+
+The executable case directly implements the standard top-oil/hot-spot and ageing-factor method in compact form.
+
+## Derived traceability
+
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#core-swap-001`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
+
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

@@ -1,76 +1,30 @@
-# Source card: Ybus construction from network data
+# Source card: ybus_construction
 
 ## Benchmark family
 
 - Family: `ybus_construction`
 - Candidate: `REL-TASK-047`
-- Subdomain: power-flow modelling and transmission analysis
+- Subdomain: power flow, modelling & transmission analysis
 - Current implementation: executable public task with deterministic evaluator
 
-## Source grounding
+## Primary source grounding
 
-Primary local provenance:
+- Primary source: Glover, Overbye and Sarma, Power System Analysis and Design
+- Locator: Cengage Learning, 2017; bus admittance matrix construction
+- Confidence: `high`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/J. Duncan Glover, Thomas J. Overbye, Mulukutla S. Sarma - Power System Analysis and Design-Cengage Learning (2017).pdf`
 
-- `literature/metadata/v4_balanced_core_shortlist.md`
-- `literature/task_bank_v4_gap_fill_balanced.md#rel-task-047`
+Canonical textbook grounding for Ybus diagonal/off-diagonal construction; executable case follows the method directly.
 
-The shortlisted task is the standard power-system modelling operation of constructing the bus admittance matrix from branch and shunt data. This is a prerequisite for Newton-Raphson power flow, DC/AC network analysis, fault calculations, and state estimation.
+## Derived traceability
 
-## Operational problem extracted
-
-Given:
-
-- ordered bus list;
-- branch terminal buses;
-- branch series impedance `r + jx` in per unit;
-- total branch charging susceptance `b` in per unit;
-- explicit bus shunts `g + jb`.
-
-The solver must build the nodal admittance matrix `Ybus`:
-
-- for each branch, compute `y = 1 / (r + jx)`;
-- add `y + j*b/2` to both terminal diagonal entries;
-- add `-y` to symmetric off-diagonal entries;
-- add explicit shunts to their bus diagonal entries.
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-047`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
 ## Benchmark adaptation
 
-The public case uses a three-bus transmission fragment with three lines and one shunt. The task is intentionally small enough to inspect by hand but requires complex arithmetic and matrix assembly rather than copying a hidden oracle.
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
 
-The agent-facing packet contains the full input network and output schema. It does not contain `expected_submission`, `baseline_submission`, or evaluator-only fields.
+## Licensing note
 
-## Evaluator
-
-Evaluator module:
-
-- `prototype/evaluators/evaluate_ybus_construction.py`
-
-The evaluator independently recomputes `Ybus` from `task.network` and checks:
-
-- required fields `buses` and `ybus`;
-- exact bus order;
-- square matrix shape;
-- parseable complex entries represented as `{re, im}`;
-- maximum complex absolute error within `numeric_tolerance`.
-
-Metrics:
-
-- `feasible`;
-- `score`;
-- `max_abs_error`;
-- `entry_errors`.
-
-## Baseline
-
-Baseline module:
-
-- `baselines/ybus_construction/baseline.py`
-
-The baseline uses the same public formula, not a stored oracle, to produce a valid sample submission.
-
-## Limitations and next upgrades
-
-- The public task has no transformer taps or phase-shifters yet.
-- The current evaluator assumes symmetric passive branches.
-- Hidden cases should add off-nominal taps, multiple voltage levels, switched shunts, and larger sparse matrices.
-- A later version can compare against pandapower/MATPOWER case conversion for external validation.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

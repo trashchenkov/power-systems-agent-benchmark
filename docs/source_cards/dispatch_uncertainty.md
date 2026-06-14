@@ -1,26 +1,30 @@
-# Source card: scenario dispatch under uncertainty
+# Source card: dispatch_uncertainty
 
 ## Benchmark family
 
 - Family: `dispatch_uncertainty`
 - Candidate: `REL-TASK-015`
-- Subdomain: market and dispatch planning under uncertainty
-- Public case: `tasks/dispatch_uncertainty/public/case_001/task.json`
+- Subdomain: market/dispatch planning & uncertainty
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on robust/scenario economic dispatch: generation is scheduled against uncertain load and renewable output, with a reserve margin maintained for the worst net-load scenario.
+- Primary source: Advanced Prediction Techniques Applied to Smart Grids
+- Locator: local archive; dispatch under renewable forecast uncertainty sections
+- Confidence: `medium`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
 
-Representative references:
+Grounds uncertainty-aware dispatch framing; the executable case uses explicit robust-dispatch equations.
 
-- Scenario robust economic dispatch and reserve scheduling.
-- Unit/economic dispatch practice with generator bounds and variable costs.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-015`.
+## Derived traceability
 
-## Operational instance
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-015`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The public case gives two thermal generators, three time periods, and three load/renewable scenarios. The agent must schedule generator outputs that cover maximum net load plus reserve in every period while minimizing variable cost.
+## Benchmark adaptation
 
-## Evaluation logic
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
 
-The evaluator independently computes the worst-case net load by period, constructs the least-cost dispatch from the listed generators, verifies generator bounds and reserve margins, and checks the submitted dispatch, margins, and total cost.
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

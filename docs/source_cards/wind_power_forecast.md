@@ -1,26 +1,30 @@
-# Source card: wind-power point forecast
+# Source card: wind_power_forecast
 
 ## Benchmark family
 
 - Family: `wind_power_forecast`
 - Candidate: `REL-TASK-009`
-- Subdomain: forecasting and uncertainty
-- Public case: `tasks/wind_power_forecast/public/case_001/task.json`
+- Subdomain: forecasting & uncertainty
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on wind-power forecasting practice: weather forecasts, especially wind speed and air density, are transformed into generation estimates through a turbine power curve. Recent measured production can be used to estimate a simple residual bias.
+- Primary source: LoRA-Finetuned LLM for Multi-Step Wind Power Forecasting
+- Locator: DOI:10.13140/RG.2.2.33696.34561
+- Confidence: `medium`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/LoRA-Finetuned-LLM-for-Multi-Step-Wind-Power-Forecasting.pdf`
 
-Representative references:
+Grounds multi-step wind-power forecasting; the case uses deterministic power-curve and residual-bias calculations.
 
-- Wind-turbine power-curve forecasting practice used in operational renewable forecasting.
-- Density-corrected speed-to-power conversion for wind turbines.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-009`.
+## Derived traceability
 
-## Operational instance
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-009`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The public case gives turbine count, rated power, cut-in/rated/cut-out speeds, historical weather and actual power, and a four-step weather forecast. The agent must compute a bias-corrected MW forecast, total forecast energy, and the peak timestamp.
+## Benchmark adaptation
 
-## Evaluation logic
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
 
-The evaluator independently applies the power curve, computes the historical residual bias, clamps forecasts to the physical farm capacity, and checks submitted values within tolerance.
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

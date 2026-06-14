@@ -1,30 +1,30 @@
-# Source card: dynamic thermal rating of overhead lines
+# Source card: dynamic_thermal_rating
 
 ## Benchmark family
 
 - Family: `dynamic_thermal_rating`
 - Candidate: `REL-TASK-014`
-- Subdomain: transmission operations and asset ratings
-- Public case: `tasks/dynamic_thermal_rating/public/case_001/task.json`
+- Subdomain: transmission operations & asset ratings
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on standard overhead-conductor dynamic thermal rating practice. A conductor current limit is obtained from a steady-state heat balance: Joule heating and solar heating must not exceed convective and radiative cooling at the maximum allowed conductor temperature.
+- Primary source: Advanced Prediction Techniques Applied to Smart Grids
+- Locator: local archive dynamic-line-rating / weather-uncertainty sections
+- Confidence: `medium`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
 
-Representative engineering references:
+Grounds weather-dependent rating and operational uncertainty; the task implements an IEEE-738-style heat-balance surrogate.
 
-- IEEE 738 style heat-balance methods for calculating current-temperature relationships of bare overhead conductors.
-- CIGRE/utility dynamic line rating practice using weather-dependent wind speed, ambient temperature, and solar radiation.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-014`.
+## Derived traceability
 
-## Operational instance
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-014`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The public case gives conductor diameter, resistance, emissivity, absorptivity, maximum conductor temperature, scheduled current, and a four-point weather series. The agent must compute ampacity at each timestamp, identify the limiting timestamp, and list timestamps where the scheduled current exceeds the dynamic rating.
+## Benchmark adaptation
 
-## Evaluation logic
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
 
-The evaluator independently solves the compact heat balance for each weather point. It checks all timestamp ampacities, the minimum rating, the limiting timestamp, and overload timestamps. The public task no longer exposes an expected answer.
+## Licensing note
 
-## Limitations
-
-The instance is intentionally compact and omits conductor heat capacity, wind angle, detailed air-property corrections, and full IEEE/CIGRE parameterization. Those can be added in hidden or larger cases.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

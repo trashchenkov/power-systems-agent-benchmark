@@ -1,22 +1,30 @@
-# Source card: islanded microgrid P/Q dispatch
+# Source card: islanded_microgrid_pq_dispatch
 
 ## Benchmark family
 
 - Family: `islanded_microgrid_pq_dispatch`
 - Candidate: `REL-TASK-022`
-- Subdomain: microgrids and DER dispatch
-- Public case: `tasks/islanded_microgrid_pq_dispatch/public/case_001/task.json`
+- Subdomain: microgrids & DER dispatch
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-The task is based on islanded microgrid active/reactive dispatch: a diesel unit and grid-forming inverter must balance P/Q demand, respect inverter apparent-power capability, and maintain voltage within an acceptable range.
+- Primary source: Distributed active/reactive dispatch in isolated microgrids
+- Locator: local archive fmincon / microgrid dispatch source
+- Confidence: `medium`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/fmincon.pdf`
 
-Representative references:
+Grounds joint P/Q dispatch with inverter capability; the task uses explicit balance, voltage-sensitivity and capability constraints.
 
-- Islanded microgrid P/Q balancing and inverter capability curves.
-- Voltage support through reactive power in low-voltage microgrids.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-022`.
+## Derived traceability
 
-## Evaluation logic
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-022`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The evaluator independently uses available inverter active power first, allocates reactive power within the inverter capability circle, computes diesel P/Q, voltage from the public sensitivity model, and total operating cost. Submitted structured values are checked with numeric tolerance.
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

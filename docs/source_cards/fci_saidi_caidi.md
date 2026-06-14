@@ -1,22 +1,30 @@
-# Source card: SAIDI/CAIDI impact of FCI deployment
+# Source card: fci_saidi_caidi
 
 ## Benchmark family
 
 - Family: `fci_saidi_caidi`
 - Candidate: `REL-TASK-053`
-- Subdomain: distribution reliability and outage management
-- Public case: `tasks/fci_saidi_caidi/public/case_001/task.json`
+- Subdomain: distribution reliability & outage management
+- Current implementation: executable public task with deterministic evaluator
 
-## Source basis
+## Primary source grounding
 
-This task uses standard reliability-index definitions to quantify how FCI-driven restoration-time reductions affect SAIDI and CAIDI.
+- Primary source: Brown, Faulted Circuit Indicators and System Reliability
+- Locator: DOI:10.1109/REPCON.2000.848037
+- Confidence: `medium`
+- Private-library check: `local_archive_extracted/local_lit/power_engineering/faulted-circuit-indicators-and-system-reliability.pdf`
 
-Representative references:
+Grounds reliability-index effects of FCI deployment; the case computes SAIDI/CAIDI changes deterministically.
 
-- Standard SAIDI, SAIFI, and CAIDI definitions for distribution reliability.
-- FCI deployment studies that reduce fault location and restoration time.
-- Repository task-bank source: `literature/task_bank_v4_gap_fill_balanced.md#rel-task-053`.
+## Derived traceability
 
-## Evaluation logic
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-053`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-The evaluator computes baseline customer-minutes and customer interruptions, applies best deployed-FCI restoration-time reductions subject to a minimum duration floor, recomputes SAIDI/CAIDI/SAIFI, and checks the reported improvements.
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

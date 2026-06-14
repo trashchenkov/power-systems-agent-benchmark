@@ -1,78 +1,30 @@
-# Source card: corrective transmission switching after contingency
+# Source card: corrective_transmission_switching
 
 ## Benchmark family
 
 - Family: `corrective_transmission_switching`
 - Candidate: `GAP-TASK-002`
 - Subdomain: transmission operations, contingency & congestion management
+- Current implementation: executable public task with deterministic evaluator
 
-## Primary source provenance
+## Primary source grounding
 
-- **Security Constrained Unit Commitment with Corrective Transmission Switching**
-  - Locator: https://arxiv.org/abs/2001.00597v1
-  - Local benchmark note: `literature/task_bank_v4_gap_fill_balanced.md#GAP-TASK-002`
-  - Confidence: medium-strong
+- Primary source: Security Constrained Unit Commitment with Corrective Transmission Switching
+- Locator: arXiv:2001.00597v1
+- Confidence: `medium`
+- Private-library check: `external_arxiv_not_in_private_pdf_corpus`
 
-## Source-derived operational problem
+Primary source for post-contingency corrective switching; public case is a compact DC-flow adaptation, not the full SCUC MILP.
 
-The source frames corrective transmission switching as an operational/security action used after contingencies to remove network security violations and improve dispatch feasibility/cost. The benchmark adaptation isolates the corrective switching subproblem from the full SCUC formulation:
+## Derived traceability
 
-- a post-contingency network has an overloaded branch;
-- a small set of candidate branch status changes is available;
-- the operator/agent must choose a limited corrective action;
-- the resulting topology must remain connected and satisfy emergency line limits.
+- Task-bank entry: `literature/task_bank_v4_gap_fill_balanced.md#gap-task-002`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
-## Public executable adaptation
+## Benchmark adaptation
 
-The public case uses a compact lossless DC power-flow model so the task is executable without external solver dependencies:
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
 
-- buses with balanced active-power injections;
-- branches with reactance `x_pu`, emergency rating `rating_mw`, and initial `closed` state;
-- one initiating contingency is already represented as an initially open branch;
-- candidate switches are explicit open/close actions;
-- the agent must compute post-action DC flows and submit the selected action.
+## Licensing note
 
-This is intentionally a small instance, but it is no longer an oracle-copy task: the agent must derive the action from the network data and candidate actions.
-
-## Agent-facing input
-
-- `task.json` with buses, branches, candidate switches, switching budget, and DC model description.
-- No `expected_submission`, `baseline_submission`, hidden evaluator state, or source-task path is exposed in the agent packet.
-
-## Submission contract
-
-```json
-{
-  "close_branches": ["l14"],
-  "open_branches": [],
-  "reported_flows_mw": {"l12": 70.714286},
-  "rationale": "optional free text"
-}
-```
-
-`reported_flows_mw` is diagnostic only; the evaluator recomputes flows independently.
-
-## Evaluator
-
-File: `prototype/evaluators/evaluate_corrective_transmission_switching.py`
-
-Checks:
-
-1. `close_branches` and `open_branches` are lists of known branch IDs.
-2. Only candidate switches are used.
-3. Switch count does not exceed `switching_budget`.
-4. Resulting graph remains connected.
-5. Independent DC power flow has no active branch above 100% rating.
-6. Score is feasible-first, with minor penalties for extra switching or higher max loading relative to enumerated feasible candidates.
-
-## Baselines
-
-File: `baselines/corrective_transmission_switching/baseline.py`
-
-The reference baseline enumerates no-action and all one-switch candidates, runs the same DC model, and returns the feasible minimum-action repair.
-
-## Known limitations and next step
-
-- Public v1 uses a small DC instance, not the full SCUC+CTS MILP from the source.
-- Hidden variants should scale to larger MATPOWER/PGLib-style DC cases and include multiple contingencies.
-- A later advanced version should couple this with SCUC dispatch decisions and objective-gap scoring against a MILP reference.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

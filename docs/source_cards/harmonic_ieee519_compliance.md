@@ -1,24 +1,30 @@
-# Source card: IEEE 519 harmonic compliance at the PCC
+# Source card: harmonic_ieee519_compliance
 
-Family `harmonic_ieee519_compliance` (`CORE-SWAP-003`) models the routine
-power-quality study at a point of common coupling: compute the short-circuit
-ratio Isc/IL, select the matching IEEE 519-2014 current-distortion limit row,
-compute TDD and per-harmonic current percentages against the maximum demand
-current IL, compute voltage THD, and report every violated limit plus the
-overall verdict.
+## Benchmark family
 
-Key engineering trap preserved by the task: TDD is normalized by the maximum
-demand current IL, not by the measured fundamental — the case publishes both so
-a careless denominator choice produces a wrong answer. The IEEE 519 limit
-table (current rows keyed by Isc/IL for 120 V-69 kV systems; voltage limits
-3 % individual / 5 % THD for 1-69 kV buses) is published inside the task so
-the deterministic evaluator and the agent share identical reference data.
+- Family: `harmonic_ieee519_compliance`
+- Candidate: `CORE-SWAP-003`
+- Subdomain: power quality & standards
+- Current implementation: executable public task with deterministic evaluator
 
-Both compliant and non-compliant draws are valid benchmark instances; hidden
-cases vary Isc/IL across table rows and harmonic magnitudes across the limits.
+## Primary source grounding
 
-Replacement note: this family replaces `pv_soft_cost_sobol` in the 41-task
-balanced core. Harmonic compliance was uncovered (the existing power-quality
-family classifies RMS events such as sags and swells), while Sobol
-decomposition of PV soft costs was generic sensitivity analysis with little
-power-systems content.
+- Primary source: IEEE 519-2014 harmonic-control limits
+- Locator: IEEE 519-2014 current-distortion and voltage-distortion limits
+- Confidence: `high`
+- Private-library check: `standard_not_redistributed`
+
+The executable case directly applies IEEE-519-style TDD/THD limit-table logic; the standard is cited, not redistributed.
+
+## Derived traceability
+
+- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#core-swap-003`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
+
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.

@@ -1,16 +1,30 @@
-# Source card: N-1 generation commitment
+# Source card: n1_generation_commitment
 
-Family `n1_generation_commitment` (`GAP-TASK-001`, formerly published as
-`scuc_n1`) is a compact single-period commitment surrogate: choose the
-least-cost set of units whose total capacity covers demand plus reserve and
-still covers demand after losing the largest committed unit (N-1 on
-generation). Cost is startup plus no-load cost of the committed set.
+## Benchmark family
 
-Naming note: the family was renamed from `scuc_n1` because the original name
-oversold the task. A real security-constrained unit commitment is a
-multi-period MILP with ramps, minimum up/down times, network constraints, and
-line contingencies; none of those are modeled here. The source paper
-(Security Constrained Unit Commitment with Corrective Transmission Switching,
-arXiv:2001.00597) motivates the security framing only — this executable case
-keeps just the loss-of-largest-unit capacity rule. A full SCUC instance over
-PGLib-style cases is a candidate for a simulator/solver-backed hidden track.
+- Family: `n1_generation_commitment`
+- Candidate: `GAP-TASK-001`
+- Subdomain: markets, unit commitment, reserves & adequacy
+- Current implementation: executable public task with deterministic evaluator
+
+## Primary source grounding
+
+- Primary source: Security Constrained Unit Commitment with Corrective Transmission Switching
+- Locator: arXiv:2001.00597v1
+- Confidence: `medium`
+- Private-library check: `external_arxiv_not_in_private_pdf_corpus`
+
+Primary source for N-1/security-constrained UC framing; case is a small deterministic commitment feasibility problem.
+
+## Derived traceability
+
+- Task-bank entry: `literature/task_bank_v4_gap_fill_balanced.md#gap-task-001`
+- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
+
+## Benchmark adaptation
+
+The public case is a compact executable instance derived from the primary method/source above. The source card documents provenance only; it does not change public inputs, formulas, evaluator logic, baselines, hard constraints, or sample submissions.
+
+## Licensing note
+
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.
