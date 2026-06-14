@@ -13,4 +13,6 @@ class SCUCN1Tests(unittest.TestCase):
         submission=solve_case(self.task); submission['committed_units']=['g1','g2']; result=evaluate_case(self.task, submission); self.assertFalse(result["feasible"]); self.assertTrue(any("committed_units" in v for v in result["violations"]), result)
     def test_unknown_field_is_rejected(self):
         submission=solve_case(self.task); submission["answer"]="leak"; result=evaluate_case(self.task, submission); self.assertFalse(result["feasible"]); self.assertTrue(any("unknown answer fields" in v for v in result["violations"]))
+    def test_committed_units_order_independent(self):
+        submission=solve_case(self.task); submission["committed_units"]=list(reversed(submission["committed_units"])); result=evaluate_case(self.task, submission); self.assertTrue(result["feasible"], result)
 if __name__=="__main__": unittest.main()

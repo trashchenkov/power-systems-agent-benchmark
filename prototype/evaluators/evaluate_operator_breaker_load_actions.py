@@ -45,7 +45,15 @@ def evaluate_case(task, submission):
     exp=_expected(task); allowed=set(exp)|{"rationale"}; violations=[]
     extra=set(submission)-allowed
     if extra: violations.append(f"unknown answer fields: {sorted(extra)}")
-    for k,v in exp.items(): _cmp(k, submission.get(k), v, violations)
+    for k,v in exp.items():
+        if k=="selected_actions":
+            # The chosen actions form a set: they are applied commutatively and
+            # scored independently of order, so the listing order is not graded.
+            got=submission.get(k)
+            if not isinstance(got, list) or sorted(map(str,got))!=sorted(map(str,v)):
+                violations.append(f"selected_actions expected {sorted(v)} got {sorted(got) if isinstance(got,list) else got}")
+        else:
+            _cmp(k, submission.get(k), v, violations)
     return {"task_id":task.get("task_id"),"feasible":not violations,"score":1.0 if not violations else 0.0,"study":exp,"violations":violations}
 def main():
     import sys

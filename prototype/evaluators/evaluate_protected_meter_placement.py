@@ -34,11 +34,20 @@ def _cmp(path, got, exp, violations):
     else:
         if got!=exp: violations.append(f"{path} expected {exp} got {got}")
 
+# Both list fields are set-valued: which meters to protect and which attack
+# vectors that protection covers. Their order carries no meaning.
+_SET_FIELDS={"protected_meters","covered_attack_vectors"}
 def evaluate_case(task, submission):
     exp=_expected(task); allowed=set(exp)|{"rationale"}; violations=[]
     extra=set(submission)-allowed
     if extra: violations.append(f"unknown answer fields: {sorted(extra)}")
-    for k,v in exp.items(): _cmp(k, submission.get(k), v, violations)
+    for k,v in exp.items():
+        if k in _SET_FIELDS:
+            got=submission.get(k)
+            if not isinstance(got, list) or sorted(map(str,got))!=sorted(map(str,v)):
+                violations.append(f"{k} expected {sorted(v)} got {sorted(got) if isinstance(got,list) else got}")
+        else:
+            _cmp(k, submission.get(k), v, violations)
     return {"task_id":task.get("task_id"),"feasible":not violations,"score":1.0 if not violations else 0.0,"study":exp,"violations":violations}
 def main():
     import sys

@@ -37,7 +37,10 @@ def evaluate_case(task, submission):
     exp=_expected(task); violations=[]
     extra=set(submission)-ALLOWED
     if extra: violations.append(f"unknown answer fields: {sorted(extra)}")
-    if submission.get("online_units")!=exp["online_units"]: violations.append(f"online_units expected {exp['online_units']} got {submission.get('online_units')}")
+    # online_units is order-independent: which machines are online, not in what order.
+    _ou=submission.get("online_units")
+    if not isinstance(_ou, list) or sorted(map(str,_ou))!=sorted(map(str,exp["online_units"])):
+        violations.append(f"online_units expected {sorted(exp['online_units'])} got {sorted(_ou) if isinstance(_ou,list) else _ou}")
     for k in ["min_synchronous_share_pct","system_inertia_gws","rocof_hz_per_s","short_circuit_ratio"]:
         if k not in submission or not _num(submission[k], exp[k]): violations.append(f"{k} expected {exp[k]} got {submission.get(k)}")
     return {"task_id":task.get("task_id"),"feasible":not violations,"score":1.0 if not violations else 0.0,"study":exp,"violations":violations}

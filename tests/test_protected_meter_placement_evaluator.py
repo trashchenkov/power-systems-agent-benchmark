@@ -13,4 +13,9 @@ class ProtectedMeterPlacementTests(unittest.TestCase):
         submission=solve_case(self.task); submission['protected_meters']=['m12','m23']; result=evaluate_case(self.task, submission); self.assertFalse(result["feasible"]); self.assertTrue(any("protected_meters" in v for v in result["violations"]), result)
     def test_unknown_field_is_rejected(self):
         submission=solve_case(self.task); submission["answer"]="leak"; result=evaluate_case(self.task, submission); self.assertFalse(result["feasible"]); self.assertTrue(any("unknown answer fields" in v for v in result["violations"]))
+    def test_set_fields_are_order_independent(self):
+        submission=solve_case(self.task)
+        submission["protected_meters"]=list(reversed(submission["protected_meters"]))
+        submission["covered_attack_vectors"]=list(reversed(submission["covered_attack_vectors"]))
+        result=evaluate_case(self.task, submission); self.assertTrue(result["feasible"], result)
 if __name__=="__main__": unittest.main()

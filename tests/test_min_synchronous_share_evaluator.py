@@ -15,4 +15,6 @@ class MinSynchronousShareEvaluatorTests(unittest.TestCase):
         submission=solve_case(self.task); submission['short_circuit_ratio'] += 0.1; result=evaluate_case(self.task, submission); self.assertFalse(result["feasible"]); self.assertTrue(any("short_circuit_ratio" in v for v in result["violations"]), result)
     def test_unknown_field_is_rejected(self):
         submission=solve_case(self.task); submission["answer"]="leak"; result=evaluate_case(self.task, submission); self.assertFalse(result["feasible"]); self.assertTrue(any("unknown answer fields" in v for v in result["violations"]))
+    def test_online_units_order_independent(self):
+        submission=solve_case(self.task); submission["online_units"]=list(reversed(submission["online_units"])); result=evaluate_case(self.task, submission); self.assertTrue(result["feasible"], result)
 if __name__=="__main__": unittest.main()
