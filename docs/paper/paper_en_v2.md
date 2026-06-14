@@ -318,8 +318,10 @@ perturbations, one per family. A held-out case is produced from a public case by
 redrawing its numerical content — network parameters, weather series, load
 profiles, a fault location together with the indicator readings and customer
 complaints it implies — under a private random seed, and a draw is accepted only if
-the family's reference solver still solves it and the evaluator confirms the
-solution feasible, with a deterministic redraw otherwise. Whoever operates a
+the family's reference solver still solves it, the evaluator confirms the solution
+feasible, and no small perturbation of that solution scores higher — keeping the
+reference solution the optimum against which the case is scored (Section 6) — with a
+deterministic redraw otherwise. Whoever operates a
 leaderboard keeps the seed private; anyone else can read exactly how held-out cases
 are constructed without learning the particular instances of any round. This makes
 the held-out set, normally the most leak-prone component of a benchmark, auditable
@@ -405,20 +407,27 @@ or keeping the network radial — and a solution is *feasible* only if it violat
 of them. The score then grades quality among feasible solutions; an infeasible
 solution scores zero however close it may have looked.
 
-How the score is computed depends on the task. An exact computation is scored against
-numeric tolerances. A control or optimization task combines feasibility on the
-constraints with quality on the objective; where the optimum is not unique, as in
-dispatch, the evaluator re-simulates the submitted decision and scores the gap between
-its cost and the optimal cost, so that an alternative optimum of equal cost receives
-full credit and a feasible but costlier solution receives partial credit. A
-classification or localization task is scored against exact sets with enumerated
-misses, and a standards-compliance task as pass/fail with diagnostic fields.
+How the score is computed depends on the task, but every score is reported *relative
+to the reference optimum*: it is scaled so that an optimal solution earns exactly one,
+and a feasible but worse solution earns a fraction below it. This matters because many
+tasks have no natural unit ceiling on their raw objective — a reactive effort in kvar,
+a switching cost, an amount of restored load — so without this scaling even a perfect
+answer would score below one. The reference solver for each family computes that
+optimum and is optimal by construction; an agent's solution, being one feasible
+solution among many, cannot exceed it, and should a submission nonetheless score
+higher the reference was not optimal on that case and the reported score is capped at
+one. An exact computation is scored against numeric tolerances; a control or
+optimization task scores the gap between the submitted objective and the optimum, so
+that an alternative optimum of equal cost receives full credit and a feasible but
+costlier solution receives partial credit; a classification or localization task is
+scored against exact sets with enumerated misses; and a standards-compliance task as
+pass/fail with diagnostic fields.
 
 A microgrid dispatch task makes the distinction concrete: its hard constraints are
 the power balance, the generator and battery limits, and the state-of-charge bounds;
-any schedule meeting all of them is feasible, and among feasible schedules the score
-declines with the gap between its cost and the least-cost schedule — so a feasible but
-expensive dispatch counts as feasible yet scores below one.
+any schedule meeting all of them is feasible, and among feasible schedules the
+least-cost schedule scores exactly one while a costlier feasible dispatch scores below
+one in proportion to its cost gap.
 
 At the level of a whole run we report two aggregates that need not agree: the
 *feasible rate*, the fraction of tasks whose solution satisfied every hard
@@ -429,33 +438,39 @@ alongside the mean score.
 
 ## 7. Reproducibility
 
-The benchmark is intended to be re-run rather than taken on trust. A single command
+Every number in this paper can be regenerated from the repository. A single command
 runs the unit tests over the evaluators, the reference solvers, the runner, and the
-generator; validates every artifact; evaluates each of the 41 public sample
-solutions individually; and runs the reference solvers across the public set. Those
-solvers are built on the same computational kernels as the evaluators and return all
-41 cases feasible at a mean score of 0.997. We present this figure as a
-self-consistency check on the contract rather than as evidence that the tasks are
-easy — a distinction that proves important, because, as Section 8.2 shows, this very
-self-consistency is blind to errors in an evaluator: a reference solver derived from
-a faulty evaluator agrees with it by construction. Continuous integration runs the
+generator; validates every artifact; evaluates each of the 41 public sample solutions
+individually; and runs the reference solvers across the public set, which return all
+41 cases feasible. Because each task's score is measured relative to its own reference
+optimum (Section 6), a reference solution scores one by construction, so the check
+confirms not that the tasks are easy but that every task has a contract-valid,
+physically consistent reference solution. One limit of such a check is worth stating
+plainly: a reference solver and an evaluator built on the same kernels can share the
+same mistake and still agree, so their agreement confirms the contract but cannot, by
+itself, certify the evaluator's underlying physics. Continuous integration runs the
 full check on every change.
 
 ## 8. Experiments
 
-We evaluated three command-line agents under identical prompts, a fixed per-task
-timeout, and the infrastructure-retry policy of Section 4.2, with no adaptation of
-the agents to the benchmark: a coding agent on a frontier general model at medium
-reasoning effort, an IDE agent on a proprietary model, and an open-source agent on a
-small open model. We refer to them below as codex, cursor, and opencode, with the
-exact versions recorded in the appendix.
+We evaluated three command-line agents on an identical task input — the same
+`task.json` and the same instruction file for every agent on every task — under a
+fixed per-task timeout and the infrastructure-retry policy of Section 4.2, with no
+adaptation of the agents to the benchmark. Each agent was invoked through its own
+command-line interface and ran under whatever internal system prompt and
+scaffolding it ships with; we standardize what the task asks, not how an agent
+organizes itself to answer it, since that scaffolding is part of what an agent is
+and what the benchmark compares. The three are Codex running gpt-5.5 at medium
+reasoning effort, Cursor's command-line agent running composer-2.5, and the
+open-source OpenCode agent running deepseek-v4-flash; we refer to them below as
+codex, cursor, and opencode.
 
 ### 8.1 Public versus held-out evaluation
 
 The reference round was run after the corrections described in this paper. Each agent
 attempted the public case of every family and one freshly generated held-out case
-per family drawn from a new private seed; no run encountered an unresolved
-infrastructure failure, so the metrics with and without retries coincide.
+per family drawn from a new private seed. No run triggered the retry policy of
+Section 4.2, so the figures below are reported directly.
 
 | agent | public feasible | public perfect | public mean | held-out feasible | held-out perfect | held-out mean |
 |---|---|---|---|---|---|---|
