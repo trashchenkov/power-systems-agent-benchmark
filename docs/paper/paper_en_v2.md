@@ -573,9 +573,9 @@ benchmark turns power-system tasks into checks that recompute physics, and on a 
 of current agents it discriminates between them consistently across its public and
 held-out splits. Its most transferable contribution is not any single task but a
 method: reading a unanimous failure as a defect signal, which over the course of this
-work uncovered ten specification defects and a latent error in an evaluator's physics
-that the benchmark could not have caught by self-consistency alone — a reminder that a
-reference answer derived from an evaluator cannot certify it. The lasting value of the
+work repeatedly uncovered specification defects and even a latent error in an
+evaluator's own physics that the benchmark could not have caught by self-consistency
+alone — a reminder that a reference answer derived from an evaluator cannot certify it. The lasting value of the
 artifact lies in the contract, the domain-grounded task set, the evaluators, the
 seed-driven held-out generator with its prospective resistance to contamination, the
 isolated runner, and the reproducible quality-control procedure; one line of work
