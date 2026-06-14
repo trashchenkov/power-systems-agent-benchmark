@@ -184,7 +184,7 @@ integrity informs the held-out split:
 because training-data contamination inflates results [contaminationsurvey2025,
 statictodynamic2025], dynamic and refreshed benchmarks have become the standard
 response [kiela2021dynabench, white2024livebench, jain2024livecodebench], and a
-seed-driven generator is a prevention mechanism of the same family. The harness
+seed-driven generator is a prevention mechanism of the same family. The runner
 follows the prescriptions of [kapoor2024agentsmatter] on cost, reproducibility, and
 the separation of failure classes, and respects the limits of best-of-N
 characterized in [brown2024monkeys].
@@ -261,10 +261,12 @@ A short-circuit task, abbreviated, illustrates the form:
 }
 ```
 
-### 4.2 Agent-agnostic execution and a trustworthy harness
+### 4.2 Agent-agnostic execution and a trustworthy runner
 
-For a comparison across agents to be meaningful, the apparatus that runs them must
-satisfy three properties beyond merely invoking each agent on each task. The first
+For a comparison across agents to be meaningful, the *runner* — the benchmark's own
+apparatus that launches each agent (itself a harness of model, loop, and tools) on
+each task and scores what it returns — must satisfy three properties beyond merely
+invoking the agent. The first
 is isolation: an agent must not be able to read the evaluator or any stored answer.
 Each task is therefore packaged with its answer key and evaluator internals removed,
 and is executed in a sandbox that has no path back to the benchmark's own code. This
@@ -284,7 +286,7 @@ leave an incomplete, incomparable record.
 The third property is a principled separation of failure classes. A run can fail
 for reasons that have nothing to do with the agent's competence — a transient
 provider error, a dropped connection, an exhausted usage quota — and conflating
-these with genuine failures contaminates the measurement. The harness classifies
+these with genuine failures contaminates the measurement. The runner classifies
 each failure and retries only those attributable to infrastructure, never those in
 which the agent produced a poor or absent solution within a healthy environment;
 retrying the latter would silently turn the benchmark into a best-of-N search and
@@ -394,25 +396,41 @@ looser adaptations of common practice.
 
 ## 6. Evaluators and Metrics
 
-What an evaluator returns is uniform across the benchmark — a feasibility flag, a
-score in the unit interval, a list of violations stated in words, and task-specific
-evidence — but how it arrives at a score depends on the kind of task. An exact
-computation is scored against numeric tolerances. A control or optimization task is
-scored by combining feasibility on the constraints with quality on the objective;
-where the optimum is not unique, as in dispatch, the evaluator re-simulates the
-submitted decision and scores the gap to the optimal cost, so that an alternative
-optimum of equal cost receives full credit and a feasible but more expensive
-solution receives partial credit. A classification or localization task is scored
-against exact sets with enumerated misses, and a standards-compliance task as
-pass/fail with diagnostic fields. At the level of a whole run we report two
-aggregates that need not agree: the share of tasks meeting the hard constraints, and
-the share scoring exactly one. Because these can rank agents differently, we
-recommend reporting both alongside the mean score.
+Every evaluation returns the same four things: a feasibility flag, a score in the
+unit interval, a list of violations stated in words, and task-specific evidence. The
+two numbers play distinct roles. Each task declares a set of *hard constraints* — the
+physical and operational requirements a solution must satisfy to be admissible at
+all, such as respecting a generator's limits, holding every voltage within its band,
+or keeping the network radial — and a solution is *feasible* only if it violates none
+of them. The score then grades quality among feasible solutions; an infeasible
+solution scores zero however close it may have looked.
+
+How the score is computed depends on the task. An exact computation is scored against
+numeric tolerances. A control or optimization task combines feasibility on the
+constraints with quality on the objective; where the optimum is not unique, as in
+dispatch, the evaluator re-simulates the submitted decision and scores the gap between
+its cost and the optimal cost, so that an alternative optimum of equal cost receives
+full credit and a feasible but costlier solution receives partial credit. A
+classification or localization task is scored against exact sets with enumerated
+misses, and a standards-compliance task as pass/fail with diagnostic fields.
+
+A microgrid dispatch task makes the distinction concrete: its hard constraints are
+the power balance, the generator and battery limits, and the state-of-charge bounds;
+any schedule meeting all of them is feasible, and among feasible schedules the score
+declines with the gap between its cost and the least-cost schedule — so a feasible but
+expensive dispatch counts as feasible yet scores below one.
+
+At the level of a whole run we report two aggregates that need not agree: the
+*feasible rate*, the fraction of tasks whose solution satisfied every hard
+constraint, and the *perfect rate*, the fraction scoring exactly one (feasible and,
+where graded, optimal). The two diverge whenever an agent produces admissible but
+suboptimal solutions, and because they can rank agents differently we report both
+alongside the mean score.
 
 ## 7. Reproducibility
 
 The benchmark is intended to be re-run rather than taken on trust. A single command
-runs the unit tests over the evaluators, the reference solvers, the harness, and the
+runs the unit tests over the evaluators, the reference solvers, the runner, and the
 generator; validates every artifact; evaluates each of the 41 public sample
 solutions individually; and runs the reference solvers across the public set. Those
 solvers are built on the same computational kernels as the evaluators and return all
@@ -538,7 +556,7 @@ that the benchmark could not have caught by self-consistency alone — a reminde
 reference answer derived from an evaluator cannot certify it. The lasting value of the
 artifact lies in the contract, the domain-grounded task set, the evaluators, the
 seed-driven held-out generator with its prospective resistance to contamination, the
-isolated harness, and the reproducible quality-control procedure; one line of work
+isolated runner, and the reproducible quality-control procedure; one line of work
 ahead is to fill the evaluators with simulator-backed implementations without
 disturbing the contract that holds them together.
 
