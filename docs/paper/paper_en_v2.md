@@ -601,6 +601,62 @@ the agent's tool for solving, or the evaluator's backend for checking — and th
 isolation of Section 4.2 is exactly what must keep the two apart, so that an agent can
 never reach the checking instance as an oracle.
 
+## References
+
+- **[abur2004se]** Abur, Ali; Expósito, Antonio Gómez. *Power System State Estimation: Theory and Implementation*. Marcel Dekker, 2004.
+- **[agenticpowersurvey2025]** *Agentic AI Systems in Electrical Power Systems Engineering: Current State-of-the-Art and Challenges*. arXiv preprint arXiv:2511.14478, 2025.
+- **[aisjudgeais2025]** *When AIs Judge AIs: The Rise of Agent-as-a-Judge Evaluation for LLMs*. arXiv preprint arXiv:2508.02994, 2025.
+- **[babaeinejadsarookolaee2019pglib]** Babaeinejadsarookolaee, Sogol et al. *The Power Grid Library for Benchmarking AC Optimal Power Flow Algorithms*. arXiv preprint arXiv:1908.02788, 2019.
+- **[brown2018pypsa]** Brown, Tom; Hörsch, Jonas; Schlachtberger, David. *PyPSA: Python for Power System Analysis*. Journal of Open Research Software 6, 2018.
+- **[brown2024monkeys]** Brown, Bradley; Juravsky, Jordan; Ehrlich, Ryan; Clark, Ronald; Le, Quoc V.; Ré, Christopher; Mirhoseini, Azalia. *Large Language Monkeys: Scaling Inference Compute with Repeated Sampling*. arXiv preprint arXiv:2407.21787, 2024.
+- **[chan2024mlebench]** Chan, Jun Shern et al. *MLE-bench: Evaluating Machine Learning Agents on Machine Learning Engineering*. arXiv preprint arXiv:2410.07095, 2024.
+- **[chen2021codex]** Chen, Mark et al. *Evaluating Large Language Models Trained on Code*. arXiv preprint arXiv:2107.03374, 2021.
+- **[coffrin2018powermodels]** Coffrin, Carleton; Bent, Russell; Sundar, Kaarthik; Ng, Yeesian; Lubin, Miles. *PowerModels.jl: An Open-Source Framework for Exploring Power Flow Formulations*. Power Systems Computation Conference (PSCC), 2018.
+- **[contaminationsurvey2025]** *A Survey on Data Contamination for Large Language Models*. arXiv preprint arXiv:2502.14425, 2025.
+- **[cui2021andes]** Cui, Hantao; Li, Fangxing; Tomsovic, Kevin. *Hybrid Symbolic-Numeric Framework for Power System Modeling and Analysis*. IEEE Transactions on Power Systems 36, 1373--1384, 2021.
+- **[dugan2011opendss]** Dugan, Roger C.; McDermott, Thomas E. *An Open Source Platform for Collaborating on Smart Grid Research*. IEEE PES General Meeting, 2011.
+- **[en50160]** *EN 50160:2010 Voltage characteristics of electricity supplied by public distribution networks*. CENELEC, 2010.
+- **[entsoerfg]** *ENTSO-E Network Code on Requirements for Grid Connection of Generators (RfG)*. ENTSO-E / European Commission Regulation 2016/631, 2016.
+- **[gridmind2025]** *GridMind: LLMs-Powered Agents for Power System Analysis and Operations*. arXiv preprint arXiv:2509.02494, 2025.
+- **[gridmindcia2026]** *Grid-Mind: An LLM-Orchestrated Multi-Fidelity Agent for Automated Connection Impact Assessment*. arXiv preprint arXiv:2602.20683, 2026.
+- **[iec600767]** *IEC 60076-7:2018 Power transformers — Part 7: Loading guide for mineral-oil-immersed power transformers*. IEC, 2018.
+- **[iec60364552]** *IEC 60364-5-52 Low-voltage electrical installations — Selection and erection of electrical equipment — Wiring systems*. IEC, 2009.
+- **[iec60909]** *IEC 60909-0:2016 Short-circuit currents in three-phase a.c. systems — Part 0: Calculation of currents*. IEC, 2016.
+- **[ieee1366]** *IEEE Std 1366-2012 Guide for Electric Power Distribution Reliability Indices*. IEEE, 2012.
+- **[ieee2800]** *IEEE Std 2800-2022 Standard for Interconnection and Interoperability of Inverter-Based Resources Interconnecting with Associated Transmission Electric Power Systems*. IEEE, 2022.
+- **[ieee519]** *IEEE Std 519-2014 Recommended Practice and Requirements for Harmonic Control in Electric Power Systems*. IEEE, 2014.
+- **[ieee738]** *IEEE Std 738-2012 Standard for Calculating the Current-Temperature Relationship of Bare Overhead Conductors*. IEEE, 2012.
+- **[jain2024livecodebench]** Jain, Naman et al. *LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models for Code*. arXiv preprint arXiv:2403.07974, 2024.
+- **[jimenez2024swebench]** Jimenez, Carlos E.; Yang, John; Wettig, Alexander; Yao, Shunyu; Pei, Kexin; Press, Ofir; Narasimhan, Karthik. *SWE-bench: Can Language Models Resolve Real-World GitHub Issues?*. ICLR, 2024. arXiv:2310.06770.
+- **[kapoor2024agentsmatter]** Kapoor, Sayash; Stroebl, Benedikt; Siegel, Zachary S.; Nadgir, Nitya; Narayanan, Arvind. *AI Agents That Matter*. arXiv preprint arXiv:2407.01502, 2024.
+- **[kiela2021dynabench]** Kiela, Douwe et al. *Dynabench: Rethinking Benchmarking in NLP*. NAACL, 2021.
+- **[kundur1994stability]** Kundur, Prabha. *Power System Stability and Control*. McGraw-Hill, 1994.
+- **[liu2011fdi]** Liu, Yao; Ning, Peng; Reiter, Michael K. *False Data Injection Attacks against State Estimation in Electric Power Grids*. ACM Transactions on Information and System Security 14, 2011. First presented at ACM CCS 2009.
+- **[liu2024agentbench]** Liu, Xiao et al. *AgentBench: Evaluating LLMs as Agents*. ICLR, 2024. arXiv:2308.03688.
+- **[llmpowersurvey2025]** *Large Language Models for Power System Applications: A Comprehensive Literature Survey*. arXiv preprint arXiv:2512.13004, 2025.
+- **[marot2020l2rpn]** Marot, Antoine; Donnot, Benjamin; Romero, Camilo; Donon, Balthazar; Lerousseau, Marvin; Veyrin-Forrer, Luca; Guyon, Isabelle. *Learning to Run a Power Network Challenge for Training Topology Controllers*. Electric Power Systems Research 189, 2020. arXiv:1912.04211.
+- **[marot2021retrospective]** Marot, Antoine; Donnot, Benjamin; Dulac-Arnold, Gabriel; Kelly, Adrian; O'Sullivan, Aidan; Viebahn, Jan; Awad, Mariette; Guyon, Isabelle; Panciatici, Patrick; Romero, Camilo. *Learning to Run a Power Network Challenge: a Retrospective Analysis*. NeurIPS 2020 Competition and Demonstration Track, PMLR v133, 112--132, 2021.
+- **[mialon2023gaia]** Mialon, Grégoire; Fourrier, Clémentine; Swift, Craig; Wolf, Thomas; LeCun, Yann; Scialom, Thomas. *GAIA: A Benchmark for General AI Assistants*. arXiv preprint arXiv:2311.12983, 2023.
+- **[pfagent2026]** *PFAgent: A Tractable and Self-Evolving Power-Flow Agent for Interactive Grid Analysis*. arXiv preprint arXiv:2604.10846, 2026.
+- **[pfbench2025]** *PFBench: Power-Flow Benchmark for LLM-based Power System Agent Evaluation*. IEEE DataPort, 2025. https://ieee-dataport.org/documents/power-flow-benchmark-llm-based-power-system-agent-evaluation-pfbench
+- **[poweragentbench]** PowerAgent community, Harvard SEAS. *PowerAgentBench: Standardized Tasks, Environments, and Metrics for Power-System Agents*. GitHub repository, Power-Agent/PowerAgentBench, 2026. Benchmark component of the PowerAgent ecosystem (poweragent.seas.harvard.edu); no dedicated publication at the time of writing.
+- **[restoration2020]** *A Two-Stage Service Restoration Method for Electric Power Distribution Systems*. arXiv preprint arXiv:2004.07921, 2020.
+- **[scuccts2020]** *Security Constrained Unit Commitment with Corrective Transmission Switching*. arXiv preprint arXiv:2001.00597, 2020.
+- **[terminalbench2025]** Laude Institute; Stanford University. *Terminal-Bench: Benchmarking AI Agents on Realistic Terminal Tasks*. https://www.tbench.ai/, 2025.
+- **[thurner2018pandapower]** Thurner, Leon; Scheidler, Alexander; Schäfer, Florian; Menke, Jan-Hendrik; Dollichon, Julian; Meier, Friederike; Meinecke, Steffen; Braun, Martin. *pandapower — An Open-Source Python Tool for Convenient Modeling, Analysis, and Optimization of Electric Power Systems*. IEEE Transactions on Power Systems 33, 6510--6521, 2018.
+- **[turitsyn2010voltvar]** Turitsyn, Konstantin; v Sulc, Petr; Backhaus, Scott; Chertkov, Michael. *Local Control of Reactive Power by Distributed Photovoltaic Generators*. arXiv preprint arXiv:1006.0160, 2010.
+- **[wang2023fairevaluators]** Wang, Peiyi et al. *Large Language Models are not Fair Evaluators*. arXiv preprint arXiv:2305.17926, 2023.
+- **[white2024livebench]** White, Colin et al. *LiveBench: A Challenging, Contamination-Free LLM Benchmark*. arXiv preprint arXiv:2406.19314, 2024.
+- **[xgridagent2025]** *X-GridAgent: An LLM-Powered Agentic AI System for Assisting Power Grid Analysis*. arXiv preprint arXiv:2512.20789, 2025.
+- **[yao2024taubench]** Yao, Shunyu; Shinn, Noah; Razavi, Pedram; Narasimhan, Karthik. *τ-bench: A Benchmark for Tool-Agent-User Interaction in Real-World Domains*. arXiv preprint arXiv:2406.12045, 2024.
+- **[zhang2025poweragent]** Zhang, Qian; Xie, Le. *PowerAgent: A Road Map Toward Agentic Intelligence in Power Systems: Foundation Model, Model Context Protocol, and Workflow*. IEEE Power & Energy Magazine 23, 93--101, 2025.
+- **[zheng2023judging]** Zheng, Lianmin et al. *Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena*. NeurIPS Datasets and Benchmarks, 2023. arXiv:2306.05685.
+- **[zhou2019contingency]** *Graph Computing based Fast Screening in Contingency Analysis*. arXiv preprint arXiv:1904.00044, 2019.
+- **[zhou2024webarena]** Zhou, Shuyan et al. *WebArena: A Realistic Web Environment for Building Autonomous Agents*. ICLR, 2024. arXiv:2307.13854.
+- **[zhou2025elecbench]** Zhou, Xiyuan et al. *ElecBench: a Power Dispatch Evaluation Benchmark for Large Language Models*. IEEE PES General Meeting, 2025. arXiv:2407.05365; Best Paper.
+- **[zhuge2024agentjudge]** Zhuge, Mingchen; Zhao, Changsheng; Ashley, Dylan; Wang, Wenyi; Khizbullin, Dmitrii; Xiong, Yunyang; Liu, Zechun; Chang, Ernie; Krishnamoorthi, Raghuraman; Tian, Yuandong; Shi, Yangyang; Chandra, Vikas; Schmidhuber, Jürgen. *Agent-as-a-Judge: Evaluate Agents with Agents*. arXiv preprint arXiv:2410.10934, 2024.
+- **[zimmerman2011matpower]** Zimmerman, Ray D.; Murillo-Sánchez, Carlos E.; Thomas, Robert J. *MATPOWER: Steady-State Operations, Planning, and Analysis Tools for Power Systems Research and Education*. IEEE Transactions on Power Systems 26, 12--19, 2011.
+
 ## Appendix A. Task Catalog
 
 The 41 families are listed below by domain area, each with its primary source or
