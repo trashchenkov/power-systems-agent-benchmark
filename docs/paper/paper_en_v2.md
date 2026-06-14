@@ -32,8 +32,9 @@ contamination-resistant evaluation whose construction is open to inspection whil
 its instances remain private. Because the launch protocol is agent-agnostic, the
 benchmark serves as a common platform for comparing language models and agent
 harnesses and for studying agent behavior on physically grounded tasks; as a
-reference evaluation we assess three command-line agents, which the benchmark
-separates cleanly and on which public and held-out performance agree. The
+reference evaluation we assess three command-line agents; on this compact tier the
+strongest already score close to the maximum while a smaller open model
+trails, and public and held-out performance agree. The
 evaluators are compact deterministic surrogates, and the task contract is designed
 so that their internals can later be upgraded to simulator-backed checks without
 changing how tasks are posed or solved.
@@ -468,38 +469,48 @@ adaptation of the agents to the benchmark. Each agent was invoked through its ow
 command-line interface and ran under whatever internal system prompt and
 scaffolding it ships with; we standardize what the task asks, not how an agent
 organizes itself to answer it, since that scaffolding is part of what an agent is
-and what the benchmark compares. The three are Codex running gpt-5.5 at medium
-reasoning effort, Cursor's command-line agent running composer-2.5, and the
-open-source OpenCode agent running deepseek-v4-flash; we refer to them below as
-codex, cursor, and opencode.
+and what the benchmark compares. The three are Codex (codex-cli 0.139.0) running gpt-5.5 at medium reasoning effort,
+Cursor's command-line agent (cursor-agent 2026.06.12) running composer-2.5, and the
+open-source OpenCode agent (opencode 1.15.13) running deepseek-v4-flash-free, the
+free tier of that model through OpenCode's provider; we refer to them below as Codex,
+Cursor, and OpenCode. Both the models and these agent CLIs are
+updated frequently, so the round, run in June 2026, should be read as a snapshot of
+these specific versions rather than a standing ranking; re-running the same protocol
+with later releases may give different results.
 
 ### 8.1 Public versus held-out evaluation
 
-The reference round was run after the corrections described in this paper. Each agent
-attempted the public case of every family and one freshly generated held-out case
-per family drawn from a new private seed. No run triggered the retry policy of
-Section 4.2, so the figures below are reported directly.
+Each agent attempted the public case of every family and one freshly generated
+held-out case per family from a new private seed, every solution scored by the same
+deterministic, optimum-normalized evaluators.
 
 | agent | public feasible | public perfect | public mean | held-out feasible | held-out perfect | held-out mean |
 |---|---|---|---|---|---|---|
-| codex | 40/41 | 36/41 | 0.971 | 40/41 | 37/41 | 0.969 |
-| cursor | 39/41 | 35/41 | 0.947 | 40/41 | 36/41 | 0.969 |
-| opencode | 37/41 | 35/41 | 0.900 | 38/41 | 35/41 | 0.920 |
+| Codex | 40/41 | 38/41 | 0.973 | 41/41 | 40/41 | 0.995 |
+| Cursor | 40/41 | 39/41 | 0.973 | 41/41 | 41/41 | 1.000 |
+| OpenCode | 39/41 | 39/41 | 0.951 | 40/41 | 39/41 | 0.973 |
 
-Two observations follow. The benchmark discriminates between agents: codex and
-cursor, both near a mean of 0.97, sit clearly above opencode at 0.90 to 0.92, and do
-so on both splits. And, on corrected specifications, the public and held-out splits
-are comparable — each agent's held-out score lands within noise of its public one. We
-report this plainly because an earlier round, run before the specification
-corrections, had appeared to show a sharp divergence in which the public leader
-collapsed on held-out cases. That divergence proved to be an artifact of the defects
-discussed next, which happened to fall hardest on one agent; it vanished once the
-defects were corrected. We therefore make no claim of an intrinsic difficulty gap
-between public and held-out cases. The case for a held-out split is instead
-prospective: a published set ages as models train on it, and a generator is what
-keeps an uncontaminated draw available. As mild corroboration, the agents do not
-score higher on the published public set than on freshly generated held-out cases —
-the signature one would expect from memorization is absent at this case size.
+Two things stand out, and the first is sobering for a benchmark: the strongest agents
+score so close to the maximum that it has little room left to tell them apart. Codex
+and Cursor are nearly indistinguishable on the public split and essentially solve the
+held-out one, and OpenCode trails only modestly.
+We therefore do not present this round as a sharp ranking of frontier agents; on this
+compact tier the benchmark has limited power to separate the best of them, a point we
+take up in Section 9.
+
+Second, the two splits agree — every agent scores at least as high on the freshly
+generated held-out cases as on the public ones. The signature one would expect from
+contamination, public scores standing above held-out, is absent; if anything the
+held-out draws were marginally easier. We make no claim of an intrinsic difficulty gap
+between the splits, and the case for the generator is prospective: a published set ages
+as models train on it, and the generator is what keeps an uncontaminated draw
+available.
+
+What discrimination the benchmark does provide comes at the lower end of the capability
+range and through shared blind spots, not through margins among the leaders: OpenCode
+fails a distribution-dispatch task outright where the others succeed, and one
+storage-scheduling task is missed by every agent in the same way — a genuine capability
+gap, confirmed not to be a specification defect (Section 8.2).
 
 ### 8.2 Distinguishing capability from specification
 
@@ -579,8 +590,8 @@ A broader question is what the benchmark is worth when the strongest current age
 already solve most of its public tasks. On this compact tier its power to rank the
 leading agents is limited, and we do not present it as a frontier-stumping
 leaderboard; its value rests elsewhere. It separates the realistic spectrum of agents
-rather than only the leaders, with a small open model trailing the frontier clearly
-and failing outright where the leaders succeed. It surfaces shared blind spots even
+rather than only the leaders, with OpenCode, on a small open model, trailing the
+frontier clearly and failing outright where the leaders succeed. It surfaces shared blind spots even
 when scores are high, because a task that every agent misses in the same way is a
 capability gap an executable check makes visible and a prose grade would not. Its
 contract is built to grow into the harder tiers of Section 10, where an agent must
@@ -594,9 +605,11 @@ a domain that had only textual assessment, not a one-round wall of difficulty.
 
 We have brought executable evaluation, by now standard for software and tool-use
 agents, to electric power engineering, where assessment had remained textual. The
-benchmark turns power-system tasks into checks that recompute physics, and on a matrix
-of current agents it discriminates between them consistently across its public and
-held-out splits. Its most transferable contribution is not any single task but a
+benchmark turns power-system tasks into checks that recompute physics; on a matrix of
+current agents the strongest already score close to the maximum on the present compact
+tier while OpenCode, a smaller open model, trails, and public and held-out performance
+agree. Its most
+transferable contribution is not any single task but a
 method: reading a unanimous failure as a defect signal, which over the course of this
 work repeatedly uncovered specification defects and even a latent error in an
 evaluator's own physics that the benchmark could not have caught by self-consistency
@@ -772,8 +785,25 @@ mapping the source onto the executable case).
 
 ## Appendix B. Experiment Artifacts
 
-The reference round is provided with the benchmark as per-agent, per-split run
-summaries. For the public split the per-case submissions, evaluator results, and agent
-logs are included as well; for the held-out split only the aggregate summaries are
+**Run configuration.** Each agent was invoked once per case through its own
+command-line interface under a 600-second per-case timeout and the infrastructure-retry
+policy of Section 4.2 — at most two attempts, retrying only provider- or
+transport-transient failures, never quality, contract, or timeout failures. One public
+case and one freshly generated held-out case were run per family, and every submission
+was scored by the deterministic, optimum-normalized evaluators of Section 6. The
+versions were Codex on gpt-5.5 at medium reasoning effort (codex-cli 0.139.0), Cursor's
+command-line agent on composer-2.5 (cursor-agent 2026.06.12-01-15-52-7244546), and
+OpenCode on deepseek-v4-flash-free (opencode 1.15.13).
+
+**Public shortfalls.** Every public case not scored one is as follows. Codex missed
+contingency_screening (0.9) and returned an infeasible ev_v2g_outage_schedule, with
+pv_volt_var within 10⁻⁵ of the optimum but short of an exact one; Cursor missed
+contingency_screening (0.9) and ev_v2g_outage_schedule (infeasible); OpenCode returned
+infeasible solutions for ev_v2g_outage_schedule and pv_volt_var. All remaining public
+cases scored one.
+
+**Distribution.** The reference round ships with the benchmark as per-agent, per-split
+run summaries. For the public split the per-case submissions, evaluator results, and
+agent logs are included; for the held-out split only the aggregate summaries are
 published, since a per-case held-out submission or evaluator result would disclose that
 case's answer (Section 4.4).
