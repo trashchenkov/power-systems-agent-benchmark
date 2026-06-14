@@ -603,11 +603,93 @@ never reach the checking instance as an oracle.
 
 ## Appendix A. Task Catalog
 
-The full catalog of all 41 families is provided with the benchmark in English and
-Russian. Each entry gives the family identifier, the public task contract — inputs,
-objective, hard constraints, and submission schema — and a provenance record: the
-primary source, the governing engineering standard where one applies, and the
-confidence level of Section 5.1.
+The 41 families are listed below by domain area, each with its primary source or
+governing standard and the confidence level of Section 5.1 (11 high, 28 medium, 2
+low). The benchmark ships the full record for every family in English and Russian: the
+complete task contract — inputs, objective, hard constraints, and submission
+schema — together with the provenance entry (source title, locator, and the note
+mapping the source onto the executable case).
+
+**1. Network analysis and operating constraints**
+
+| Family | Source / standard | Confidence |
+|---|---|---|
+| `ybus_construction` | Glover, Overbye & Sarma (textbook) | high |
+| `pf_voltage_repair` | Glover, Overbye & Sarma (textbook) | high |
+| `contingency_screening` | Graph-computing contingency screening | medium |
+| `corrective_transmission_switching` | SCUC with corrective switching (arXiv:2001.00597) | medium |
+| `dynamic_thermal_rating` | IEEE 738; Safari et al., probabilistic DTR | medium |
+
+**2. Short circuit and protection**
+
+| Family | Source / standard | Confidence |
+|---|---|---|
+| `three_phase_short_circuit` | IEC 60909 | high |
+| `earth_fault_calculation` | Averbukh, relay-protection problems | medium |
+| `breaker_relay_short_circuit` | IEC 60909; Glover, Overbye & Sarma | high |
+| `distance_protection_settings` | Averbukh, relay-protection problems | medium |
+| `overcurrent_protection` | Averbukh, relay-protection problems | medium |
+| `cable_ampacity_sizing` | IEC 60364-5-52 / IEC 60949 | high |
+
+**3. Stability, grid code, and inverter-based resources**
+
+| Family | Source / standard | Confidence |
+|---|---|---|
+| `critical_clearing_time` | Equal-area criterion (Kundur) | high |
+| `transient_stability_prediction` | Chen et al., transient-stability prediction | medium |
+| `frt_compliance` | IEEE 2800 / ENTSO-E RfG (FRT) | medium |
+| `ibr_short_circuit_frt` | IBR modeling for short circuit / FRT | medium |
+| `min_synchronous_share` | Wen et al., low-inertia frequency stability | low |
+
+**4. Distributed resources, PV, EV, and storage**
+
+| Family | Source / standard | Confidence |
+|---|---|---|
+| `pv_volt_var` | Turitsyn et al., local Volt-VAR control | medium |
+| `ev_v2g_outage_schedule` | EVs for power quality & security | medium |
+| `ev_v2g_voltage_support` | EVs for power quality & security | medium |
+| `bess_ancillary_response` | Gonzalez-Longatt & Rueda Torres | medium |
+| `commercial_pv_lcoe_uncertainty` | PV soft-cost uncertainty (NREL) | medium |
+
+**5. Microgrids and dispatch**
+
+| Family | Source / standard | Confidence |
+|---|---|---|
+| `microgrid_economic_dispatch` | España et al., microgrid dispatch | medium |
+| `rolling_microgrid_dispatch` | España et al., microgrid dispatch | medium |
+| `islanded_microgrid_pq_dispatch` | España et al., microgrid dispatch | medium |
+| `dispatch_uncertainty` | Chung, advanced prediction for smart grids | low |
+| `hydro_thermal_storage_uc` | ADMM unit commitment | medium |
+| `n1_generation_commitment` | SCUC with corrective switching (arXiv:2001.00597) | medium |
+
+**6. Reliability and restoration**
+
+| Family | Source / standard | Confidence |
+|---|---|---|
+| `flisr_restoration` | Two-stage distribution service restoration | medium |
+| `fault_section_localization` | Brown, faulted-circuit indicators | medium |
+| `fci_placement` | Brown, faulted-circuit indicators | medium |
+| `fci_saidi_caidi` | Brown, FCIs; IEEE 1366 indices | medium |
+| `operator_breaker_load_actions` | Glover, Overbye & Sarma (textbook) | medium |
+
+**7. Power quality, standards, assets, and cybersecurity**
+
+| Family | Source / standard | Confidence |
+|---|---|---|
+| `en50160_voltage_compliance` | EN 50160 | high |
+| `power_quality_event_classification` | IEC 61000-4-30 | high |
+| `harmonic_ieee519_compliance` | IEEE 519 | high |
+| `transformer_thermal_loading` | IEC 60076-7 | high |
+| `fdi_state_estimation` | Abur & Exposito, state estimation | high |
+| `protected_meter_placement` | Graphical defense vs false-data injection | medium |
+| `mas_frequency_handover` | Multi-agent control of active distribution networks | medium |
+
+**8. Forecasting under uncertainty**
+
+| Family | Source / standard | Confidence |
+|---|---|---|
+| `wind_power_forecast` | Safari et al., short-term wind forecasting | medium |
+| `wind_prediction_interval` | Khorramdel et al., fuzzy prediction intervals | medium |
 
 ## Appendix B. Experiment Artifacts
 
