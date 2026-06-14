@@ -571,6 +571,21 @@ and environment but not a determined search for the evaluator by absolute path, 
 competitive use would want host-level containers. We run one configuration per agent
 and so do not estimate the variance of model sampling.
 
+A broader question is what the benchmark is worth when the strongest current agents
+already solve most of its public tasks. On this compact tier its power to rank the
+leading agents is limited, and we do not present it as a frontier-stumping
+leaderboard; its value rests elsewhere. It separates the realistic spectrum of agents
+rather than only the leaders, with a small open model trailing the frontier clearly
+and failing outright where the leaders succeed. It surfaces shared blind spots even
+when scores are high, because a task that every agent misses in the same way is a
+capability gap an executable check makes visible and a prose grade would not. Its
+contract is built to grow into the harder tiers of Section 10, where an agent must
+operate professional simulators rather than compute compact instances and where the
+headroom is large. And its resistance to contamination is prospective, the generator
+keeping an uncontaminated draw available as the public set ages and is trained on.
+The contribution is a growing, physics-grounded, contamination-resistant yardstick for
+a domain that had only textual assessment, not a one-round wall of difficulty.
+
 ## 10. Conclusion
 
 We have brought executable evaluation, by now standard for software and tool-use
