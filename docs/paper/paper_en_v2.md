@@ -797,7 +797,7 @@ OpenCode on deepseek-v4-flash-free (opencode 1.15.13).
 
 **Public shortfalls.** Every public case not scored one is as follows. Codex missed
 contingency_screening (0.9) and returned an infeasible ev_v2g_outage_schedule, with
-pv_volt_var within 10⁻⁵ of the optimum but short of an exact one; Cursor missed
+pv_volt_var within $10^{-5}$ of the optimum but short of an exact one; Cursor missed
 contingency_screening (0.9) and ev_v2g_outage_schedule (infeasible); OpenCode returned
 infeasible solutions for ev_v2g_outage_schedule and pv_volt_var. All remaining public
 cases scored one.
