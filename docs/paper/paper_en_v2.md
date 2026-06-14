@@ -336,28 +336,32 @@ The public benchmark comprises 41 task families, grouped into eight domain areas
 
 1. **Network analysis and operating constraints** — bus-admittance-matrix
    construction, corrective reactive-power dispatch for voltage limits, contingency
-   screening, post-contingency corrective switching, dynamic line rating.
+   screening [zhou2019contingency], post-contingency corrective switching, dynamic
+   line rating [ieee738].
 2. **Short circuit and protection** — three-phase and single-line-to-ground fault
-   calculation, breaker and relay setting from fault levels, distance-protection zone
-   setting, overcurrent coordination, cable sizing.
+   calculation [iec60909], breaker and relay setting from fault levels,
+   distance-protection zone setting, overcurrent coordination, cable sizing
+   [iec60364552].
 3. **Stability, grid code, and inverter-based resources** — critical clearing time by
-   the equal-area criterion, transient-stability classification, fault-ride-through
-   compliance, current-limited inverter fault response, minimum synchronous-generation
-   share under inertia and short-circuit constraints.
-4. **Distributed resources, PV, EV, and storage** — Volt-VAR control, vehicle-to-grid
-   scheduling and voltage support, battery ancillary-service response, soft-cost
-   levelized-cost calculation.
+   the equal-area criterion [kundur1994stability], transient-stability classification,
+   fault-ride-through compliance [ieee2800, entsoerfg], current-limited inverter fault
+   response, minimum synchronous-generation share under inertia and short-circuit
+   constraints.
+4. **Distributed resources, PV, EV, and storage** — Volt-VAR control
+   [turitsyn2010voltvar], vehicle-to-grid scheduling and voltage support, battery
+   ancillary-service response, soft-cost levelized-cost calculation.
 5. **Microgrids and dispatch** — economic and rolling-horizon dispatch, islanded
    active/reactive dispatch, robust dispatch under uncertainty, hydro-thermal unit
-   commitment, single-contingency-secure generation commitment.
-6. **Reliability and restoration** — fault isolation and service restoration,
-   faulted-section localization, fault-indicator placement, reliability-index
-   improvement, operator switching and shedding.
+   commitment, single-contingency-secure generation commitment [scuccts2020].
+6. **Reliability and restoration** — fault isolation and service restoration
+   [restoration2020], faulted-section localization, fault-indicator placement,
+   reliability-index improvement [ieee1366], operator switching and shedding.
 7. **Power quality, standards, assets, and cybersecurity** — voltage-compliance
-   checking to a supply standard, power-quality event classification, harmonic-limit
-   compliance, transformer thermal loading and insulation ageing, bad-data
-   identification in state estimation, secured-measurement placement, lead-station
-   handover in a multi-agent frequency scheme.
+   checking to a supply standard [en50160], power-quality event classification,
+   harmonic-limit compliance [ieee519], transformer thermal loading and insulation
+   ageing [iec600767], bad-data identification in state estimation [abur2004se],
+   secured-measurement placement [liu2011fdi], lead-station handover in a multi-agent
+   frequency scheme.
 8. **Forecasting under uncertainty** — wind power forecasting, prediction-interval
    estimation.
 
@@ -378,9 +382,10 @@ a measured quantity, and we assign it by a fixed rubric so that it is reproducib
 
 - **high** — the task reproduces a method defined in a published standard or a
   canonical textbook, cited specifically, and the executable case follows that method
-  directly (for example, the short-circuit, transformer-loading, and
-  harmonic-compliance tasks follow named international standards, and the
-  critical-clearing-time and bad-data tasks follow standard textbook procedures);
+  directly (for example, the short-circuit [iec60909], transformer-loading
+  [iec600767], and harmonic-compliance [ieee519] tasks follow named international
+  standards, and the critical-clearing-time [kundur1994stability] and bad-data
+  [abur2004se] tasks follow standard textbook procedures);
 - **medium** — the task is tied to an identified primary source, or to a universally
   taught engineering method written out as its governing equations, and the case is a
   faithful compact instance of it;
@@ -598,11 +603,16 @@ never reach the checking instance as an oracle.
 
 ## Appendix A. Task Catalog
 
-The full catalog of 41 families, in English and Russian, with identifiers, is provided
-with the benchmark.
+The full catalog of all 41 families is provided with the benchmark in English and
+Russian. Each entry gives the family identifier, the public task contract — inputs,
+objective, hard constraints, and submission schema — and a provenance record: the
+primary source, the governing engineering standard where one applies, and the
+confidence level of Section 5.1.
 
 ## Appendix B. Experiment Artifacts
 
-The per-agent, per-split summaries and logs of the reference round, the earlier
-development rounds, and the record of specification corrections are provided with the
-benchmark.
+The reference round is provided with the benchmark as per-agent, per-split run
+summaries. For the public split the per-case submissions, evaluator results, and agent
+logs are included as well; for the held-out split only the aggregate summaries are
+published, since a per-case held-out submission or evaluator result would disclose that
+case's answer (Section 4.4).
