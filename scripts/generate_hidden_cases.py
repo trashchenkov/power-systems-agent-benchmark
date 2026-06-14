@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import importlib
 import json
 import random
 import sys
@@ -644,6 +645,69 @@ GENERATORS: dict[str, Callable[[dict[str, Any], random.Random], None]] = {
 }
 
 
+def _raw_evaluate(family: str, task: dict[str, Any], submission: dict[str, Any]) -> tuple[bool, float]:
+    module = importlib.import_module(EVALUATOR_MODULE_BY_FAMILY[family])
+    if hasattr(module, "evaluate_case"):
+        result = module.evaluate_case(task, submission)
+    else:
+        with tempfile.TemporaryDirectory() as tmp:
+            tp = Path(tmp) / "task.json"
+            sp = Path(tmp) / "submission.json"
+            tp.write_text(json.dumps(task, ensure_ascii=False), encoding="utf-8")
+            sp.write_text(json.dumps(submission, ensure_ascii=False), encoding="utf-8")
+            result = module.evaluate_files(tp, sp)
+    return bool(result.get("feasible")), float(result.get("score", 0.0))
+
+
+def _numeric_leaves(obj: Any, path: tuple = ()):
+    if isinstance(obj, bool):
+        return
+    if isinstance(obj, (int, float)):
+        yield path, obj
+    elif isinstance(obj, dict):
+        for key, value in obj.items():
+            yield from _numeric_leaves(value, path + (key,))
+    elif isinstance(obj, list):
+        for idx, value in enumerate(obj):
+            yield from _numeric_leaves(value, path + (idx,))
+
+
+def _set_leaf(obj: Any, path: tuple, value: float) -> None:
+    cursor = obj
+    for step in path[:-1]:
+        cursor = cursor[step]
+    cursor[path[-1]] = value
+
+
+def baseline_locally_optimal(family: str, task: dict[str, Any], solution: dict[str, Any],
+                             base_score: float, tol: float = 1e-6) -> bool:
+    """Reject draws where a small numeric perturbation of the reference solution
+    yields a feasible, strictly higher score — i.e. the reference is not optimal
+    on this case. Since the score is normalized against the reference, a
+    non-optimal reference would let an agent exceed 1.0; we catch that here, at
+    generation time, where the hidden case is still ours to discard.
+
+    This can only fire when a strictly better feasible solution is found, so it
+    never produces false positives; for discrete (non-numeric) answers it is a
+    no-op and structural optimality is relied upon instead.
+    """
+    leaves = list(_numeric_leaves(solution))
+    if not leaves:
+        return True
+    factors = (0.0, 0.5, 0.9, 0.99, 1.01, 1.1, 1.5)
+    for path, value in leaves:
+        for factor in factors:
+            candidate_value = value * factor
+            if candidate_value == value:
+                continue
+            candidate = copy.deepcopy(solution)
+            _set_leaf(candidate, path, candidate_value)
+            feasible, score = _raw_evaluate(family, task, candidate)
+            if feasible and score > base_score + tol:
+                return False
+    return True
+
+
 def generate_case(root: Path, family: str, seed: str, case_id: str) -> dict[str, Any]:
     public_path = root / "tasks" / family / "public" / "case_001" / "task.json"
     public = json.loads(public_path.read_text(encoding="utf-8"))
@@ -665,6 +729,10 @@ def generate_case(root: Path, family: str, seed: str, case_id: str) -> dict[str,
             submission_path.write_text(json.dumps(submission, ensure_ascii=False), encoding="utf-8")
             result = evaluate_submission_file(task_path, submission_path)
         if result.get("feasible") and float(result.get("score", 0.0)) > 0.0:
+            base_score = float(result.get("absolute_score", result.get("score", 0.0)))
+            if not baseline_locally_optimal(family, task, submission, base_score):
+                last_error = ValueError("reference solver not locally optimal on this draw")
+                continue
             return task
         last_error = ValueError(f"baseline solution infeasible: {result.get('violations')}")
     raise RuntimeError(f"could not generate feasible hidden case for {family}: {last_error}")

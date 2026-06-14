@@ -93,17 +93,72 @@ def discover_executable_cases(root: Path, splits: tuple[str, ...] = ("public",))
     return sorted(cases, key=lambda case: (case.family, case.split, case.case_id))
 
 
+NORMALIZATION_TOLERANCE = 1e-6
+
+
+def _dispatch_raw(module: Any, task: dict[str, Any], task_path: Path, submission_path: Path) -> dict[str, Any]:
+    if hasattr(module, "evaluate_files"):
+        return module.evaluate_files(task_path, submission_path)
+    if hasattr(module, "evaluate_case"):
+        return module.evaluate_case(task, load_json(submission_path))
+    raise ValueError(f"Evaluator module lacks evaluate_files/evaluate_case: {module.__name__}")
+
+
+def reference_optimum(family: str, task: dict[str, Any]) -> float | None:
+    """Score the family's reference solver on this task, i.e. the achievable
+    optimum used to normalize the score. Returns None if it cannot be computed.
+
+    The reference solver is required to be optimal, so this is the maximum score
+    any feasible solution can earn; the per-task score is reported relative to it
+    so that an optimal answer scores 1.0 even on continuous-objective tasks.
+    """
+    try:
+        baseline = importlib.import_module(f"baselines.{family}.baseline")
+        solution = baseline.solve_case(task)
+        module = importlib.import_module(EVALUATOR_MODULE_BY_FAMILY[family])
+        if hasattr(module, "evaluate_case"):
+            result = module.evaluate_case(task, solution)
+        else:  # evaluate_files-only module: round-trip through a temporary file
+            import tempfile
+
+            with tempfile.TemporaryDirectory() as tmp:
+                tp = Path(tmp) / "task.json"
+                sp = Path(tmp) / "submission.json"
+                tp.write_text(json.dumps(task, ensure_ascii=False), encoding="utf-8")
+                sp.write_text(json.dumps(solution, ensure_ascii=False), encoding="utf-8")
+                result = module.evaluate_files(tp, sp)
+        score = float(result.get("score", 0.0))
+        return score if score > 0.0 else None
+    except Exception:
+        return None
+
+
 def evaluate_submission_file(task_path: Path, submission_path: Path) -> dict[str, Any]:
     task = load_json(task_path)
     family = task.get("family")
     if family not in EVALUATOR_MODULE_BY_FAMILY:
         raise ValueError(f"No evaluator registered for family: {family}")
-    module = importlib.import_module(EVALUATOR_MODULE_BY_FAMILY_BY_FAMILY := EVALUATOR_MODULE_BY_FAMILY[family])
-    if hasattr(module, "evaluate_files"):
-        return module.evaluate_files(task_path, submission_path)
-    if hasattr(module, "evaluate_case"):
-        return module.evaluate_case(task, load_json(submission_path))
-    raise ValueError(f"Evaluator module lacks evaluate_files/evaluate_case: {EVALUATOR_MODULE_BY_FAMILY_BY_FAMILY}")
+    module = importlib.import_module(EVALUATOR_MODULE_BY_FAMILY[family])
+    result = _dispatch_raw(module, task, task_path, submission_path)
+
+    # Normalize the score against the reference optimum so that 1.0 means optimal
+    # on every task. The reference solver is optimal, so an agent cannot exceed it;
+    # if one does, the reference is not optimal on this case — flag it as a defect
+    # and clamp rather than report a score above one.
+    absolute = float(result.get("score", 0.0))
+    optimum = reference_optimum(family, task)
+    result["absolute_score"] = round(absolute, 6)
+    if optimum is None:
+        result["reference_optimum"] = None
+        result["reference_unavailable"] = True
+    else:
+        result["reference_optimum"] = round(optimum, 6)
+        if absolute > optimum + NORMALIZATION_TOLERANCE:
+            result["reference_suboptimal"] = True
+            result["score"] = 1.0
+        else:
+            result["score"] = round(min(1.0, absolute / optimum), 6)
+    return result
 
 
 def result_row(task_path: Path, submission_path: Path, result: dict[str, Any]) -> dict[str, Any]:
