@@ -1,5 +1,8 @@
 # Power Systems Agent Benchmark: Bringing Executable Evaluation to AI Agents on Electric Power Engineering Tasks
 
+**Sergei Trashchenkov**
+trashchenkov@gmail.com · ORCID [0000-0001-8786-8336](https://orcid.org/0000-0001-8786-8336)
+
 *Preprint draft v2 (2026-06). English version for arXiv (eess.SY; cs.AI).
 Word-for-word Russian companion: `paper_ru_v2.md`. Annotated bibliography:
 `bibliography.md`; BibTeX: `references.bib`.*
