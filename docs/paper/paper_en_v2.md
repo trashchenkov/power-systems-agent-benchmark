@@ -544,19 +544,26 @@ over 41 points is statistically fragile, though the generator makes enlarging th
 sample inexpensive. The tasks are also self-contained: an agent computes each answer
 directly and is never required to operate professional power-system software, so the
 benchmark does not yet measure mastery of the simulators and tools that much real
-engineering work depends on. The reference solver's perfect public score is a
-self-consistency
-check on the contract, not a lower bound on difficulty, and cannot validate the
-evaluator. The seed of a held-out round is spent once the round is disclosed, so a
+engineering work depends on. A reference solution scores one by construction, which is
+a self-consistency check on the contract, not a lower bound on difficulty, and cannot
+validate the evaluator. The quality-control method of Section 8.2 — reading a unanimous
+agent failure as a likely defect — has a limit that grows with the benchmark's
+difficulty: it can tell a broken task from a merely hard one only while the agents are
+strong enough that genuine failures are rare, so as tasks approach the frontier and
+honest failures become common, a unanimous failure no longer points clearly at the
+specification, and the unsolved tail must then be validated by independent
+recomputation rather than by agent agreement. And because each score is reported
+relative to its task's reference optimum, the scale is only as trustworthy as that
+reference's optimality: we verify optimality when a held-out case is generated and
+treat any solution that beats the reference as a flag rather than a score above one,
+but we do not prove global optimality for every family, so any future
+continuous-objective task would need its reference established with the same care. The
+seed of a held-out round is spent once the round is disclosed, so a
 citable leaderboard requires a fresh seed on an isolated host. The sandbox isolates by
 relocation rather than containerization, which removes leakage through relative paths
 and environment but not a determined search for the evaluator by absolute path, so
 competitive use would want host-level containers. We run one configuration per agent
-and so do not estimate the variance of model sampling. Finally, evaluating an agent
-built on the same model family as the benchmark's authors, on an account whose budget
-is shared with development, proved infeasible because it exhausted that budget; a
-clean self-evaluation would require a dedicated account and an explicit
-conflict-of-interest statement.
+and so do not estimate the variance of model sampling.
 
 ## 10. Conclusion
 
