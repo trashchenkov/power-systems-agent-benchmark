@@ -568,8 +568,12 @@ seed of a held-out round is spent once the round is disclosed, so a
 citable leaderboard requires a fresh seed on an isolated host. The sandbox isolates by
 relocation rather than containerization, which removes leakage through relative paths
 and environment but not a determined search for the evaluator by absolute path, so
-competitive use would want host-level containers. We run one configuration per agent
-and so do not estimate the variance of model sampling.
+competitive use would want host-level containers; packaging the benchmark as an
+environment for a container-based evaluation harness such as Harbor [harbor2026] is a
+natural route to that isolation, and would additionally supply the parallel execution
+and rollout interfaces needed to estimate the sampling variance we currently leave
+unmeasured. We run one configuration per agent and so do not estimate the variance of
+model sampling.
 
 A broader question is what the benchmark is worth when the strongest current agents
 already solve most of its public tasks. On this compact tier its power to rank the
@@ -637,6 +641,7 @@ never reach the checking instance as an oracle.
 - **[entsoerfg]** *ENTSO-E Network Code on Requirements for Grid Connection of Generators (RfG)*. ENTSO-E / European Commission Regulation 2016/631, 2016.
 - **[gridmind2025]** *GridMind: LLMs-Powered Agents for Power System Analysis and Operations*. arXiv preprint arXiv:2509.02494, 2025.
 - **[gridmindcia2026]** *Grid-Mind: An LLM-Orchestrated Multi-Fidelity Agent for Automated Connection Impact Assessment*. arXiv preprint arXiv:2602.20683, 2026.
+- **[harbor2026]** Terminal-Bench Team. *Harbor: A Framework for Running Agent Evaluations and RL Environments*. https://github.com/harbor-framework/harbor, 2026. Container-based agent-evaluation harness released with Terminal-Bench 2.0.
 - **[iec600767]** *IEC 60076-7:2018 Power transformers — Part 7: Loading guide for mineral-oil-immersed power transformers*. IEC, 2018.
 - **[iec60364552]** *IEC 60364-5-52 Low-voltage electrical installations — Selection and erection of electrical equipment — Wiring systems*. IEC, 2009.
 - **[iec60909]** *IEC 60909-0:2016 Short-circuit currents in three-phase a.c. systems — Part 0: Calculation of currents*. IEC, 2016.
