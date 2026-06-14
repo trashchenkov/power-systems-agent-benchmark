@@ -208,7 +208,7 @@ realized.
    terms, launching an agent must not depend on any particular one — participation
    reduces to reading a task file and writing a solution file (Section 4.2).
 4. **Provenance and machine-readable results.** Every task must declare where it
-   comes from, with a confidence level (Section 5.2), and every result must be
+   comes from, with a confidence level (Section 5.1), and every result must be
    machine-readable — a feasibility flag, a score, and an explicit list of
    violations (Sections 4.1 and 6) — so that runs can be aggregated and audited
    without anyone reading prose.
@@ -328,59 +328,40 @@ summaries are published — never the per-case held-out submissions, results, or
 
 ## 5. Task Set
 
-The public benchmark comprises 41 task families, grouped into eight areas of power
-engineering to make their coverage legible. Network analysis and operating
-constraints include bus-admittance-matrix construction, corrective reactive-power
-dispatch for voltage limits, contingency screening, post-contingency corrective
-switching, and dynamic line rating. Short circuit and protection include
-three-phase and single-line-to-ground fault calculation, breaker and relay setting
-from fault levels, distance-protection zone setting, overcurrent coordination, and
-cable sizing. Stability, grid code, and inverter-based resources include critical
-clearing time by the equal-area criterion, transient-stability classification,
-fault-ride-through compliance, current-limited inverter fault response, and minimum
-synchronous-generation share under inertia and short-circuit constraints.
-Distributed resources, photovoltaics, electric vehicles, and storage include
-Volt-VAR control, vehicle-to-grid scheduling and voltage support, battery
-ancillary-service response, and a soft-cost levelized-cost calculation. Microgrids
-and dispatch include economic and rolling-horizon dispatch, islanded active/reactive
-dispatch, robust dispatch under uncertainty, hydro-thermal unit commitment, and
-single-contingency-secure generation commitment. Reliability and restoration include
-fault isolation and service restoration, faulted-section localization, fault-indicator
-placement, reliability-index improvement, and operator switching and shedding.
-Power quality, standards, assets, and cybersecurity include voltage-compliance
-checking to a supply standard, power-quality event classification, harmonic-limit
-compliance, transformer thermal loading and insulation ageing, bad-data
-identification in state estimation, secured-measurement placement, and lead-station
-handover in a multi-agent frequency scheme. Forecasting under uncertainty includes
-wind power forecasting and prediction-interval estimation. Every family carries a
-documented source and a confidence level, and the appendix lists the full catalog
-with identifiers.
+The public benchmark comprises 41 task families, grouped into eight domain areas:
 
-### 5.1 Domain vetting of the set
+1. **Network analysis and operating constraints** — bus-admittance-matrix
+   construction, corrective reactive-power dispatch for voltage limits, contingency
+   screening, post-contingency corrective switching, dynamic line rating.
+2. **Short circuit and protection** — three-phase and single-line-to-ground fault
+   calculation, breaker and relay setting from fault levels, distance-protection zone
+   setting, overcurrent coordination, cable sizing.
+3. **Stability, grid code, and inverter-based resources** — critical clearing time by
+   the equal-area criterion, transient-stability classification, fault-ride-through
+   compliance, current-limited inverter fault response, minimum synchronous-generation
+   share under inertia and short-circuit constraints.
+4. **Distributed resources, PV, EV, and storage** — Volt-VAR control, vehicle-to-grid
+   scheduling and voltage support, battery ancillary-service response, soft-cost
+   levelized-cost calculation.
+5. **Microgrids and dispatch** — economic and rolling-horizon dispatch, islanded
+   active/reactive dispatch, robust dispatch under uncertainty, hydro-thermal unit
+   commitment, single-contingency-secure generation commitment.
+6. **Reliability and restoration** — fault isolation and service restoration,
+   faulted-section localization, fault-indicator placement, reliability-index
+   improvement, operator switching and shedding.
+7. **Power quality, standards, assets, and cybersecurity** — voltage-compliance
+   checking to a supply standard, power-quality event classification, harmonic-limit
+   compliance, transformer thermal loading and insulation ageing, bad-data
+   identification in state estimation, secured-measurement placement, lead-station
+   handover in a multi-agent frequency scheme.
+8. **Forecasting under uncertainty** — wind power forecasting, prediction-interval
+   estimation.
 
-Assembling tasks from the literature is not the same as making them correct, and a
-domain review of the initial set removed four classes of factual defect. Some were
-errors of physics: in one task a rate-of-change-of-frequency expression placed
-system frequency in the denominator rather than the numerator, a squared-frequency
-error that left the inertia constraint it was meant to enforce permanently slack;
-restoring the swing-equation form and rebalancing the case corrects it. Some were
-conceptual: a task nominally about false-data-injection detection had included the
-attack labels among its inputs and so reduced to a threshold comparison, and it was
-reworked into a genuine weighted-least-squares state estimation with an iterative
-largest-normalized-residual test — a setting in which residual smearing defeats the
-naive test — with stealthy injection scoped out explicitly. Some were degenerate: a
-critical-clearing-time task read its answer from precomputed stability flags, and was
-replaced by an analytic equal-area calculation. And some overstated a standard: a
-short-circuit task invoking a fault-calculation standard had omitted the standard's
-voltage-correction factor and folded arc resistance into the maximum current,
-understating that current by roughly ten percent in the non-conservative direction,
-and was reworked into the standard's own maximum/minimum current pair. Finally, three
-families that on inspection lay outside power engineering — two concerning building
-heating and one a generic variance decomposition — were retired in favor of
-previously uncovered domains: transformer thermal loading, cable sizing, and
-harmonic-limit compliance.
+Each task was checked for physical correctness against its cited source before
+inclusion. Every family carries a documented source and confidence level
+(Section 5.1), and the appendix lists the full catalog with identifiers.
 
-### 5.2 Provenance and confidence
+### 5.1 Provenance and confidence
 
 Because the task set is drawn from the engineering literature rather than authored
 from scratch, each family records where its formulation comes from and how firmly it
