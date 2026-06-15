@@ -343,9 +343,9 @@ The public benchmark comprises 41 task families, grouped into eight domain areas
    screening [zhou2019contingency], post-contingency corrective switching, dynamic
    line rating [ieee738].
 2. **Short circuit and protection** — three-phase and single-line-to-ground fault
-   calculation [iec60909], breaker and relay setting from fault levels,
-   distance-protection zone setting, overcurrent coordination, cable sizing
-   [iec60364552].
+   calculation [iec60909, anderson1995faulted], breaker and relay setting from fault
+   levels, distance-protection zone setting and overcurrent coordination
+   [horowitz2014relaying], cable sizing [iec60364552].
 3. **Stability, grid code, and inverter-based resources** — critical clearing time by
    the equal-area criterion [kundur1994stability], transient-stability classification,
    fault-ride-through compliance [ieee2800, entsoerfg], current-limited inverter fault
@@ -641,6 +641,7 @@ never reach the checking instance as an oracle.
 - **[abur2004se]** Abur, Ali; Expósito, Antonio Gómez. *Power System State Estimation: Theory and Implementation*. Marcel Dekker, 2004.
 - **[agenticpowersurvey2025]** *Agentic AI Systems in Electrical Power Systems Engineering: Current State-of-the-Art and Challenges*. arXiv preprint arXiv:2511.14478, 2025.
 - **[aisjudgeais2025]** *When AIs Judge AIs: The Rise of Agent-as-a-Judge Evaluation for LLMs*. arXiv preprint arXiv:2508.02994, 2025.
+- **[anderson1995faulted]** Anderson, Paul M. *Analysis of Faulted Power Systems*. Wiley-IEEE Press, 1995. ISBN 978-0-7803-1145-9.
 - **[babaeinejadsarookolaee2019pglib]** Babaeinejadsarookolaee, Sogol et al. *The Power Grid Library for Benchmarking AC Optimal Power Flow Algorithms*. arXiv preprint arXiv:1908.02788, 2019.
 - **[brown2018pypsa]** Brown, Tom; Hörsch, Jonas; Schlachtberger, David. *PyPSA: Python for Power System Analysis*. Journal of Open Research Software 6, 2018.
 - **[brown2024monkeys]** Brown, Bradley; Juravsky, Jordan; Ehrlich, Ryan; Clark, Ronald; Le, Quoc V.; Ré, Christopher; Mirhoseini, Azalia. *Large Language Monkeys: Scaling Inference Compute with Repeated Sampling*. arXiv preprint arXiv:2407.21787, 2024.
@@ -655,6 +656,7 @@ never reach the checking instance as an oracle.
 - **[gridmind2025]** *GridMind: LLMs-Powered Agents for Power System Analysis and Operations*. arXiv preprint arXiv:2509.02494, 2025.
 - **[gridmindcia2026]** *Grid-Mind: An LLM-Orchestrated Multi-Fidelity Agent for Automated Connection Impact Assessment*. arXiv preprint arXiv:2602.20683, 2026.
 - **[harbor2026]** Terminal-Bench Team. *Harbor: A Framework for Running Agent Evaluations and RL Environments*. https://github.com/harbor-framework/harbor, 2026. Container-based agent-evaluation harness released with Terminal-Bench 2.0.
+- **[horowitz2014relaying]** Horowitz, Stanley H.; Phadke, Arun G. *Power System Relaying*. 4th ed., Wiley, 2014. ISBN 978-1-118-66200-7.
 - **[iec600767]** *IEC 60076-7:2018 Power transformers — Part 7: Loading guide for mineral-oil-immersed power transformers*. IEC, 2018.
 - **[iec60364552]** *IEC 60364-5-52 Low-voltage electrical installations — Selection and erection of electrical equipment — Wiring systems*. IEC, 2009.
 - **[iec60909]** *IEC 60909-0:2016 Short-circuit currents in three-phase a.c. systems — Part 0: Calculation of currents*. IEC, 2016.
@@ -717,10 +719,10 @@ mapping the source onto the executable case).
 | Family | Source / standard | Confidence |
 |---|---|---|
 | `three_phase_short_circuit` | IEC 60909 | high |
-| `earth_fault_calculation` | Averbukh, relay-protection problems | medium |
+| `earth_fault_calculation` | Anderson, Analysis of Faulted Power Systems | medium |
 | `breaker_relay_short_circuit` | IEC 60909; Glover, Overbye & Sarma | high |
-| `distance_protection_settings` | Averbukh, relay-protection problems | medium |
-| `overcurrent_protection` | Averbukh, relay-protection problems | medium |
+| `distance_protection_settings` | Horowitz & Phadke, Power System Relaying | medium |
+| `overcurrent_protection` | Horowitz & Phadke, Power System Relaying | medium |
 | `cable_ampacity_sizing` | IEC 60364-5-52 / IEC 60949 | high |
 
 **3. Stability, grid code, and inverter-based resources**

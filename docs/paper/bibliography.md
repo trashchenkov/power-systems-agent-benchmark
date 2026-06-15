@@ -254,22 +254,32 @@
     (`frt_compliance`, `ibr_short_circuit_frt`).
 56. **ENTSO-E RfG / IEC 61400-27.** Requirements for Generators: RoCoF
     withstand, FRT-кривые. — Лимит 2 Гц/с (`min_synchronous_share`).
+57. **Anderson P. M.** Analysis of Faulted Power Systems. Wiley-IEEE Press,
+    1995. ISBN 978-0-7803-1145-9. — Канонический англоязычный источник по
+    анализу несимметричных КЗ методом симметричных составляющих
+    (`earth_fault_calculation`); заменил ранее использовавшееся советское
+    пособие по релейной защите.
+58. **Horowitz S. H., Phadke A. G.** Power System Relaying. 4th ed., Wiley,
+    2014. ISBN 978-1-118-66200-7. — Канонический англоязычный учебник по
+    релейной защите: зонирование дистанционной защиты и координация МТЗ
+    (`distance_protection_settings`, `overcurrent_protection`); заменил ранее
+    использовавшиеся советское/российское пособия.
 
 ## 9. Методология оценивания агентов
 
-57. **Brown B. et al.** Large Language Monkeys: Scaling Inference Compute
+59. **Brown B. et al.** Large Language Monkeys: Scaling Inference Compute
     with Repeated Sampling. 2024. arXiv:2407.21787. — Покрытие растёт с
     числом сэмплов по степенному закону: количественное обоснование, почему
     best-of-N — другая метрика, и почему наши ретраи ограничены
     инфраструктурным классом.
-58. **Yao S. et al.** (τ-bench, см. №5) — метрика pass^k как мера
+60. **Yao S. et al.** (τ-bench, см. №5) — метрика pass^k как мера
     УСТОЙЧИВОСТИ агента при повторных прогонах; кандидат для v2 при оценке
     дисперсии.
-59. **Kapoor S. et al.** AI Agents That Matter. 2024. arXiv:2407.01502. —
+61. **Kapoor S. et al.** AI Agents That Matter. 2024. arXiv:2407.01502. —
     Критика агентных бенчмарков: стоимость, воспроизводимость, переобучение
     на бенчмарк; чек-лист, по которому мы строили harness (фиксация команд,
     разделение классов провалов, обе метрики).
-60. **Terminal-Bench Team.** Harbor: A Framework for Running Agent Evaluations
+62. **Terminal-Bench Team.** Harbor: A Framework for Running Agent Evaluations
     and RL Environments. 2026. github.com/harbor-framework/harbor (выпущен с
     Terminal-Bench 2.0). — Контейнерный agent-agnostic харнесс для оценок в
     масштабе (облачные контейнеры, параллельный прогон, RL/SFT-роллауты).

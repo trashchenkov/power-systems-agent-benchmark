@@ -8,13 +8,12 @@
 
 ## Primary source grounding
 
-- Primary source: Авербух А. М. Релейная защита в задачах с решениями и примерами. Л.: Энергия, 1975
-- Locator: local OCR РЕЛЕЙНАЯ ЗАЩИТА..._bed306ea.txt, title/bibliography lines 3-15; TOC distance-protection chapter line 582
+- Primary source: Horowitz, S. H.; Phadke, A. G. Power System Relaying. 4th ed., Wiley, 2014 (ISBN 978-1-118-66200-7)
+- Locator: Distance protection — Zone 1/2/3 reach and time-delay coordination
 - Confidence: `medium`
-- Verification status: `found in private library`
-- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/РЕЛЕЙНАЯ ЗАЩИТА В ЗАДАЧАХ С РЕШЕНИЯМИ И ПРИМЕРАМИ.pdf`
+- Verification status: `internationally published textbook`
 
-Resolved from a vague local-archive locator to a bibliographic Russian relay-protection source; OCR confirms title/author/year and distance-protection chapter, but not a DOI-level source.
+Standard distance-protection zoning and reach-setting procedure from a canonical English-language relaying textbook; the executable case is a compact instance. Equivalent worked examples also appear in standard relay-protection collections.
 
 ## DOI / locator verification
 

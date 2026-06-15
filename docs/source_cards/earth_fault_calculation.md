@@ -8,13 +8,12 @@
 
 ## Primary source grounding
 
-- Primary source: Авербух А. М. Релейная защита в задачах с решениями и примерами. Л.: Энергия, 1975
-- Locator: local OCR РЕЛЕЙНАЯ ЗАЩИТА..._bed306ea.txt, title/bibliography lines 3-15; earth-fault / zero-sequence TOC lines 536-568
+- Primary source: Anderson, P. M. Analysis of Faulted Power Systems. Wiley-IEEE Press, 1995 (ISBN 978-0-7803-1145-9)
+- Locator: Symmetrical components — single-line-to-ground fault sequence and residual current derivation
 - Confidence: `medium`
-- Verification status: `found in private library`
-- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/РЕЛЕЙНАЯ ЗАЩИТА В ЗАДАЧАХ С РЕШЕНИЯМИ И ПРИМЕРАМИ.pdf`
+- Verification status: `internationally published textbook`
 
-Resolved to an author/title/year relay-protection worked-example book; supports earth-fault and zero-sequence protection calculations at medium confidence.
+Standard symmetrical-components method for single-line-to-ground fault currents from a canonical English-language reference; the executable case is a compact instance. Equivalent worked examples also appear in standard relay-protection collections.
 
 ## DOI / locator verification
 

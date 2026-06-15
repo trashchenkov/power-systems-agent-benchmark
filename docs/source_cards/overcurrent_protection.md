@@ -8,13 +8,12 @@
 
 ## Primary source grounding
 
-- Primary source: Авербух А. М. Релейная защита в задачах с решениями и примерами. Л.: Энергия, 1975; Копьев В. Н. Релейная защита, Томск, 2011
-- Locator: local OCR РЕЛЕЙНАЯ ЗАЩИТА..._bed306ea.txt lines 3-15 and maximum-current protection TOC lines 548-557; Релейная защита. Томск_3f3d000a.txt title/author/year metadata
+- Primary source: Horowitz, S. H.; Phadke, A. G. Power System Relaying. 4th ed., Wiley, 2014 (ISBN 978-1-118-66200-7)
+- Locator: Overcurrent protection — pickup current and time-grading/selectivity
 - Confidence: `medium`
-- Verification status: `found in private library`
-- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/РЕЛЕЙНАЯ ЗАЩИТА В ЗАДАЧАХ С РЕШЕНИЯМИ И ПРИМЕРАМИ.pdf; local_archive_extracted/local_lit/power_engineering/Релейная защита. Томск.pdf`
+- Verification status: `internationally published textbook`
 
-Resolved vague protection-setting locator to bibliographic relay-protection sources and OCR TOC evidence for maximum-current protection.
+Standard overcurrent pickup and time-coordination procedure from a canonical English-language relaying textbook; the executable case is a compact instance. Equivalent worked examples also appear in standard relay-protection collections.
 
 ## DOI / locator verification
 

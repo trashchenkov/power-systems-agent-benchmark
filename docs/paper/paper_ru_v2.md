@@ -339,9 +339,9 @@ statictodynamic2025], динамические и обновляемые бен�
    корректирующие переключения, динамическое определение допустимой токовой нагрузки линии
    [ieee738].
 2. **Короткое замыкание и релейная защита** — расчёт трёхфазного и однофазного на землю
-   короткого замыкания [iec60909], выбор уставок выключателя и реле по уровням токов КЗ,
-   настройка зон дистанционной защиты, согласование максимальной токовой защиты, выбор сечения
-   кабеля [iec60364552].
+   короткого замыкания [iec60909, anderson1995faulted], выбор уставок выключателя и реле по
+   уровням токов КЗ, настройка зон дистанционной защиты и согласование максимальной токовой
+   защиты [horowitz2014relaying], выбор сечения кабеля [iec60364552].
 3. **Устойчивость, сетевой кодекс и инверторные источники** — критическое время отключения по
    критерию равных площадей (equal-area criterion) [kundur1994stability], классификация
    переходной устойчивости, соответствие требованиям по выдерживанию провалов напряжения
@@ -629,6 +629,7 @@ OpenCode, меньшая открытая модель, отстаёт, а ре�
 - **[abur2004se]** Abur, Ali; Expósito, Antonio Gómez. *Power System State Estimation: Theory and Implementation*. Marcel Dekker, 2004.
 - **[agenticpowersurvey2025]** *Agentic AI Systems in Electrical Power Systems Engineering: Current State-of-the-Art and Challenges*. arXiv preprint arXiv:2511.14478, 2025.
 - **[aisjudgeais2025]** *When AIs Judge AIs: The Rise of Agent-as-a-Judge Evaluation for LLMs*. arXiv preprint arXiv:2508.02994, 2025.
+- **[anderson1995faulted]** Anderson, Paul M. *Analysis of Faulted Power Systems*. Wiley-IEEE Press, 1995. ISBN 978-0-7803-1145-9.
 - **[babaeinejadsarookolaee2019pglib]** Babaeinejadsarookolaee, Sogol et al. *The Power Grid Library for Benchmarking AC Optimal Power Flow Algorithms*. arXiv preprint arXiv:1908.02788, 2019.
 - **[brown2018pypsa]** Brown, Tom; Hörsch, Jonas; Schlachtberger, David. *PyPSA: Python for Power System Analysis*. Journal of Open Research Software 6, 2018.
 - **[brown2024monkeys]** Brown, Bradley; Juravsky, Jordan; Ehrlich, Ryan; Clark, Ronald; Le, Quoc V.; Ré, Christopher; Mirhoseini, Azalia. *Large Language Monkeys: Scaling Inference Compute with Repeated Sampling*. arXiv preprint arXiv:2407.21787, 2024.
@@ -643,6 +644,7 @@ OpenCode, меньшая открытая модель, отстаёт, а ре�
 - **[gridmind2025]** *GridMind: LLMs-Powered Agents for Power System Analysis and Operations*. arXiv preprint arXiv:2509.02494, 2025.
 - **[gridmindcia2026]** *Grid-Mind: An LLM-Orchestrated Multi-Fidelity Agent for Automated Connection Impact Assessment*. arXiv preprint arXiv:2602.20683, 2026.
 - **[harbor2026]** Terminal-Bench Team. *Harbor: A Framework for Running Agent Evaluations and RL Environments*. https://github.com/harbor-framework/harbor, 2026. Container-based agent-evaluation harness released with Terminal-Bench 2.0.
+- **[horowitz2014relaying]** Horowitz, Stanley H.; Phadke, Arun G. *Power System Relaying*. 4th ed., Wiley, 2014. ISBN 978-1-118-66200-7.
 - **[iec600767]** *IEC 60076-7:2018 Power transformers — Part 7: Loading guide for mineral-oil-immersed power transformers*. IEC, 2018.
 - **[iec60364552]** *IEC 60364-5-52 Low-voltage electrical installations — Selection and erection of electrical equipment — Wiring systems*. IEC, 2009.
 - **[iec60909]** *IEC 60909-0:2016 Short-circuit currents in three-phase a.c. systems — Part 0: Calculation of currents*. IEC, 2016.
@@ -705,10 +707,10 @@ OpenCode, меньшая открытая модель, отстаёт, а ре�
 | Семейство | Источник / стандарт | Достоверность |
 |---|---|---|
 | `three_phase_short_circuit` | IEC 60909 | высокая |
-| `earth_fault_calculation` | Авербух, задачи по релейной защите | средняя |
+| `earth_fault_calculation` | Anderson, Analysis of Faulted Power Systems | средняя |
 | `breaker_relay_short_circuit` | IEC 60909; Glover, Overbye & Sarma | высокая |
-| `distance_protection_settings` | Авербух, задачи по релейной защите | средняя |
-| `overcurrent_protection` | Авербух, задачи по релейной защите | средняя |
+| `distance_protection_settings` | Horowitz & Phadke, Power System Relaying | средняя |
+| `overcurrent_protection` | Horowitz & Phadke, Power System Relaying | средняя |
 | `cable_ampacity_sizing` | IEC 60364-5-52 / IEC 60949 | высокая |
 
 **3. Устойчивость, сетевой кодекс и инверторные источники**
