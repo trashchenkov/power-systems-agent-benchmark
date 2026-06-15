@@ -24,14 +24,8 @@ Runnable v0 prototype:
   - `schemas/task.schema.json`
   - `schemas/submission.schema.json`
   - `schemas/evaluation-result.schema.json`
-- executable public task families:
-  - `contingency_screening`
-  - `fdi_state_estimation`
-  - `flisr_restoration`
-  - `frt_compliance`
-  - `overcurrent_protection`
-  - `pf_voltage_repair`
-  - `pv_volt_var`
+- executable public task families: the full **41-family balanced core** (catalog in
+  `docs/paper/paper_en_v2.md` Appendix A and `docs/bilingual_task_inventory.md`)
 - agent-agnostic runner scripts:
   - `scripts/evaluate_submission.py`
   - `scripts/run_public_baselines.py`
@@ -156,13 +150,20 @@ Latest historical local report: `runs/public_agent_smoke/REPORT.md`.
 - Historical 0–100 run before the normalized-score migration: OpenCode (`opencode/deepseek-v4-flash-free`) was 6/7 feasible and failed `pv_volt_var` on voltage-limit violations.
 - Codex CLI: 0/7 feasible because the local Codex OAuth session failed before writing submissions (`401 Unauthorized`, expired/reused refresh token). This is an environment/auth issue, not a benchmark-mechanics failure.
 
-## Hidden normalized smoke results
+## Reference evaluation
 
-Latest hidden report: `runs/hidden_agent_smoke/REPORT.md`.
+The canonical reference round — three command-line agents, one public and one freshly
+generated held-out case per family, optimum-normalized scoring — is summarized in
+`runs/canonical_round1/REPORT.md`:
 
-- Hermes CLI (`--toolsets file`): 3/3 feasible, `mean_score=0.864412` on hidden `case_101` packets.
-- OpenCode (`opencode/deepseek-v4-flash-free`): 2/3 feasible, `mean_score=0.541778`; failed hidden `pv_volt_var` on voltage-limit violations.
-- Historical run directories without the `-normalized` suffix used the old 0–100/`total_score` convention and should not be mixed with the normalized report.
+| agent (model) | public mean | held-out mean |
+|---|---|---|
+| codex (gpt-5.5 medium) | 0.973 | 0.995 |
+| cursor (composer-2.5) | 0.973 | 1.000 |
+| opencode (deepseek-v4-flash-free) | 0.951 | 0.973 |
+
+Per the leak policy, only aggregate per-agent summaries are published for the held-out
+split; per-case held-out submissions, results, and logs are not.
 
 ## Public executable task inventory
 
