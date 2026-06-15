@@ -4,7 +4,7 @@
 trashchenkov@gmail.com · ORCID [0000-0001-8786-8336](https://orcid.org/0000-0001-8786-8336)
 
 *Preprint draft v2 (2026-06). English version for arXiv (eess.SY; cs.AI).
-Word-for-word Russian companion: `paper_ru_v2.md`. Annotated bibliography:
+Russian companion: `paper_ru_v2.md`. Annotated bibliography:
 `bibliography.md`; BibTeX: `references.bib`.*
 
 ## Abstract
@@ -508,7 +508,7 @@ available.
 
 What discrimination the benchmark does provide comes at the lower end of the capability
 range and through shared blind spots, not through margins among the leaders: OpenCode
-fails a distribution-dispatch task outright where the others succeed, and one
+fails a microgrid-dispatch task outright where the others succeed, and one
 storage-scheduling task is missed by every agent in the same way — a genuine capability
 gap, confirmed not to be a specification defect (Section 8.2).
 
