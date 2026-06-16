@@ -587,25 +587,37 @@ This validates the generator itself: it is a property of the held-out constructi
 measure of agent performance, for which repeated agent runs over many variants — beyond
 the single configuration reported above — would be required.
 
-### 8.4 A wider spectrum of accessible models
+### 8.4 A wider spectrum of models and harnesses
 
-To check that the benchmark separates more than the three reference agents, we ran four
-further, widely accessible models on the public split through a single model-agnostic
-harness, so that only the model varies. On the same optimum-normalized evaluators their
-public means span a wide range below the frontier: Kimi K2.5 (a ~1-trillion-parameter
-open-weight mixture-of-experts, 32B active) at 0.93, GLM-4.6 (357B, 32B active, open) at
-0.78, Claude Haiku 4.5 (proprietary; size undisclosed) at 0.71, and Qwen3-Coder-Next
-(80B, 3B active, open) at 0.66, against the reference agents at 0.95–0.97. The benchmark
-therefore discriminates clearly across the realistic spectrum of models a practitioner
-might actually deploy, not only at the frontier; the ordering also tracks something other
-than raw size, as the two 32B-active models differ by 0.15. Three caveats keep this
-honest: all four share one harness, so this varies the model and not the scaffolding;
-each is a single run; and some failures are infrastructure rather than capability — two
-models occasionally wrote no solution at all (counted as infeasible), which depresses
-their scores below their true competence. The genuine failures are of the kind the
-benchmark is meant to catch: a fault current reported a thousand times too small,
-dispatch schedules that breach state-of-charge limits, a missed islanding flag, an
-inverted ride-through verdict.
+The three reference agents each bundle a harness with a model — Codex with gpt-5.5,
+Cursor with composer-2.5, OpenCode with the free deepseek-v4-flash. To probe both axes,
+we ran a small grid on the public split: two model-agnostic harnesses, OpenCode and
+Aider, each driving four further, widely accessible models, with every cell scored by
+the same optimum-normalized evaluators. OpenCode therefore appears both in the reference
+round (on the free model) and here (on the four others).
+
+| model | OpenCode | Aider |
+|---|---|---|
+| Kimi K2.5 (~1T MoE, 32B active, open) | 0.93 | 0.85 |
+| GLM-4.6 (357B, 32B active, open) | 0.78 | 0.44 |
+| Claude Haiku 4.5 (proprietary) | 0.71 | 0.51 |
+| Qwen3-Coder-Next (80B, 3B active, open) | 0.66 | 0.53 |
+
+Two things stand out. Under OpenCode the public means span 0.66 to 0.93, well below the
+reference frontier at 0.95–0.97, so the benchmark separates the realistic spectrum of
+models a practitioner might deploy, and the ordering tracks more than raw size — the two
+32B-active models differ by 0.15. And the harness matters as much as the model: every
+model scores lower under Aider, a code-editing harness applied here to an answer-writing
+task, by as much as 0.34 for GLM-4.6. The same model is thus a different agent under
+different scaffolding — the agent-agnostic contract put to use, and the reason we keep
+the harness, not only the model, in view (Section 4.2). Caveats keep this honest: each
+cell is a single run; the lower Aider scores are overwhelmingly genuine wrong answers,
+not format errors (one empty submission aside); two OpenCode runs had a few
+infrastructure no-submission misses; and of the other harnesses we tried, Forge and
+Terminus were unavailable in our environment and Goose would not route to our model
+gateway. The genuine failures are of the kind the benchmark is meant to catch: a fault
+current reported a thousand times too small, dispatch schedules that breach
+state-of-charge limits, a missed islanding flag, an inverted ride-through verdict.
 
 ## 9. Limitations
 

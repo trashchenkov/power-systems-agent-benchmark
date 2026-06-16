@@ -139,6 +139,14 @@ def evaluate_submission_file(task_path: Path, submission_path: Path) -> dict[str
     if family not in EVALUATOR_MODULE_BY_FAMILY:
         raise ValueError(f"No evaluator registered for family: {family}")
     module = importlib.import_module(EVALUATOR_MODULE_BY_FAMILY[family])
+    # An empty or non-JSON submission file is an ordinary failed solution, not a crash:
+    # parse it up front and return infeasible if it cannot be read (Section 4.2 robustness).
+    try:
+        json.loads(submission_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {"task_id": task.get("task_id"), "feasible": False, "score": 0.0,
+                "absolute_score": 0.0, "reference_optimum": None,
+                "violations": ["submission file is empty or not valid JSON"]}
     result = _dispatch_raw(module, task, task_path, submission_path)
 
     # Normalize the score against the reference optimum so that 1.0 means optimal

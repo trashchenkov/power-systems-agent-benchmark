@@ -69,6 +69,22 @@ class MalformedSubmissionTests(unittest.TestCase):
         for key in ("min_synchronous_share_pct", "system_inertia_gws", "rocof_hz_per_s", "short_circuit_ratio"):
             self.assertTrue(any(key in v for v in result["violations"]), key)
 
+    def test_empty_or_nonjson_submission_is_infeasible_not_raised(self):
+        # A model/harness that writes an empty or non-JSON submission must be scored
+        # infeasible, not crash the run (observed with one code-editing harness).
+        task_path, _ = _public_paths("three_phase_short_circuit")
+        for content in ("", "   ", "not json at all", "{oops"):
+            with self.subTest(content=content):
+                tmp = ROOT / "runs" / ".tmp_empty_submission.json"
+                tmp.write_text(content, encoding="utf-8")
+                try:
+                    result = evaluate_submission_file(task_path, tmp)
+                finally:
+                    tmp.unlink(missing_ok=True)
+                self.assertFalse(result.get("feasible"), content)
+                self.assertEqual(float(result.get("score", 1.0)), 0.0, content)
+                self.assertTrue(result.get("violations"), content)
+
 
 if __name__ == "__main__":
     unittest.main()
