@@ -438,7 +438,9 @@ answer would score below one. The reference solver for each family computes that
 optimum and is optimal by construction; an agent's solution, being one feasible
 solution among many, cannot exceed it, and should a submission nonetheless score
 higher the reference was not optimal on that case and the reported score is capped at
-one. An exact computation is scored against numeric tolerances; a control or
+one. An exact computation is scored against numeric tolerances — a 0.1% relative band with a
+small absolute floor, so that an answer correct to about four significant figures passes
+while a genuinely wrong one does not; a control or
 optimization task scores the gap between the submitted objective and the optimum, so
 that an alternative optimum of equal cost receives full credit and a feasible but
 costlier solution receives partial credit; a classification or localization task is
@@ -584,6 +586,26 @@ mean coefficient of variation near 0.2, so the variants are genuinely different 
 This validates the generator itself: it is a property of the held-out construction, not a
 measure of agent performance, for which repeated agent runs over many variants — beyond
 the single configuration reported above — would be required.
+
+### 8.4 A wider spectrum of accessible models
+
+To check that the benchmark separates more than the three reference agents, we ran four
+further, widely accessible models on the public split through a single model-agnostic
+harness, so that only the model varies. On the same optimum-normalized evaluators their
+public means span a wide range below the frontier: Kimi K2.5 (a ~1-trillion-parameter
+open-weight mixture-of-experts, 32B active) at 0.93, GLM-4.6 (357B, 32B active, open) at
+0.78, Claude Haiku 4.5 (proprietary; size undisclosed) at 0.71, and Qwen3-Coder-Next
+(80B, 3B active, open) at 0.66, against the reference agents at 0.95–0.97. The benchmark
+therefore discriminates clearly across the realistic spectrum of models a practitioner
+might actually deploy, not only at the frontier; the ordering also tracks something other
+than raw size, as the two 32B-active models differ by 0.15. Three caveats keep this
+honest: all four share one harness, so this varies the model and not the scaffolding;
+each is a single run; and some failures are infrastructure rather than capability — two
+models occasionally wrote no solution at all (counted as infeasible), which depresses
+their scores below their true competence. The genuine failures are of the kind the
+benchmark is meant to catch: a fault current reported a thousand times too small,
+dispatch schedules that breach state-of-charge limits, a missed islanding flag, an
+inverted ride-through verdict.
 
 ## 9. Limitations
 
