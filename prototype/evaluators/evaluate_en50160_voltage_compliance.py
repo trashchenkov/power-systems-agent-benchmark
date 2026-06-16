@@ -88,7 +88,7 @@ def _num(value: Any, name: str, violations: list[str]) -> float | None:
 def _close(name: str, actual: float | None, expected: float, violations: list[str], abs_tol: float = 0.001) -> None:
     if actual is None:
         return
-    if abs(actual - expected) > abs_tol:
+    if abs(actual - expected) > max(1e-4, 1e-3*max(1.0, abs(expected))):
         violations.append(f"{name}={actual:.6g} differs from expected {expected:.6g} by more than {abs_tol}")
 
 

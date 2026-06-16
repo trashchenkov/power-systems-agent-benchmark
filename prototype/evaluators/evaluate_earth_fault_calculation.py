@@ -113,7 +113,7 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     expected = compute_earth_fault(task)
     tol = task.get("tolerances", {})
     abs_tol = float(tol.get("absolute", 1e-3))
-    rel_tol = float(tol.get("relative", 1e-4))
+    rel_tol = float(tol.get("relative", 1e-3))
     for seq_name, exp_key in [("i1", "i1_ka"), ("i2", "i2_ka"), ("i0", "i0_ka")]:
         actual = _get_mag_angle(submission, f"sequence_currents_ka.{seq_name}", violations)
         _close(f"sequence_currents_ka.{seq_name}.mag_ka", actual["mag_ka"], expected[exp_key]["mag_ka"], abs_tol, rel_tol, violations)

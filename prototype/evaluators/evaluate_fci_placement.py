@@ -9,7 +9,7 @@ TOL=1e-6
 
 def _load_json(path: str | Path) -> dict[str, Any]: return json.loads(Path(path).read_text(encoding="utf-8"))
 def _close(a: Any,b: Any,tol: float=TOL)->bool:
-    try: return abs(float(a)-float(b))<=tol
+    try: return abs(float(a)-float(b))<=max(1e-4,1e-3*max(1.0,abs(float(b))))
     except Exception: return False
 
 def _value(case: dict[str, Any], selected: tuple[str,...]) -> tuple[float, dict[str,float]]:

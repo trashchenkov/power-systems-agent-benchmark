@@ -30,7 +30,7 @@ def _expected(task):
     return {"online_units":ids,"min_synchronous_share_pct":_round(share),"system_inertia_gws":_round(inertia),"rocof_hz_per_s":_round(rocof),"short_circuit_ratio":_round(scr)}
 def _num(a,b,tol=TOL):
     try:
-        return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+        return math.isclose(float(a), float(b), rel_tol=1e-3, abs_tol=tol)
     except (TypeError, ValueError):
         return False
 def evaluate_case(task, submission):

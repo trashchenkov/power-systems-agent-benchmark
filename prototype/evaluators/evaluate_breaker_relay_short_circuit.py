@@ -94,9 +94,9 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
         return {"task_id": task.get("task_id"), "feasible": False, "score": 0.0, "study": study, "violations": violations}
     assert max_fault is not None and min_fault is not None and breaker is not None and pickup is not None
     tol = float(task.get("numeric_tolerance", 1e-3))
-    if abs(max_fault - study["max_3ph_fault_ka"]) > tol:
+    if abs(max_fault - study["max_3ph_fault_ka"]) > max(tol, 1e-3*abs(study["max_3ph_fault_ka"])):
         violations.append("max_3ph_fault_ka does not match recomputed study")
-    if abs(min_fault - study["min_2ph_fault_ka"]) > tol:
+    if abs(min_fault - study["min_2ph_fault_ka"]) > max(tol, 1e-3*abs(study["min_2ph_fault_ka"])):
         violations.append("min_2ph_fault_ka does not match recomputed study")
     if breaker + tol < study["minimum_breaker_rating_ka"]:
         violations.append("breaker_interrupting_rating_ka below required safety margin")

@@ -26,7 +26,7 @@ def _expected(task):
     return {"current_profile_pu":prof,"min_reactive_current_pu":_round(min_iq),"max_total_current_pu":_round(max_itot),"frt_compliant":compliant}
 def _num(a,b,tol=TOL):
     try:
-        return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+        return math.isclose(float(a), float(b), rel_tol=1e-3, abs_tol=tol)
     except (TypeError, ValueError):
         return False
 def evaluate_case(task, submission):

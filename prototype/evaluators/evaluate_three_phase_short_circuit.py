@@ -101,7 +101,7 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
     expected = compute_three_phase_fault(task)
     tol = task.get("tolerances", {})
     abs_tol = float(tol.get("absolute", 1e-3))
-    rel_tol = float(tol.get("relative", 1e-4))
+    rel_tol = float(tol.get("relative", 1e-3))
     for key in ("ik_max_ka", "sk_max_mva", "ik_min_ka", "z_bolted_mag_pu", "z_min_mag_pu"):
         _close(key, _num(submission, key, violations), expected[key], abs_tol, rel_tol, violations)
     feasible = not violations

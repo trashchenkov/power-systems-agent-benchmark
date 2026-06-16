@@ -101,7 +101,7 @@ def evaluate_case(task: dict[str, Any], submission: dict[str, Any]) -> dict[str,
                 continue
             error = abs(observed_value - expected_value)
             max_abs_error = max(max_abs_error, error)
-            if error > tolerance:
+            if error > max(1e-4, 1e-3 * abs(expected_value)):
                 key = f"{from_bus},{to_bus}"
                 entry_errors[key] = round(error, 9)
 

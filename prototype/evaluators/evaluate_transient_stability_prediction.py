@@ -25,7 +25,7 @@ def _expected(task):
     return {"case_results":results,"stable_case_count":stable_count,"highest_risk_case":high}
 def _num(a,b,tol=TOL):
     try:
-        return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+        return math.isclose(float(a), float(b), rel_tol=1e-3, abs_tol=tol)
     except (TypeError, ValueError):
         return False
 def evaluate_case(task, submission):

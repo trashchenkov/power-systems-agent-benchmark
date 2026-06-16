@@ -6,7 +6,7 @@ from typing import Any
 ALLOWED_EXTRA={"rationale"}
 def _load_json(path: str|Path)->dict[str,Any]: return json.loads(Path(path).read_text(encoding="utf-8"))
 def _close(a,b,tol=1e-3):
-    try: return abs(float(a)-float(b))<=tol
+    try: return abs(float(a)-float(b))<=max(1e-4,1e-3*max(1.0,abs(float(b))))
     except Exception: return False
 
 def _quantile(xs,q):

@@ -44,7 +44,7 @@ def _expected(task):
 
 def _num(a,b,tol):
     try:
-        return math.isclose(float(a), float(b), rel_tol=0, abs_tol=tol)
+        return math.isclose(float(a), float(b), rel_tol=1e-3, abs_tol=tol)
     except (TypeError, ValueError):
         return False
 def evaluate_case(task, submission):

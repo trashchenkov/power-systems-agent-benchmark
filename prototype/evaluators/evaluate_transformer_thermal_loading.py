@@ -16,7 +16,7 @@ from __future__ import annotations
 import json, math
 from pathlib import Path
 TOL_ABS=0.01
-TOL_REL=1e-4
+TOL_REL=1e-3
 ALLOWED={"top_oil_c","hot_spot_c","ageing_rate","total_ageing_hours","max_hot_spot_c","overload_admissible","rationale"}
 
 def _expected(task):

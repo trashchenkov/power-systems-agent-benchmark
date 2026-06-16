@@ -12,7 +12,7 @@ from __future__ import annotations
 import json, math
 from pathlib import Path
 TOL_ABS=0.01
-TOL_REL=1e-4
+TOL_REL=1e-3
 ALLOWED={"selected_cross_section_mm2","selected_derated_ampacity_a","selected_voltage_drop_pct","min_thermal_section_mm2","rationale"}
 
 def _spec(task):

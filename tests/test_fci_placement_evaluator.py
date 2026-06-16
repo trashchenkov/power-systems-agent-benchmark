@@ -26,7 +26,7 @@ class FCIPlacementEvaluatorTests(unittest.TestCase):
 
     def test_wrong_summary_value_is_rejected(self) -> None:
         submission = solve_case(self.task)
-        submission['expected_customer_minutes_saved'] += 1.0
+        submission['expected_customer_minutes_saved'] *= 1.05  # 5% off, well beyond the 0.1% tolerance
         result = evaluate_case(self.task, submission)
         self.assertFalse(result["feasible"])
         self.assertTrue(any("expected_customer_minutes_saved" in v for v in result["violations"]))

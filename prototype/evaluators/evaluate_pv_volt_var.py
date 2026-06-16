@@ -103,7 +103,7 @@ def evaluate_case(case: dict[str, Any], submission: dict[str, Any]) -> dict[str,
                 "corrected_voltage_pu": round(corrected_voltage, 6),
             }
             total_control_effort += abs(q_command)
-            if corrected_voltage < v_min - tolerance or corrected_voltage > v_max + tolerance:
+            if corrected_voltage < v_min - 1e-4 or corrected_voltage > v_max + 1e-4:
                 voltage_violation_timesteps.append(step_id)
 
     for step_id in q_limit_violations:
