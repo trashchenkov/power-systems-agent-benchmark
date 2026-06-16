@@ -118,7 +118,10 @@ serve as a substrate for studying agent behavior on physically grounded tasks. W
 accompany the benchmark with a reference evaluation of three command-line agents
 and, in the course of running it, report a methodological observation — that a
 failure shared by all agents is a reliable signal of a defective task or
-evaluator — useful enough to recommend in its own right (Section 8.2).
+evaluator — useful enough to recommend in its own right (Section 8.2). We frame this as
+a v0: a broad, contamination-resistant, agent-agnostic executable prototype across 41
+compact task families — not a claim of priority over earlier domain efforts (Section 2),
+nor a measure of industrial-scale competence (Section 9).
 
 ## 2. Related Work
 
