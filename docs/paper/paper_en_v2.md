@@ -325,7 +325,8 @@ complaints it implies — under a private random seed, and a draw is accepted on
 the family's reference solver still solves it, the evaluator confirms the solution
 feasible, and no small perturbation of that solution scores higher — keeping the
 reference solution the optimum against which the case is scored (Section 6) — with a
-deterministic redraw otherwise. Whoever operates a
+deterministic redraw otherwise; Section 8.3 confirms empirically that this yields
+solvable, diverse held-out instances at scale. Whoever operates a
 leaderboard keeps the seed private; anyone else can read exactly how held-out cases
 are constructed without learning the particular instances of any round. This makes
 the held-out set, normally the most leak-prone component of a benchmark, auditable
@@ -549,6 +550,24 @@ because three independent agents brought the correct physics to bear. An executa
 benchmark, in other words, can harbor a latent domain error in the very code that
 defines correctness, and a matrix of agents is a means of finding it — a caution we
 would extend to any benchmark whose reference answers are derived from its evaluator.
+
+### 8.3 Held-out generator validation
+
+The held-out mechanism of Section 4.4 is only useful if the generator reliably produces
+solvable, varied instances rather than near-duplicates of the public case. We tested
+this directly by drawing eight held-out variants of every family from a fixed validation
+seed and scoring each with the reference solver. All 328 variants (41 families × 8) were
+produced without exhausting the redraw budget and were feasible, so the acceptance rule —
+keep a draw only if the reference solver solves it and no small perturbation of that
+solution scores higher — holds at scale. Every variant differed from its public case, and
+40 of the 41 families yielded eight distinct instances; the exception, faulted-section
+localization, draws a fault location from a small discrete set and so produces fewer
+distinct instances (four of eight) — an inherent bound for categorical families rather
+than a generator fault. Across the continuous content the perturbed inputs varied with a
+mean coefficient of variation near 0.2, so the variants are genuinely different problems.
+This validates the generator itself: it is a property of the held-out construction, not a
+measure of agent performance, for which repeated agent runs over many variants — beyond
+the single configuration reported above — would be required.
 
 ## 9. Limitations
 
