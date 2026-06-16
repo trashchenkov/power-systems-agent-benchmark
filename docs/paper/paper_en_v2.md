@@ -307,7 +307,16 @@ capability.
 The evaluators are allowed to mature in place along a ladder: from a closed-form or
 graph-based surrogate, through a deterministic engineering model, to a check backed
 by a full power-system simulator, and ultimately to a stochastic or large-scale
-scenario suite. The evaluators presented here occupy the first two rungs. The
+scenario suite. The evaluators presented here occupy the first two rungs, and within
+those rungs they are of two kinds. About half compute an engineering quantity in closed
+form from a standard or textbook method — short-circuit and symmetrical-component fault
+currents, an admittance matrix, a transformer thermal model, harmonic and
+voltage-compliance limits — and are exact for the compact problem as posed. The rest
+score a decision over a deliberately simplified model — a linear voltage-sensitivity
+stand-in for an AC power flow, or an optimization over a compact dispatch or restoration
+model — and are approximate by construction; the boundary is not always sharp, since some
+solve a linearized model exactly. None yet invokes a full power-system simulator, which
+is the next rung. The
 contract of Section 4.1 is what makes the ladder usable: because the task and
 solution formats are fixed independently of how a check is computed, the internal
 step of replacing, say, a linearized power-flow surrogate with a full AC solution
@@ -461,8 +470,12 @@ confirms not that the tasks are easy but that every task has a contract-valid,
 physically consistent reference solution. One limit of such a check is worth stating
 plainly: a reference solver and an evaluator built on the same kernels can share the
 same mistake and still agree, so their agreement confirms the contract but cannot, by
-itself, certify the evaluator's underlying physics. Continuous integration runs the
-full check on every change.
+itself, certify the evaluator's underlying physics. As a partial, independent check on
+that physics, a set of evaluators is additionally cross-checked against golden cases
+whose answers are derived by hand from the governing formulas rather than from our own
+baselines — at present three: three-phase short circuit (IEC 60909), single-line-to-ground
+fault by symmetrical components, and admittance-matrix construction. Continuous
+integration runs the full check on every change.
 
 ## 8. Experiments
 
