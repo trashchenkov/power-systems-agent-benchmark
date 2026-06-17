@@ -495,7 +495,9 @@ free tier of that model through OpenCode's provider; we refer to them below as C
 Cursor, and OpenCode. Both the models and these agent CLIs are
 updated frequently, so the round, run in June 2026, should be read as a snapshot of
 these specific versions rather than a standing ranking; re-running the same protocol
-with later releases may give different results.
+with later releases may give different results. This reference round is the subject of
+Sections 8.1 and 8.2; Section 8.3 then validates the held-out generator and Section 8.4
+widens the comparison beyond these three to further models and a second harness.
 
 ### 8.1 Public versus held-out evaluation
 
@@ -877,4 +879,5 @@ cases scored one.
 run summaries. For the public split the per-case submissions, evaluator results, and
 agent logs are included; for the held-out split only the aggregate summaries are
 published, since a per-case held-out submission or evaluator result would disclose that
-case's answer (Section 4.4).
+case's answer (Section 4.4). The wider model–harness grid of Section 8.4 ships likewise,
+as per-cell public submissions with their recomputed per-case results and summaries.
