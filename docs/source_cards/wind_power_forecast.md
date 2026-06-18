@@ -12,20 +12,15 @@
 - Locator: DOI:10.1109/TPWRS.2017.2694705; RG DOI 10.13140/RG.2.2.33696.34561 was checked via DataCite/OpenAlex and is an Unpublished/ResearchGate preprint, not used as primary
 - Confidence: `medium`
 - Verification status: `doi_resolved_crossref; weak_rg_doi_demoted_from_primary`
-- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/LoRA-Finetuned-LLM-for-Multi-Step-Wind-Power-Forecasting.pdf`
-
 Replaces the weak ResearchGate DOI with a DOI-resolved peer-reviewed multi-step wind-power forecasting source; the RG locator remains only a checked/demoted breadcrumb.
 
 ## DOI / locator verification
 
 - DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
-- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
 - If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 
-- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-009`
-- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
 ## Benchmark adaptation
 
@@ -33,4 +28,4 @@ The public case is a compact executable instance derived from the primary method
 
 ## Licensing note
 
-Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository.

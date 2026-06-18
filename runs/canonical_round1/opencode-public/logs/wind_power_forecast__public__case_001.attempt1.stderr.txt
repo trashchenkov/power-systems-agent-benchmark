@@ -1,0 +1,92 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import json, math
+
+# Inputs
+ref_density = 1.225
+turbine_count = 8
+rated_mw_each = 2.5
+capacity = turbine_count * rated_mw_each  # 20 MW
+
+cut_in = 3.0
+rated_speed = 12.0
+cut_out = 25.0
+step_hours = 1.0
+
+def corrected_speed(ws, density):
+    return ws * (density / ref_density) ** (1/3)
+
+def power_curve_estimate(vc):
+    if vc < cut_in or vc >= cut_out:
+        return 0.0
+    if vc >= rated_speed:
+        return capacity
+    frac = (vc - cut_in) / (rated_speed - cut_in)
+    return capacity * frac ** 3
+
+# History
+history = [
+    ("h-4", 6.2, 1.21, 0.98),
+    ("h-3", 7.4, 1.20, 2.35),
+    ("h-2", 8.6, 1.19, 4.55),
+    ("h-1", 9.1, 1.18, 5.85),
+]
+
+biases = []
+for ts, ws, density, actual in history:
+    vc = corrected_speed(ws, density)
+    est = power_curve_estimate(vc)
+    bias = actual - est
+    biases.append(bias)
+    print(f"History {ts}: ws={ws}, density={density}, v_c={vc:.6f}, est={est:.6f}, actual={actual}, bias={bias:.6f}")
+
+bias = sum(biases) / len(biases)
+print(f"\nBias (mean): {bias:.6f}")
+
+# Weather forecast
+forecast = [
+    ("t01", 8.0, 1.19),
+    ("t02", 9.5, 1.18),
+    ("t03", 11.0, 1.17),
+    ("t04", 13.2, 1.16),
+]
+
+results = {}
+for ts, ws, density in forecast:
+    vc = corrected_speed(ws, density)
+    est = power_curve_estimate(vc)
+    fc = max(0.0, min(est + bias, capacity))
+    results[ts] = round(fc, 4)
+    print(f"Forecast {ts}: ws={ws}, density={density}, v_c={vc:.6f}, est={est:.6f}, forecast={fc:.6f}")
+
+total_mwh = sum(results.values()) * step_hours
+peak_ts = max(results, key=results.get)
+
+print(f"\ntotal_forecast_mwh: {total_mwh:.4f}")
+print(f"peak_timestamp: {peak_ts}")
+print(f"forecast_mw_by_timestamp: {results}")
+PYEOF
+History h-4: ws=6.2, density=1.21, v_c=6.174590, est=0.877739, actual=0.98, bias=0.102261
+History h-3: ws=7.4, density=1.2, v_c=7.349313, est=2.257172, actual=2.35, bias=0.092828
+History h-2: ws=8.6, density=1.19, v_c=8.517303, est=4.607686, actual=4.55, bias=-0.057686
+History h-1: ws=9.1, density=1.18, v_c=8.987178, est=5.888017, actual=5.85, bias=-0.038017
+
+Bias (mean): 0.024847
+Forecast t01: ws=8.0, density=1.19, v_c=7.923072, est=3.273490, forecast=3.298337
+Forecast t02: ws=9.5, density=1.18, v_c=9.382219, est=7.132103, forecast=7.156950
+Forecast t03: ws=11.0, density=1.17, v_c=10.832847, est=13.184431, forecast=13.209278
+Forecast t04: ws=13.2, density=1.16, v_c=12.962275, est=20.000000, forecast=20.000000
+
+total_forecast_mwh: 43.6645
+peak_timestamp: t04
+forecast_mw_by_timestamp: {'t01': 3.2983, 't02': 7.1569, 't03': 13.2093, 't04': 20.0}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

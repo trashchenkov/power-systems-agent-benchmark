@@ -12,14 +12,10 @@
 - Primary source: EN 50160 voltage-characteristics compliance practice
 - Locator: EN 50160 supply-voltage characteristics; 10-minute RMS voltage limits
 - Confidence: `high`
-- Private-library check: `standard_not_redistributed`
-
 The executable case directly applies EN-50160-style voltage compliance thresholds; the standard itself is not redistributed.
 
 ## Derived traceability
 
-- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-021`
-- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
 ## Benchmark adaptation
 
@@ -27,4 +23,4 @@ The public case is a compact executable instance derived from the primary method
 
 ## Licensing note
 
-Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository.

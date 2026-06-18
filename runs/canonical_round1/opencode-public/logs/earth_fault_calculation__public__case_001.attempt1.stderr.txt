@@ -1,0 +1,59 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat << 'PYEOF' | python3
+import math, json
+
+# Impedances
+z1 = complex(0.042, 0.31)
+z2 = complex(0.045, 0.29)
+z0 = complex(0.12, 0.82)
+zf = 0.04
+
+z_total = z1 + z2 + z0 + 3*zf
+
+v_pre = 1.0
+i_pu = v_pre / z_total
+
+# Base current
+sbase = 50.0
+vbase = 13.8
+ibase = sbase / (math.sqrt(3) * vbase)
+
+i_ka = i_pu * ibase
+
+mag_i1 = abs(i_ka)
+angle_i1 = math.degrees(math.atan2(i_ka.imag, i_ka.real))
+
+mag_i0 = mag_i1  # same
+angle_i0 = angle_i1
+
+fault_current_mag = 3 * mag_i0
+fault_current_angle = angle_i0  # 3*I0 has same angle as I0
+
+print(f"Z_total = {z_total}")
+print(f"Z_total magn = {abs(z_total):.6f}, angle = {math.degrees(math.atan2(z_total.imag, z_total.real)):.6f}")
+print(f"I_pu = {i_pu}")
+print(f"I_pu mag = {abs(i_pu):.6f}, angle = {math.degrees(math.atan2(i_pu.imag, i_pu.real)):.6f}")
+print(f"Ibase = {ibase:.6f} kA")
+print(f"|I1| = {mag_i1:.6f} kA, angle = {angle_i1:.6f} deg")
+print(f"|I0| = {mag_i0:.6f} kA, angle = {angle_i0:.6f} deg")
+print(f"3*I0 mag = {fault_current_mag:.6f} kA, angle = {fault_current_angle:.6f} deg")
+print(f"Residual current mag = {fault_current_mag:.6f} kA")
+PYEOF
+Z_total = (0.32699999999999996+1.42j)
+Z_total magn = 1.457165, angle = 77.031908
+I_pu = (0.15400345401018872-0.668761176435682j)
+I_pu mag = 0.686264, angle = -77.031908
+Ibase = 2.091849 kA
+|I1| = 1.435561 kA, angle = -77.031908 deg
+|I0| = 1.435561 kA, angle = -77.031908 deg
+3*I0 mag = 4.306683 kA, angle = -77.031908 deg
+Residual current mag = 4.306683 kA
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

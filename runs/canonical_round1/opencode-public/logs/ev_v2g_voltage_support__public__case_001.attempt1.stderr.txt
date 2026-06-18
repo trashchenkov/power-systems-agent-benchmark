@@ -1,0 +1,78 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math, json
+
+# inputs
+target = 0.98
+base = {'bus_2': 0.944, 'bus_3': 0.952}
+sens = {'bus_2': 0.0016, 'bus_3': 0.0012}
+evs = {
+    'evse_1': {'bus': 'bus_2', 's': 18.0, 'p': 10.0},
+    'evse_2': {'bus': 'bus_2', 's': 12.0, 'p': 6.0},
+    'evse_3': {'bus': 'bus_3', 's': 16.0, 'p': 8.0},
+}
+
+# aggregate Q capability per bus
+agg_q = {}
+for eid, ev in evs.items():
+    b = ev['bus']
+    qmax = math.sqrt(ev['s']**2 - ev['p']**2)
+    agg_q[b] = agg_q.get(b, 0.0) + qmax
+
+q_dispatch = {}
+corrected = {}
+total_abs = 0.0
+for bus in base:
+    deficit = target - base[bus]
+    q_needed = deficit / sens[bus]
+    q_clip = min(q_needed, agg_q[bus])
+    q_dispatch[bus] = round(q_clip, 4)
+    corrected[bus] = round(base[bus] + sens[bus] * q_clip, 6)
+    total_abs += abs(q_clip)
+
+result = {
+    'q_dispatch_kvar': q_dispatch,
+    'corrected_voltage_pu': corrected,
+    'total_abs_q_kvar': round(total_abs, 4),
+    'rationale': 'Q dispatch clipped by aggregate EV inverter apparent-power capability.'
+}
+print(json.dumps(result, indent=2))
+"
+
+{
+  "q_dispatch_kvar": {
+    "bus_2": 22.5,
+    "bus_3": 13.8564
+  },
+  "corrected_voltage_pu": {
+    "bus_2": 0.98,
+    "bus_3": 0.968628
+  },
+  "total_abs_q_kvar": 36.3564,
+  "rationale": "Q dispatch clipped by aggregate EV inverter apparent-power capability."
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "import json; d=json.load(open('submission.json')); print(json.dumps(d, indent=2)); print('Valid JSON: OK')"
+{
+  "q_dispatch_kvar": {
+    "bus_2": 22.5,
+    "bus_3": 13.8564
+  },
+  "corrected_voltage_pu": {
+    "bus_2": 0.98,
+    "bus_3": 0.968628
+  },
+  "total_abs_q_kvar": 36.3564,
+  "rationale": "Q dispatch clipped by aggregate EV inverter apparent-power capability."
+}
+Valid JSON: OK
+[0m

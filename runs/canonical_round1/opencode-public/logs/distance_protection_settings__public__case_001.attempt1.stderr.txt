@@ -1,0 +1,92 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math, json
+
+# Protected line L_AB
+r1_ab = 0.08 * 80
+x1_ab = 0.32 * 80
+z_ab = math.sqrt(r1_ab**2 + x1_ab**2)
+print(f'Protected line Z_AB = {r1_ab:.4f} + j{x1_ab:.4f}, |Z| = {z_ab:.6f} ohm')
+
+# Remote backup lines
+r1_bc = 0.085 * 45
+x1_bc = 0.34 * 45
+z_bc = math.sqrt(r1_bc**2 + x1_bc**2)
+print(f'L_BC Z = {r1_bc:.4f} + j{x1_bc:.4f}, |Z| = {z_bc:.6f} ohm')
+
+r1_bd = 0.075 * 60
+x1_bd = 0.3 * 60
+z_bd = math.sqrt(r1_bd**2 + x1_bd**2)
+print(f'L_BD Z = {r1_bd:.4f} + j{x1_bd:.4f}, |Z| = {z_bd:.6f} ohm')
+
+print(f'Shortest backup: L_BC ({z_bc:.6f}), Longest backup: L_BD ({z_bd:.6f})')
+
+# Load encroachment
+v_kv = 110.0
+s_mva = 80.0
+z_load_min = (v_kv**2) / s_mva
+load_encroachment_limit = 0.8 * z_load_min
+print(f'Z_load_min = {z_load_min:.4f} ohm')
+print(f'Load encroachment limit = {load_encroachment_limit:.4f} ohm')
+
+# Zone 1: reach fraction [0.78, 0.85]
+z1_reach_max = 0.85 * z_ab
+z1_reach_min = 0.78 * z_ab
+print(f'Zone 1 reach range: [{z1_reach_min:.6f}, {z1_reach_max:.6f}] ohm')
+
+# Zone 2: |Z_AB| + fraction [0.45, 0.65] * shortest backup
+z2_reach_min = z_ab + 0.45 * z_bc
+z2_reach_max = z_ab + 0.65 * z_bc
+print(f'Zone 2 reach range: [{z2_reach_min:.6f}, {z2_reach_max:.6f}] ohm')
+
+# Zone 3: |Z_AB| + fraction [1.1, 1.35] * longest backup
+z3_reach_min = z_ab + 1.1 * z_bd
+z3_reach_max = z_ab + 1.35 * z_bd
+print(f'Zone 3 reach range: [{z3_reach_min:.6f}, {z3_reach_max:.6f}] ohm')
+print(f'Zone 3 max vs load encroachment: {z3_reach_max:.6f} < {load_encroachment_limit:.4f}? {z3_reach_max < load_encroachment_limit}')
+
+# Pick reasonable values (midpoints)
+z1 = round(0.85 * z_ab, 6)  # upper end of zone1 fraction
+z1_delay = 0.05
+
+z2 = round(z_ab + 0.55 * z_bc, 6)  # midpoint of zone2 fraction
+z2_delay = 0.4  # midpoint
+
+z3 = round(z_ab + 1.25 * z_bd, 6)  # midpoint of zone3 fraction
+z3_delay = 1.075  # midpoint
+
+print(f'\\nSelected values:')
+print(f'Zone 1: {z1} ohm, {z1_delay} s')
+print(f'Zone 2: {z2} ohm, {z2_delay} s')
+print(f'Zone 3: {z3} ohm, {z3_delay} s')
+print(f'Strictly increasing: {z1} < {z2} < {z3}: {z1 < z2 < z3}')
+print(f'Delays nondecreasing: {z1_delay} <= {z2_delay} <= {z3_delay}: {z1_delay <= z2_delay <= z3_delay}')
+"
+
+Protected line Z_AB = 6.4000 + j25.6000, |Z| = 26.387876 ohm
+L_BC Z = 3.8250 + j15.3000, |Z| = 15.770879 ohm
+L_BD Z = 4.5000 + j18.0000, |Z| = 18.553975 ohm
+Shortest backup: L_BC (15.770879), Longest backup: L_BD (18.553975)
+Z_load_min = 151.2500 ohm
+Load encroachment limit = 121.0000 ohm
+Zone 1 reach range: [20.582543, 22.429695] ohm
+Zone 2 reach range: [33.484772, 36.638947] ohm
+Zone 3 reach range: [46.797249, 51.435743] ohm
+Zone 3 max vs load encroachment: 51.435743 < 121.0000? True
+
+Selected values:
+Zone 1: 22.429695 ohm, 0.05 s
+Zone 2: 35.061859 ohm, 0.4 s
+Zone 3: 49.580345 ohm, 1.075 s
+Strictly increasing: 22.429695 < 35.061859 < 49.580345: True
+Delays nondecreasing: 0.05 <= 0.4 <= 1.075: True
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

@@ -1,0 +1,69 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+total_customers = 320
+min_restore = 25
+
+fault_sections = {
+    's12': {'annual_fault_rate': 0.18, 'customers_interrupted': 120, 'base_restoration_minutes': 95},
+    's23': {'annual_fault_rate': 0.14, 'customers_interrupted': 70, 'base_restoration_minutes': 80},
+    's24': {'annual_fault_rate': 0.12, 'customers_interrupted': 90, 'base_restoration_minutes': 85},
+    's45': {'annual_fault_rate': 0.09, 'customers_interrupted': 40, 'base_restoration_minutes': 75},
+}
+
+fci_locations = {
+    'n2': {'restoration_time_reduction_min': {'s12': 6, 's23': 28, 's24': 26, 's45': 23}},
+    'n4': {'restoration_time_reduction_min': {'s12': 0, 's23': 4, 's24': 18, 's45': 34}},
+}
+deployed = ['n2', 'n4']
+
+base_cust_min = 0
+cust_int = 0
+for sid, s in fault_sections.items():
+    base_cust_min += s['annual_fault_rate'] * s['customers_interrupted'] * s['base_restoration_minutes']
+    cust_int += s['annual_fault_rate'] * s['customers_interrupted']
+
+fci_cust_min = 0
+for sid, s in fault_sections.items():
+    best_reduction = max(fci_locations[loc]['restoration_time_reduction_min'][sid] for loc in deployed)
+    fci_time = max(s['base_restoration_minutes'] - best_reduction, min_restore)
+    fci_cust_min += s['annual_fault_rate'] * s['customers_interrupted'] * fci_time
+
+baseline_saidi = base_cust_min / total_customers
+baseline_caidi = base_cust_min / cust_int
+baseline_saifi = cust_int / total_customers
+
+with_fci_saidi = fci_cust_min / total_customers
+with_fci_caidi = fci_cust_min / cust_int
+with_fci_saifi = cust_int / total_customers  # same as baseline
+
+saidi_improvement = baseline_saidi - with_fci_saidi
+caidi_improvement = baseline_caidi - with_fci_caidi
+
+print(f'baseline SAIDI: {baseline_saidi}')
+print(f'baseline CAIDI: {baseline_caidi}')
+print(f'baseline SAIFI: {baseline_saifi}')
+print(f'with_fci SAIDI: {with_fci_saidi}')
+print(f'with_fci CAIDI: {with_fci_caidi}')
+print(f'with_fci SAIFI: {with_fci_saifi}')
+print(f'saidi_improvement: {saidi_improvement}')
+print(f'caidi_improvement: {caidi_improvement}')
+"
+
+baseline SAIDI: 12.575
+baseline CAIDI: 87.86026200873363
+baseline SAIFI: 0.143125
+with_fci SAIDI: 10.052499999999998
+with_fci CAIDI: 70.23580786026201
+with_fci SAIFI: 0.143125
+saidi_improvement: 2.522500000000001
+caidi_improvement: 17.624454148471614
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

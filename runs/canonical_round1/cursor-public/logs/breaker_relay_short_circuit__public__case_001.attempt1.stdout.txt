@@ -1,0 +1,26 @@
+Solved REL-TASK-045 and wrote `submission.json`.
+
+**Short-circuit study**
+- For each fault location, total impedance = source Thevenin + transformer + feeder segment to the fault point
+- I₃φ = Vₗₗ / (√3 × |Zₜₒₜₐₗ|), I₂φ ≈ (√3/2) × I₃φ
+
+| Fault location | Distance | I₃φ (kA) | I₂φ (kA) |
+|---|---|---|---|
+| near_bus_fault | 0.2 km | 9.304 | 8.058 |
+| mid_feeder_fault | 4.0 km | 3.004 | 2.601 |
+| remote_end_fault | 8.0 km | 1.741 | 1.508 |
+
+**Selections**
+- **max_3ph_fault_ka**: 9.304 kA (near bus)
+- **min_2ph_fault_ka**: 1.508 kA (remote end)
+- **Breaker**: 12.5 kA — smallest standard rating above 9.304 × 1.1 = 10.23 kA
+- **Relay pickup**: 600 A — within [450 A, 754 A] from load margin (360 × 1.25) and sensitivity (1508/2)The benchmark task is complete. `submission.json` contains:
+
+| Field | Value |
+|---|---|
+| max_3ph_fault_ka | 9.304 |
+| min_2ph_fault_ka | 1.508 |
+| breaker_interrupting_rating_ka | 12.5 |
+| relay_pickup_a_primary | 600.0 |
+
+The breaker rating (12.5 kA) is the smallest standard option above the 1.1× safety margin on the near-bus 3-phase fault. The relay pickup (600 A) sits between the load-margin floor (450 A) and the minimum-fault sensitivity ceiling (754 A).

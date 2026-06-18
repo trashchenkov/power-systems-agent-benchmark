@@ -1,0 +1,65 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+
+V = 10.5e3
+src = complex(0.045, 0.420)
+trf = complex(0.018, 0.160)
+r_per_km = 0.18
+x_per_km = 0.32
+
+faults = [('near_bus', 0.2), ('mid_feeder', 4.0), ('remote_end', 8.0)]
+
+i3ph_list = []
+i2ph_list = []
+
+for name, dist in faults:
+    z_line = complex(r_per_km * dist, x_per_km * dist)
+    z_total = src + trf + z_line
+    mag_z = abs(z_total)
+    i3ph = V / (math.sqrt(3) * mag_z) / 1000.0  # kA
+    i2ph = i3ph * math.sqrt(3) / 2.0
+    i3ph_list.append(i3ph)
+    i2ph_list.append(i2ph)
+    print(f'{name}: Z={mag_z:.6f} ohm, I3ph={i3ph:.4f} kA, I2ph={i2ph:.4f} kA')
+
+max_3ph = max(i3ph_list)
+min_2ph = min(i2ph_list)
+print(f'\nmax_3ph_fault_ka = {max_3ph:.4f}')
+print(f'min_2ph_fault_ka = {min_2ph:.4f}')
+
+safety = 1.1
+required = max_3ph * safety
+ratings = [8.0, 12.5, 16.0, 20.0, 25.0, 31.5]
+breaker = next(r for r in sorted(ratings) if r >= required)
+print(f'Required breaker >= {required:.4f} kA -> selected {breaker} kA')
+
+load_margin = 1.25
+sens = 2.0
+min_pickup = 360.0 * load_margin
+max_pickup = min_2ph * 1000 / sens
+print(f'Relay pickup min = {min_pickup:.1f} A')
+print(f'Relay pickup max = {max_pickup:.1f} A')
+print(f'Select pickup = 500 A')
+"
+
+near_bus: Z=0.651565 ohm, I3ph=9.3040 kA, I2ph=8.0575 kA
+mid_feeder: Z=2.018090 ohm, I3ph=3.0039 kA, I2ph=2.6015 kA
+remote_end: Z=3.481179 ohm, I3ph=1.7414 kA, I2ph=1.5081 kA
+
+max_3ph_fault_ka = 9.3040
+min_2ph_fault_ka = 1.5081
+Required breaker >= 10.2344 kA -> selected 12.5 kA
+Relay pickup min = 450.0 A
+Relay pickup max = 754.1 A
+Select pickup = 500 A
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

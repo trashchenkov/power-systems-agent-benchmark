@@ -1,0 +1,24 @@
+`submission.json` has been written from the FRT control specification in `task.json`.
+
+**Method (per sample):**
+1. **Reactive current:** For `V < 0.9` pu, `iq_req = min(2.0 × (0.9 − V), 1.2)`; otherwise `0`.
+2. **Active current:** `id = min(0.92, √(1.2² − iq²))` — reactive current has priority within the 1.2 pu limit.
+3. **Total current:** `√(id² + iq²)`.
+
+**Results:**
+
+| Sample | V (pu) | id (pu) | iq (pu) | Total (pu) |
+|--------|--------|---------|---------|------------|
+| t000   | 0.88   | 0.920   | 0.040   | 0.921      |
+| t080   | 0.52   | 0.920   | 0.760   | 1.193      |
+| t160   | 0.48   | 0.857   | 0.840   | 1.200      |
+| t240   | 0.74   | 0.920   | 0.320   | 0.974      |
+
+- `min_reactive_current_pu`: **0.04**
+- `max_total_current_pu`: **1.2**
+- `frt_compliant`: **true** — all voltages ≥ 0.45 pu floor within the 0.2 s window, and reactive requirements are met within the current limit.The benchmark is complete. `submission.json` contains the current-limited IBR short-circuit FRT response derived from `task.json`:
+
+- **Reactive current** follows `iq = min(2.0 × (0.9 − V), 1.2)` when voltage is below the 0.9 pu deadband.
+- **Active current** is capped at `min(0.92, √(1.2² − iq²))` after reactive priority.
+- **Peak total current** is 1.2 pu at sample `t160`; **minimum reactive current** is 0.04 pu at `t000`.
+- **FRT compliant:** `true` — all voltages stay above the 0.45 pu floor within the 0.2 s ride-through window, and reactive requirements are met.

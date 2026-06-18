@@ -1,6 +1,6 @@
 # v0 Executable Benchmark Implementation Plan
 
-> **For Hermes:** implement task-by-task with strict TDD. Keep RU/EN externally-facing artifacts in sync and preserve explicit source provenance for every task.
+> Implement task-by-task with strict TDD. Keep RU/EN externally-facing artifacts in sync and preserve explicit source provenance for every task.
 
 **Goal:** Turn the bilingual v0 executable slice into a runnable benchmark skeleton with deterministic/simulator-backed evaluators.
 

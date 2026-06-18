@@ -1,0 +1,32 @@
+The fault is on section **s45** (n4→n5).
+
+**Network topology:**
+```
+n0 → n1 [FCI] → n2 [FCI] ─┬─ n3 (customer)
+                          └─ n4 [FCI] → n5 (customer)
+```
+
+**Observations:**
+- All FCIs (n1, n2, n4) report fault current → fault is downstream of n4
+- Outage complaint from n5 only → fault isolates n5
+
+**Candidate scoring (mismatch):**
+
+| Section | FCI match | Affected customers | Complaints | Total mismatch |
+|---------|-----------|-------------------|------------|----------------|
+| **s45** | ✓ all true | n5 | n5 | **0** |
+| s24 | fci_n4 should be false | n4, n5 | n5 only | 2 |
+| s23 | fci_n4 should be false | n3 | n5 only | 3 |
+| s12 | fci_n2, fci_n4 should be false | n2–n5 | n5 only | 5 |
+| s01 | all FCIs should be false | n2–n5 | n5 only | 6 |
+
+`submission.json` has been written with `faulted_section: "s45"` and `affected_customer_nodes: ["n5"]`.The benchmark is done. **Section s45** (n4→n5) is the faulted section — it’s the only candidate with zero mismatch against all three FCIs reporting fault current and the single outage complaint from **n5**.
+
+The answer is in `submission.json`:
+
+```json
+{
+  "faulted_section": "s45",
+  "affected_customer_nodes": ["n5"]
+}
+```

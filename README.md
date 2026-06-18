@@ -9,7 +9,6 @@ This project is intentionally not a text QA benchmark. Agents submit structured 
 Runnable v0 prototype:
 
 - benchmark design: `benchmark_spec_v0.md`
-- packaging decision: `PACKAGING_STRATEGY.md`
 - bilingual executable-slice plan:
   - `literature/v0_executable_benchmark_slice.ru.md`
   - `literature/v0_executable_benchmark_slice.en.md`
@@ -25,7 +24,7 @@ Runnable v0 prototype:
   - `schemas/submission.schema.json`
   - `schemas/evaluation-result.schema.json`
 - executable public task families: the full **41-family balanced core** (catalog in
-  `docs/paper/paper_en_v2.md` Appendix A and `docs/bilingual_task_inventory.md`)
+  `docs/bilingual_task_inventory.md`)
 - agent-agnostic runner scripts:
   - `scripts/evaluate_submission.py`
   - `scripts/run_public_baselines.py`
@@ -50,7 +49,6 @@ Rationale text can be stored and optionally judged as a secondary diagnostic, bu
 
 ```text
 benchmark_spec_v0.md                 # benchmark contract draft
-PACKAGING_STRATEGY.md                # skill vs benchmark repo boundary
 docs/agent_protocol.md               # CLI-agent packet protocol
 schemas/task.schema.json             # common task artifact schema
 scripts/validate_benchmark_artifacts.py
@@ -71,11 +69,10 @@ tests/
   test_agent_harness.py
 literature/
   v0_executable_benchmark_slice.*.md
-  task_bank_*.md
 runs/
-  public_baselines/
-  agent_packets/
-  public_agent_smoke/
+  canonical_round1/                  # curated aggregate reference summaries
+  extra_models/                      # curated aggregate model-harness summaries
+  generator_validation/              # hidden-generator validation summary
 ```
 
 ## Hidden case generation
@@ -142,14 +139,6 @@ preserved (`*.attemptN.stdout.txt`), every result row records
 (`feasible_count`, `mean_score`) metrics plus `infra_unresolved_count`, so
 provider reliability never masquerades as agent capability.
 
-## First agent smoke results
-
-Latest historical local report: `runs/public_agent_smoke/REPORT.md`.
-
-- Historical 0–100 run before the normalized-score migration: Hermes CLI (`--toolsets file`) was 7/7 feasible.
-- Historical 0–100 run before the normalized-score migration: OpenCode (`opencode/deepseek-v4-flash-free`) was 6/7 feasible and failed `pv_volt_var` on voltage-limit violations.
-- Codex CLI: 0/7 feasible because the local Codex OAuth session failed before writing submissions (`401 Unauthorized`, expired/reused refresh token). This is an environment/auth issue, not a benchmark-mechanics failure.
-
 ## Reference evaluation
 
 The canonical reference round — three command-line agents, one public and one freshly
@@ -167,7 +156,7 @@ split; per-case held-out submissions, results, and logs are not.
 
 ## Public executable task inventory
 
-The public benchmark now covers the full **41-task balanced core** from `literature/metadata/v4_balanced_core_shortlist.md`. Every public task is packaged as `tasks/<family>/public/case_001/task.json` plus `sample_submission.json`, has a registered evaluator, and includes English and Russian presentation fields under `bilingual`.
+The public benchmark covers a full **41-task balanced core**. Every public task is packaged as `tasks/<family>/public/case_001/task.json` plus `sample_submission.json`, has a registered evaluator, and includes English and Russian presentation fields under `bilingual`.
 
 Inventory / реестр: `docs/bilingual_task_inventory.md`.
 

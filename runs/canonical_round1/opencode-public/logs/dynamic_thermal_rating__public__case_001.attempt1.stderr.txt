@@ -1,0 +1,129 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import math
+
+# Conductor parameters
+diameter_mm = 22.4
+R20_per_km = 0.118
+alpha = 0.00403
+emissivity = 0.7
+solar_absorptivity = 0.7
+T_max = 75.0
+convective_coeff = 0.72
+scheduled_current = 520.0
+
+# Stefan-Boltzmann constant
+sigma = 5.670374419e-8
+
+# R_hot per metre
+R20_per_m = R20_per_km / 1000.0
+R_hot = R20_per_m * (1 + alpha * (T_max - 20))
+
+weather = [
+    ("t00", 18.0, 2.8, 150.0),
+    ("t01", 31.0, 0.7, 850.0),
+    ("t02", 27.0, 1.4, 600.0),
+    ("t03", 22.0, 3.2, 100.0),
+]
+
+results = {}
+for ts, Ta, ws, sol in weather:
+    # Convection
+    conv = convective_coeff * max(ws, 0.05)**0.6 * (T_max - Ta)
+    # Radiation
+    rad = emissivity * sigma * (math.pi * diameter_mm / 1000.0) * ((T_max + 273.15)**4 - (Ta + 273.15)**4)
+    # Solar gain
+    sol_gain = solar_absorptivity * sol * (diameter_mm / 1000.0)
+    # Net cooling
+    net = conv + rad - sol_gain
+    amp = math.sqrt(max(net, 0) / R_hot)
+    results[ts] = amp
+
+print(f"R_hot = {R_hot:.10f} ohms/m")
+for ts, amp in results.items():
+    print(f"{ts}: ampacity = {amp:.4f} A")
+
+min_amp = min(results.values())
+min_ts = min(results, key=results.get)
+print(f"\nMinimum ampacity: {min_amp:.4f} A at {min_ts}")
+
+overloads = [ts for ts, amp in results.items() if scheduled_current > amp]
+print(f"Overload timestamps: {overloads}")
+PYEOF
+R_hot = 0.0001441547 ohms/m
+t00: ampacity = 810.6601 A
+t01: ampacity = 451.4680 A
+t02: ampacity = 596.2530 A
+t03: ampacity = 811.6022 A
+
+Minimum ampacity: 451.4680 A at t01
+Overload timestamps: ['t01']
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import math, json
+
+diameter_mm = 22.4
+R20_per_km = 0.118
+alpha = 0.00403
+emissivity = 0.7
+solar_abs = 0.7
+T_max = 75.0
+conv_coeff = 0.72
+scheduled = 520.0
+sigma = 5.670374419e-8
+
+R_hot = (R20_per_km / 1000.0) * (1 + alpha * (T_max - 20))
+
+weather = [
+    ("t00", 18.0, 2.8, 150.0),
+    ("t01", 31.0, 0.7, 850.0),
+    ("t02", 27.0, 1.4, 600.0),
+    ("t03", 22.0, 3.2, 100.0),
+]
+
+for ts, Ta, ws, sol in weather:
+    conv = conv_coeff * max(ws, 0.05)**0.6 * (T_max - Ta)
+    rad = emissivity * sigma * (math.pi * diameter_mm / 1000.0) * ((T_max + 273.15)**4 - (Ta + 273.15)**4)
+    sol_gain = solar_abs * sol * (diameter_mm / 1000.0)
+    net = conv + rad - sol_gain
+    amp = math.sqrt(max(net, 0) / R_hot)
+    print(f"{ts}: conv={conv:.6f}, rad={rad:.6f}, sol={sol_gain:.6f}, net={net:.6f}, amp={amp:.6f}")
+
+print(f"\nR_hot = {R_hot:.10f}")
+
+# Check the submission values
+sub = {
+    "t00": 810.66,
+    "t01": 451.47,
+    "t02": 596.25,
+    "t03": 811.60
+}
+for ts, Ta, ws, sol in weather:
+    conv = conv_coeff * max(ws, 0.05)**0.6 * (T_max - Ta)
+    rad = emissivity * sigma * (math.pi * diameter_mm / 1000.0) * ((T_max + 273.15)**4 - (Ta + 273.15)**4)
+    sol_gain = solar_abs * sol * (diameter_mm / 1000.0)
+    net = conv + rad - sol_gain
+    amp = math.sqrt(max(net, 0) / R_hot)
+    diff = abs(amp - sub[ts])
+    print(f"{ts}: computed={amp:.6f}, submitted={sub[ts]:.2f}, diff={diff:.6f}, ok={diff <= 0.5}")
+PYEOF
+t00: conv=76.120594, rad=20.965509, sol=2.352000, net=94.734104, amp=810.660052
+t01: conv=25.576670, rad=17.133419, sol=13.328000, net=29.382089, amp=451.467956
+t02: conv=42.291253, rad=18.366281, sol=9.408000, net=51.249534, amp=596.252975
+t03: conv=76.682869, rad=19.839563, sol=1.568000, net=94.954432, amp=811.602204
+
+R_hot = 0.0001441547
+t00: computed=810.660052, submitted=810.66, diff=0.000052, ok=True
+t01: computed=451.467956, submitted=451.47, diff=0.002044, ok=True
+t02: computed=596.252975, submitted=596.25, diff=0.002975, ok=True
+t03: computed=811.602204, submitted=811.60, diff=0.002204, ok=True
+[0m

@@ -9,23 +9,18 @@
 ## Primary source grounding
 
 - Primary source: Prof. C.Y. Chung, Advanced Prediction Techniques Applied to Smart Grids, keynote slides, University of Saskatchewan/SaskPower, c. 2019-2020
-- Locator: local OCR Advanced Prediction Techniques Applied to Smart Grids_1f598a10.txt, pp. 10-12 / lines 139-220; broad decision-making slide only, no resolved peer-reviewed dispatch source
+- Locator: low-confidence broad source provenance; no stable public locator
 - Confidence: `low`
 - Verification status: `local_slides_broad_match_unresolved_primary`
-- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
-
 Broadly mentions uncertainty management, economic dispatch, OPF and unit commitment; not a specific verifiable primary source for the robust-dispatch formulation, so confidence is intentionally low.
 
 ## DOI / locator verification
 
 - DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
-- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
 - If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 
-- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-015`
-- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
 ## Benchmark adaptation
 
@@ -33,4 +28,4 @@ The public case is a compact executable instance derived from the primary method
 
 ## Licensing note
 
-Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository.

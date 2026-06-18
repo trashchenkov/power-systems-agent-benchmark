@@ -1,0 +1,22 @@
+**Analysis of the radial feeder:**
+
+```
+n0 --[s01]-- n1 --[s12]-- n2 --[s23]-- n3
+                            |
+                          [s24]
+                            |
+                            n4 --[s45]-- n5
+```
+
+For each candidate faulted section, upstream FCIs (between source and fault) should trip; downstream customers lose power.
+
+| Section | Upstream FCIs expected → true | Downstream customers | FCI mismatches | Complaint n5 in affected? |
+|---------|-------------------------------|---------------------|----------------|---------------------------|
+| s01 | none | n2,n3,n4,n5 | 3 | ✓ |
+| s12 | fci_n1 | n2,n3,n4,n5 | 2 | ✓ |
+| s23 | fci_n1, fci_n2 | n3 | 1 | ✗ |
+| s24 | fci_n1, fci_n2 | n4,n5 | 1 | ✓ |
+| **s45** | **fci_n1, fci_n2, fci_n4** | **n5** | **0** | **✓** |
+
+Section **s45** has minimum (zero) mismatch — all 3 FCIs correctly predict tripped, and the sole complaint (n5) is the only affected customer.
+Done. `submission.json` written with `faulted_section: "s45"` and `affected_customer_nodes: ["n5"]` — the only section that zero-mismatches both the all-tripped FCIs and the single outage complaint at n5.

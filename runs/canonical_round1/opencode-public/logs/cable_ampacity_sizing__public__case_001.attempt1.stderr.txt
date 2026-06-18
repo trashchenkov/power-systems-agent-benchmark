@@ -1,0 +1,94 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import json, math
+
+case = {
+    "design_current_a": 180.0,
+    "power_factor": 0.9,
+    "system_voltage_v": 400.0,
+    "length_m": 250.0,
+    "max_voltage_drop_pct": 5.0,
+    "ambient_factor": 0.96,
+    "grouping_factor": 0.8,
+    "fault_current_ka": 12.0,
+    "clearing_time_s": 0.4,
+    "k_adiabatic": 143.0,
+    "catalog": [
+        {"cross_section_mm2": 50, "base_ampacity_a": 192.0, "r_ohm_per_km": 0.387, "x_ohm_per_km": 0.085},
+        {"cross_section_mm2": 70, "base_ampacity_a": 246.0, "r_ohm_per_km": 0.268, "x_ohm_per_km": 0.082},
+        {"cross_section_mm2": 95, "base_ampacity_a": 298.0, "r_ohm_per_km": 0.193, "x_ohm_per_km": 0.082},
+        {"cross_section_mm2": 120, "base_ampacity_a": 346.0, "r_ohm_per_km": 0.153, "x_ohm_per_km": 0.08},
+        {"cross_section_mm2": 150, "base_ampacity_a": 399.0, "r_ohm_per_km": 0.124, "x_ohm_per_km": 0.08},
+        {"cross_section_mm2": 185, "base_ampacity_a": 456.0, "r_ohm_per_km": 0.0991, "x_ohm_per_km": 0.08}
+    ]
+}
+
+I = case["design_current_a"]
+pf = case["power_factor"]
+V = case["system_voltage_v"]
+L = case["length_m"]
+amb = case["ambient_factor"]
+grp = case["grouping_factor"]
+If = case["fault_current_ka"] * 1000  # to A
+t = case["clearing_time_s"]
+k = case["k_adiabatic"]
+max_drop = case["max_voltage_drop_pct"]
+
+sin_phi = math.sqrt(1 - pf**2)
+
+# Adiabatic check
+S_min_thermal = If * math.sqrt(t) / k
+print(f"Min thermal section: {S_min_thermal:.4f} mm²")
+print()
+
+for c in case["catalog"]:
+    S = c["cross_section_mm2"]
+    derated = c["base_ampacity_a"] * amb * grp
+    amp_ok = derated >= I
+    
+    r = c["r_ohm_per_km"]
+    x = c["x_ohm_per_km"]
+    dU = math.sqrt(3) * I * (L/1000) * (r*pf + x*sin_phi) / V * 100
+    vd_ok = dU <= max_drop
+    
+    th_ok = S >= S_min_thermal
+    
+    print(f"{S} mm²: derated={derated:.3f}A {'OK' if amp_ok else 'FAIL'}, "
+          f"dU={dU:.4f}% {'OK' if vd_ok else 'FAIL'}, "
+          f"thermal={S:.1f} >= {S_min_thermal:.2f} {'OK' if th_ok else 'FAIL'}")
+    if amp_ok and vd_ok and th_ok:
+        print(f"  => SELECTED (smallest passing)")
+        selected = {"S": S, "derated": round(derated, 3), "dU": round(dU, 4)}
+        break
+
+print(f"\nSelected: {selected}")
+print(f"Min thermal section: {S_min_thermal:.4f}")
+PYEOF
+Min thermal section: 53.0732 mm²
+
+50 mm²: derated=147.456A FAIL, dU=7.5088% FAIL, thermal=50.0 >= 53.07 FAIL
+70 mm²: derated=188.928A OK, dU=5.3964% FAIL, thermal=70.0 >= 53.07 OK
+95 mm²: derated=228.864A OK, dU=4.0811% OK, thermal=95.0 >= 53.07 OK
+  => SELECTED (smallest passing)
+
+Selected: {'S': 95, 'derated': 228.864, 'dU': 4.0811}
+Min thermal section: 53.0732
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -m json.tool <tmp_path> && echo "VALID JSON"
+{
+    "selected_cross_section_mm2": 95,
+    "selected_derated_ampacity_a": 228.864,
+    "selected_voltage_drop_pct": 4.081,
+    "min_thermal_section_mm2": 53.073,
+    "rationale": "Smallest catalog section passing all three checks: 50 mm\u00b2 fails all checks, 70 mm\u00b2 passes ampacity (188.9 A \u2265 180 A) and thermal (70 \u2265 53.07 mm\u00b2) but fails voltage drop (5.396% > 5%), 95 mm\u00b2 passes all three (ampacity 228.9 A \u2265 180 A, drop 4.081% \u2264 5%, thermal 95 \u2265 53.07 mm\u00b2)."
+}
+VALID JSON
+[0m

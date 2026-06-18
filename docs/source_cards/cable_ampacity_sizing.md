@@ -12,14 +12,10 @@
 - Primary source: IEC 60364-5-52 / IEC 60949 cable-selection practice
 - Locator: IEC 60364-5-52 ampacity and voltage-drop checks; IEC 60949 adiabatic short-circuit withstand
 - Confidence: `high`
-- Private-library check: `standard_not_redistributed`
-
 The executable case follows standard derated ampacity, voltage-drop and adiabatic withstand checks; standards are cited, not redistributed.
 
 ## Derived traceability
 
-- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#core-swap-002`
-- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
 ## Benchmark adaptation
 
@@ -27,4 +23,4 @@ The public case is a compact executable instance derived from the primary method
 
 ## Licensing note
 
-Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository.

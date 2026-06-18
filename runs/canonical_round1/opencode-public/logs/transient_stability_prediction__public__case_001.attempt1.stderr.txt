@@ -1,0 +1,50 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+angle_limit = 180.0
+voltage_floor = 0.7
+min_damping = 3.0
+
+cases = [
+    {'case_id': 'fault_a', 'fault_clearing_time_s': 0.1, 'estimated_cct_s': 0.17, 'max_rotor_angle_deg': 142.0, 'min_voltage_pu': 0.76, 'damping_ratio_pct': 5.0},
+    {'case_id': 'fault_b', 'fault_clearing_time_s': 0.16, 'estimated_cct_s': 0.14, 'max_rotor_angle_deg': 188.0, 'min_voltage_pu': 0.68, 'damping_ratio_pct': 2.2},
+    {'case_id': 'fault_c', 'fault_clearing_time_s': 0.08, 'estimated_cct_s': 0.11, 'max_rotor_angle_deg': 171.0, 'min_voltage_pu': 0.72, 'damping_ratio_pct': 3.4},
+]
+
+results = {}
+for c in cases:
+    am = angle_limit - c['max_rotor_angle_deg']
+    vm = c['min_voltage_pu'] - voltage_floor
+    cm = c['estimated_cct_s'] - c['fault_clearing_time_s']
+    dm = c['damping_ratio_pct'] - min_damping
+    
+    label = 'stable' if (am >= 0 and vm >= 0 and cm >= 0 and dm >= 0) else 'unstable'
+    
+    risk = max(0, -am/60) + max(0, -vm/0.1) + max(0, -cm/0.1) + max(0, -dm/5) + max(0, 1 - cm/0.2)*0.1
+    risk = round(risk, 3)
+    
+    results[c['case_id']] = {
+        'label': label,
+        'risk_score': risk,
+        'clearing_margin_s': cm
+    }
+    print(f\"{c['case_id']}: am={am}, vm={vm}, cm={cm}, dm={dm}, label={label}, risk={risk}\")
+
+stable_count = sum(1 for r in results.values() if r['label'] == 'stable')
+highest_risk = max(results.items(), key=lambda x: (x[1]['risk_score'], x[0]))
+print(f\"stable_case_count={stable_count}, highest_risk_case={highest_risk[0]}\")
+"
+
+fault_a: am=38.0, vm=0.06000000000000005, cm=0.07, dm=2.0, label=stable, risk=0.065
+fault_b: am=-8.0, vm=-0.019999999999999907, cm=-0.01999999999999999, dm=-0.7999999999999998, label=unstable, risk=0.803
+fault_c: am=9.0, vm=0.020000000000000018, cm=0.03, dm=0.3999999999999999, label=stable, risk=0.085
+stable_case_count=2, highest_risk_case=fault_b
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

@@ -1,0 +1,11 @@
+Let me analyze the network to compute the switching plan.
+
+**Network:** Source `s` → `b1` → `b2` →` [faulted l23]` → `b3` → `b4`, with normally-open tie switch `tie_24` between `b2` and `b4`.
+
+**Fault:** `l23` must be opened. Without changes, `b3` and `b4` are isolated. Priority available: b2(p3), b3(p5), b4(p2) = 10 total, and `min_priority_restored` is 10.0 — so all load must be restored.
+
+**Solution:** Open `l23`, close `tie_24`. This feeds `b3`/`b4` via `b2`–`tie_24`–`b4`–`l34`–`b3`, keeping the graph radial and restoring all load.
+Done. `submission.json` written with:
+- **open_switches:** `["l23"]` — isolates the faulted branch
+- **close_switches:** `["tie_24"]` — restores b3/b4 via alternate radial path
+- Restores all load (priority sum = 10 ≥ 10.0 min), satisfies all constraints.

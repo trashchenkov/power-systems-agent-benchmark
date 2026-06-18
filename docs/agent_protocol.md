@@ -1,6 +1,6 @@
 # Agent protocol for public benchmark smoke runs
 
-This protocol is intentionally CLI- and model-agnostic. Any tool-using agent that can read files and write a JSON file can be tested: Codex, OpenCode, Hermes subagents, local agents, hosted coding agents, or a human-operated workflow.
+This protocol is intentionally CLI- and model-agnostic. Any tool-using agent that can read files and write a JSON file can be tested: Codex, OpenCode, local agents, hosted coding agents, or a human-operated workflow.
 
 ## Core loop
 
@@ -88,10 +88,6 @@ python scripts/run_agent_command.py \
 
 OpenCode provider/model selection can be added to the command, for example `--model openrouter/...` or a local/free model if available.
 
-## Hermes/subagent style example
-
-For Hermes-mediated runs, use the same packet contract: load `instructions.md` and `task.json`, ask the subagent to write `submission.json`, then call `scripts/evaluate_submission.py`. The important point is that the benchmark protocol does not depend on Hermes-specific tools.
-
 ## Output format
 
 A run directory contains:
@@ -106,5 +102,5 @@ A run directory contains:
 1. `./scripts/check.sh` — local deterministic gate.
 2. `python scripts/run_public_baselines.py --out runs/public_baselines/latest` — baseline sanity.
 3. `python scripts/prepare_agent_tasks.py --out runs/agent_packets/public_v0` — portable packets.
-4. Run Codex, OpenCode, and Hermes-style agents via the same packet contract.
+4. Run different command-line agents via the same packet contract.
 5. Compare `results.jsonl` across agents; inspect `violations` before trusting aggregate score.

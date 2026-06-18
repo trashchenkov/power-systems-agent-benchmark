@@ -1,0 +1,61 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+
+# Given parameters
+f0 = 50.0          # Hz
+H = 4.0             # s
+Pm = 0.9            # pu
+prefault_pmax = 2.0
+postfault_pmax = 1.5
+
+# Step 1: delta0 (pre-fault rotor angle)
+delta0 = math.asin(Pm / prefault_pmax)
+delta0_deg = math.degrees(delta0)
+print(f'delta0 = {delta0:.10f} rad = {delta0_deg:.10f} deg')
+
+# Step 2: delta_max (maximum post-fault angle)
+delta_max = math.pi - math.asin(Pm / postfault_pmax)
+delta_max_deg = math.degrees(delta_max)
+print(f'delta_max = {delta_max:.10f} rad = {delta_max_deg:.10f} deg')
+
+# Step 3: Critical clearing angle from equal-area criterion
+cos_delta_cr = (Pm * (delta_max - delta0) + postfault_pmax * math.cos(delta_max)) / postfault_pmax
+delta_cr = math.acos(cos_delta_cr)
+delta_cr_deg = math.degrees(delta_cr)
+print(f'delta_cr = {delta_cr:.10f} rad = {delta_cr_deg:.10f} deg')
+
+# Step 4: Critical clearing time
+t_cr = math.sqrt(4 * H * (delta_cr - delta0) / (2 * math.pi * f0 * Pm))
+print(f't_cr = {t_cr:.10f} s')
+
+# Print with required precision
+print()
+print('Submission values:')
+print(f'delta0_deg = {delta0_deg:.6f}')
+print(f'delta_max_deg = {delta_max_deg:.6f}')
+print(f'delta_critical_deg = {delta_cr_deg:.6f}')
+print(f'critical_clearing_time_s = {t_cr:.6f}')
+"
+
+delta0 = 0.4667653390 rad = 26.7436839504 deg
+delta_max = 2.4980915448 rad = 143.1301023542 deg
+delta_cr = 1.1386775911 rad = 65.2414201989 deg
+t_cr = 0.1949934757 s
+
+Submission values:
+delta0_deg = 26.743684
+delta_max_deg = 143.130102
+delta_critical_deg = 65.241420
+critical_clearing_time_s = 0.194993
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m→ [0mRead submission.json

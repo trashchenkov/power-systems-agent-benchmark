@@ -18,13 +18,10 @@ Standard symmetrical-components method for single-line-to-ground fault currents 
 ## DOI / locator verification
 
 - DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
-- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
 - If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 
-- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-034`
-- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
 ## Benchmark adaptation
 
@@ -32,4 +29,4 @@ The public case is a compact executable instance derived from the primary method
 
 ## Licensing note
 
-Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository.

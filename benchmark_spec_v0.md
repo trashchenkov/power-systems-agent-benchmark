@@ -1,6 +1,6 @@
 # Power-Systems Agent Benchmark Spec v0
 
-Status: draft v0 derived from `literature/task_bank_v0_from_local_archive.md`.
+Status: draft v0 benchmark contract for executable power-systems agent evaluation.
 
 Goal: define an executable, simulator-backed benchmark for power-systems agents where the primary score comes from hidden recomputation of physical/economic/reliability constraints, not from LLM-as-a-judge report grading.
 

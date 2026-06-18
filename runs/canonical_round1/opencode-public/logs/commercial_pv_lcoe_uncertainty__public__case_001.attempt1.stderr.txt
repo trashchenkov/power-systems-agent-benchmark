@@ -1,0 +1,90 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat << 'PYEOF' > /tmp/lcoe_calc.py
+import json
+
+case = {
+    "system_size_kw_dc": 2000,
+    "hard_cost_usd_per_kw": 760,
+    "soft_cost_components_usd_per_kw": {"permitting": 80, "interconnection": 95, "customer_acquisition": 45, "engineering": 60},
+    "capital_recovery_factor": 0.082,
+    "fixed_om_usd_per_kw_year": 18,
+    "annual_energy_mwh_year1": 3200,
+    "soft_cost_scenarios": {
+        "s_low": {"permitting": 0.75, "interconnection": 0.8, "customer_acquisition": 0.85, "engineering": 0.9},
+        "s_base": {"permitting": 1.0, "interconnection": 1.0, "customer_acquisition": 1.0, "engineering": 1.0},
+        "s_perm": {"permitting": 1.35, "interconnection": 1.05, "customer_acquisition": 1.1, "engineering": 1.0},
+        "s_inter": {"permitting": 1.05, "interconnection": 1.45, "customer_acquisition": 1.05, "engineering": 1.1},
+        "s_high": {"permitting": 1.4, "interconnection": 1.5, "customer_acquisition": 1.25, "engineering": 1.2}
+    }
+}
+
+scenario_lcoe = {}
+for sid, mults in case["soft_cost_scenarios"].items():
+    soft_sum = sum(case["soft_cost_components_usd_per_kw"][k] * v for k, v in mults.items())
+    capex_per_kw = case["hard_cost_usd_per_kw"] + soft_sum
+    capex = capex_per_kw * case["system_size_kw_dc"]
+    annual = capex * case["capital_recovery_factor"] + case["fixed_om_usd_per_kw_year"] * case["system_size_kw_dc"]
+    lcoe = annual / case["annual_energy_mwh_year1"]
+    scenario_lcoe[sid] = round(lcoe, 6)
+
+print("Scenario LCOEs:", scenario_lcoe)
+
+sorted_vals = sorted(scenario_lcoe.values())
+n = len(sorted_vals)
+
+# Type 7 quantile interpolation
+def quantile(data, p):
+    n = len(data)
+    h = (n - 1) * p + 1
+    lo = int(h) - 1
+    hi = lo + 1
+    if hi >= n:
+        return data[-1]
+    frac = h - int(h)
+    return data[lo] + frac * (data[hi] - data[lo])
+
+p10 = quantile(sorted_vals, 0.10)
+p50 = quantile(sorted_vals, 0.50)
+p90 = quantile(sorted_vals, 0.90)
+mean = sum(sorted_vals) / n
+
+print(f"p10: {p10}")
+print(f"p50: {p50}")
+print(f"p90: {p90}")
+print(f"mean: {mean}")
+
+print(f"p10 rounded: {round(p10, 6)}")
+print(f"p50 rounded: {round(p50, 6)}")
+print(f"p90 rounded: {round(p90, 6)}")
+print(f"mean rounded: {round(mean, 6)}")
+
+# More precision
+print(f"p10 8dp: {round(p10, 8)}")
+print(f"p50 8dp: {round(p50, 8)}")
+print(f"p90 8dp: {round(p90, 8)}")
+print(f"mean 8dp: {round(mean, 8)}")
+PYEOF
+python3 /tmp/lcoe_calc.py
+Scenario LCOEs: {'s_low': 61.897813, 's_base': 64.55, 's_perm': 66.459063, 's_inter': 67.36875, 's_high': 69.815938}
+p10: 62.9586878
+p50: 66.459063
+p90: 68.8370628
+mean: 66.0183128
+p10 rounded: 62.958688
+p50 rounded: 66.459063
+p90 rounded: 68.837063
+mean rounded: 66.018313
+p10 8dp: 62.9586878
+p50 8dp: 66.459063
+p90 8dp: 68.8370628
+mean 8dp: 66.0183128
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

@@ -1,0 +1,190 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'PYEOF'
+import json
+import numpy as np
+
+# Data from task.json
+buses = {
+    "b1": 100.0,
+    "b2": -20.0,
+    "b3": -50.0,
+    "b4": -30.0,
+}
+
+branches = {
+    "l12": {"from": "b1", "to": "b2", "x": 0.1, "rating": 75.0},
+    "l13": {"from": "b1", "to": "b3", "x": 0.1, "rating": 40.0, "out": True},
+    "l23": {"from": "b2", "to": "b3", "x": 0.1, "rating": 50.0},
+    "l24": {"from": "b2", "to": "b4", "x": 0.1, "rating": 50.0},
+    "l34": {"from": "b3", "to": "b4", "x": 0.1, "rating": 50.0},
+    "l14": {"from": "b1", "to": "b4", "x": 0.3, "rating": 50.0},
+}
+
+bus_list = ["b1", "b2", "b3", "b4"]
+n = len(bus_list)
+bus_idx = {b: i for i, b in enumerate(bus_list)}
+
+def solve_pf(closed_branches):
+    """Solve DC power flow for given set of closed branch ids."""
+    # Build B matrix
+    B = np.zeros((n, n))
+    for bid, br in branches.items():
+        if bid not in closed_branches:
+            continue
+        if br.get("out"):
+            continue
+        i = bus_idx[br["from"]]
+        j = bus_idx[br["to"]]
+        b = 1.0 / br["x"]
+        B[i, i] += b
+        B[j, j] += b
+        B[i, j] -= b
+        B[j, i] -= b
+    
+    # Slack bus is b1 (first in list)
+    slack = 0
+    
+    # Reduced B' matrix (remove slack)
+    non_slack = [i for i in range(n) if i != slack]
+    B_reduced = B[np.ix_(non_slack, non_slack)]
+    
+    # Injections (all buses)
+    P = np.array([buses[b] for b in bus_list])
+    P_reduced = P[non_slack]
+    
+    # Solve for theta
+    theta_reduced = np.linalg.solve(B_reduced, P_reduced)
+    
+    # Full theta vector
+    theta = np.zeros(n)
+    theta[slack] = 0.0
+    theta[non_slack] = theta_reduced
+    
+    # Compute flows
+    flows = {}
+    for bid, br in branches.items():
+        if bid not in closed_branches:
+            continue
+        if br.get("out"):
+            continue
+        i = bus_idx[br["from"]]
+        j = bus_idx[br["to"]]
+        flow = (theta[i] - theta[j]) / br["x"]
+        loading = abs(flow) / br["rating"] * 100
+        flows[bid] = {"flow_mw": flow, "loading_pct": loading}
+    
+    return flows, theta
+
+def check_connectivity(closed_branches):
+    """Check if all 4 buses are connected."""
+    adj = {b: [] for b in bus_list}
+    for bid, br in branches.items():
+        if bid not in closed_branches:
+            continue
+        if br.get("out"):
+            continue
+        adj[br["from"]].append(br["to"])
+        adj[br["to"]].append(br["from"])
+    
+    # BFS from b1
+    visited = set()
+    stack = ["b1"]
+    while stack:
+        b = stack.pop()
+        if b in visited:
+            continue
+        visited.add(b)
+        for nb in adj[b]:
+            if nb not in visited:
+                stack.append(nb)
+    
+    return len(visited) == len(bus_list)
+
+# Base case (post-contingency, l13 out)
+base_closed = {"l12", "l23", "l24", "l34"}
+print("=== Base case (post-contingency) ===")
+flows, theta = solve_pf(base_closed)
+for bid, f in sorted(flows.items()):
+    status = "OVERLOAD" if f["loading_pct"] > 100 else "OK"
+    print(f"  {bid}: {f['flow_mw']:.2f} MW, {f['loading_pct']:.2f}% loading [{status}]")
+print(f"  theta = {theta}")
+print(f"  connected: {check_connectivity(base_closed)}")
+print()
+
+# Candidate actions
+candidates = [
+    ("close l14", base_closed | {"l14"}),
+    ("open l23", base_closed - {"l23"}),
+    ("open l24", base_closed - {"l24"}),
+    ("open l34", base_closed - {"l34"}),
+]
+
+for name, closed in candidates:
+    print(f"=== Action: {name} ===")
+    conn = check_connectivity(closed)
+    print(f"  connected: {conn}")
+    if not conn:
+        print("  INFEASIBLE - islanding")
+        print()
+        continue
+    
+    flows, theta = solve_pf(closed)
+    max_loading = 0
+    overloaded = False
+    for bid, f in sorted(flows.items()):
+        loading = f["loading_pct"]
+        max_loading = max(max_loading, loading)
+        status = "OVERLOAD" if loading > 100 else "OK"
+        print(f"  {bid}: {f['flow_mw']:.2f} MW, {loading:.2f}% loading [{status}]")
+    
+    feas = "FEASIBLE" if max_loading <= 100 else "INFEASIBLE"
+    print(f"  max loading: {max_loading:.2f}% [{feas}]")
+    print()
+
+PYEOF
+=== Base case (post-contingency) ===
+  l12: 100.00 MW, 133.33% loading [OVERLOAD]
+  l23: 43.33 MW, 86.67% loading [OK]
+  l24: 36.67 MW, 73.33% loading [OK]
+  l34: -6.67 MW, 13.33% loading [OK]
+  theta = [  0.         -10.         -14.33333333 -13.66666667]
+  connected: True
+
+=== Action: close l14 ===
+  connected: True
+  l12: 70.71 MW, 94.29% loading [OK]
+  l14: 29.29 MW, 58.57% loading [OK]
+  l23: 33.57 MW, 67.14% loading [OK]
+  l24: 17.14 MW, 34.29% loading [OK]
+  l34: -16.43 MW, 32.86% loading [OK]
+  max loading: 94.29% [FEASIBLE]
+
+=== Action: open l23 ===
+  connected: True
+  l12: 100.00 MW, 133.33% loading [OVERLOAD]
+  l24: 80.00 MW, 160.00% loading [OVERLOAD]
+  l34: -50.00 MW, 100.00% loading [OK]
+  max loading: 160.00% [INFEASIBLE]
+
+=== Action: open l24 ===
+  connected: True
+  l12: 100.00 MW, 133.33% loading [OVERLOAD]
+  l23: 80.00 MW, 160.00% loading [OVERLOAD]
+  l34: 30.00 MW, 60.00% loading [OK]
+  max loading: 160.00% [INFEASIBLE]
+
+=== Action: open l34 ===
+  connected: True
+  l12: 100.00 MW, 133.33% loading [OVERLOAD]
+  l23: 50.00 MW, 100.00% loading [OK]
+  l24: 30.00 MW, 60.00% loading [OK]
+  max loading: 133.33% [INFEASIBLE]
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

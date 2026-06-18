@@ -1,6 +1,6 @@
 # План реализации v0 executable benchmark
 
-> **Для Hermes:** реализовывать task-by-task через строгий TDD. Внешние артефакты держать синхронно на RU/EN и сохранять явный источник у каждой задачи.
+> Реализовывать task-by-task через строгий TDD. Внешние артефакты держать синхронно на RU/EN и сохранять явный источник у каждой задачи.
 
 **Цель:** Превратить bilingual v0 executable slice в запускаемый benchmark skeleton с deterministic/simulator-backed evaluators.
 

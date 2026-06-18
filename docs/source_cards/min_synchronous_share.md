@@ -9,23 +9,18 @@
 ## Primary source grounding
 
 - Primary source: Yunfeng Wen, Rongzhen Zhao, Mingzeng Huang, Chuangxin Guo, Data-driven transient frequency stability assessment: A deep learning method with combined estimation-correction framework, Energy Conversion and Economics, 2020
-- Locator: DOI:10.1049/enc2.12015; local OCR Advanced Prediction... lines 24128-24220 discuss low inertia / renewable replacement of synchronous units, but not SCR/minimum-share optimization
+- Locator: DOI:10.1049/enc2.12015
 - Confidence: `low`
 - Verification status: `doi_resolved_but_partial_match_only`
-- Private-library breadcrumb: `local_archive_extracted/local_lit/power_engineering/Advanced Prediction Techniques Applied to Smart Grids.pdf`
-
 Resolved a related low-inertia frequency-stability source, but it does not fully ground the benchmark’s minimum synchronous-share plus SCR formulation; kept low per provenance criterion.
 
 ## DOI / locator verification
 
 - DOI-bearing locators above were checked against Crossref, DataCite, and/or OpenAlex during the follow-up audit where applicable.
-- Vague local-archive labels such as `local archive ... sections` are no longer used as medium-confidence primary locators.
 - If a source could not be resolved to a specific bibliographic item that fully grounds the benchmark family, the family is marked `low` rather than upgraded by local-library presence alone.
 
 ## Derived traceability
 
-- Task-bank entry: `literature/task_bank_v2_reliable_source_mining.md#rel-task-007`
-- Task-bank role: derived task-bank entry only; it is not treated as the primary source.
 
 ## Benchmark adaptation
 
@@ -33,4 +28,4 @@ The public case is a compact executable instance derived from the primary method
 
 ## Licensing note
 
-Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository. Private-library paths above are provenance breadcrumbs for maintainers with legitimate access.
+Full books, standards, paywalled PDFs, and OCR text are not redistributed in this repository.

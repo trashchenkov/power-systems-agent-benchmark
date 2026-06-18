@@ -1,0 +1,51 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import itertools
+
+candidates = ['m12', 'm23', 'm31', 'pinj2']
+budget = 2
+
+attacks = {
+    'a_theta2': {'risk': 7, 'detectable_by': ['m12', 'pinj2']},
+    'a_theta3': {'risk': 6, 'detectable_by': ['m31']},
+    'a_load_shift': {'risk': 4, 'detectable_by': ['m23', 'pinj2']},
+    'a_stealth_pair': {'risk': 9, 'detectable_by': ['m12', 'm31']},
+}
+
+best_score = -1
+best_combo = None
+best_covered = None
+
+for combo in itertools.combinations(candidates, budget):
+    covered = [aid for aid, info in attacks.items() if any(m in info['detectable_by'] for m in combo)]
+    score = sum(attacks[aid]['risk'] for aid in covered)
+    print(f'{sorted(combo)}: covered={sorted(covered)}, risk={score}')
+    if score > best_score:
+        best_score = score
+        best_combo = combo
+        best_covered = covered
+    elif score == best_score and sorted(combo) < sorted(best_combo):
+        best_combo = combo
+        best_covered = covered
+
+print(f'\nBest: {sorted(best_combo)}, covered={sorted(best_covered)}, risk={best_score}')
+"
+
+['m12', 'm23']: covered=['a_load_shift', 'a_stealth_pair', 'a_theta2'], risk=20
+['m12', 'm31']: covered=['a_stealth_pair', 'a_theta2', 'a_theta3'], risk=22
+['m12', 'pinj2']: covered=['a_load_shift', 'a_stealth_pair', 'a_theta2'], risk=20
+['m23', 'm31']: covered=['a_load_shift', 'a_stealth_pair', 'a_theta3'], risk=19
+['m23', 'pinj2']: covered=['a_load_shift', 'a_theta2'], risk=11
+['m31', 'pinj2']: covered=['a_load_shift', 'a_stealth_pair', 'a_theta2', 'a_theta3'], risk=26
+
+Best: ['m31', 'pinj2'], covered=['a_load_shift', 'a_stealth_pair', 'a_theta2', 'a_theta3'], risk=26
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

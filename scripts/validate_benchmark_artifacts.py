@@ -30,7 +30,6 @@ REQUIRED_REPO_FILES = [
     "README.md",
     "LICENSE",
     "benchmark_spec_v0.md",
-    "PACKAGING_STRATEGY.md",
     "docs/evaluator_contract.md",
     "docs/public_hidden_split.md",
     "docs/metrics.md",

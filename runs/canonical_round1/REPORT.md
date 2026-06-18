@@ -29,10 +29,10 @@ optimum so that an optimal solution scores 1.0 (`scripts/evaluate_submission.py`
 
 ## Procedure / provenance
 
-- **Public** results are rescored from the recorded public submissions against the
+- **Public** results were rescored from the recorded public submissions against the
   corrected, normalized evaluators (the agent answers are unchanged; only the
-  evaluators were fixed and the score normalized). Reproducible from
-  `runs/canonical_round1/{agent}-public/submissions/`.
+  evaluators were fixed and the score normalized). Raw logs, packets, and
+  per-case submissions are not committed; rerun the public split to reproduce them.
 - **Held-out** results are from a fresh run on a new private seed (not recorded). Per
   the leak policy only the aggregate summaries are kept in the repo; per-case held-out
   submissions, results, and logs are not published (paper Section 4.4).

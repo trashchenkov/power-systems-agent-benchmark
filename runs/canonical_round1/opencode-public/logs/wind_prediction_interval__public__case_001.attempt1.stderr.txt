@@ -1,0 +1,66 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m← [0mWrite compute.py
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 compute.py
+{
+  "prediction_interval_mw_by_timestamp": {
+    "t01": {
+      "p10": 1.8367910241273955,
+      "p50": 4.074846224333149,
+      "p90": 7.991365237489278
+    },
+    "t02": {
+      "p10": 4.9332762275782995,
+      "p50": 10.000752944051314,
+      "p90": 17.21150193212359
+    },
+    "t03": {
+      "p10": 0.5957736562654339,
+      "p50": 1.6686720523096965,
+      "p90": 4.901294503765996
+    }
+  },
+  "average_interval_width_mw": 7.5794402551359115,
+  "rationale": "Computed using corrected wind speed, power curve, and linear-interpolation quantile per instructions."
+}
+[0m
+[0m$ [0mrm compute.py && python3 -c "
+import json
+with open('submission.json') as f:
+    s = json.load(f)
+print(json.dumps(s, indent=2))
+# Verify constraints
+for ts, v in s['prediction_interval_mw_by_timestamp'].items():
+    assert v['p10'] <= v['p50'] <= v['p90'], f'Order violated at {ts}'
+print('All constraints satisfied.')
+"
+{
+  "prediction_interval_mw_by_timestamp": {
+    "t01": {
+      "p10": 1.8367910241273955,
+      "p50": 4.074846224333149,
+      "p90": 7.991365237489278
+    },
+    "t02": {
+      "p10": 4.9332762275782995,
+      "p50": 10.000752944051314,
+      "p90": 17.21150193212359
+    },
+    "t03": {
+      "p10": 0.5957736562654339,
+      "p50": 1.6686720523096965,
+      "p90": 4.901294503765996
+    }
+  },
+  "average_interval_width_mw": 7.5794402551359115,
+  "rationale": "Computed using corrected wind speed, power curve, and linear-interpolation quantile per instructions."
+}
+All constraints satisfied.
+[0m

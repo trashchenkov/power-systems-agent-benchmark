@@ -1,0 +1,42 @@
+[0m
+> build · deepseek-v4-flash-free
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+max_load = 420.0
+margin = 1.2
+min_fault = 1800.0
+sens = 1.5
+ct = 100.0
+min_pickup = max_load * margin  # 504.0
+max_pickup_sens = min_fault / sens  # 1200.0
+max_pickup_range = 10.0 * ct  # 1000.0
+pickup = min_pickup  # optimal for max sensitivity
+secondary_pickup = pickup / ct
+time_delay = 0.35 + 0.3  # 0.65
+sens_factor = min_fault / pickup
+print(f'min_pickup (load margin): {min_pickup}')
+print(f'max_pickup (sensitivity): {max_pickup_sens}')
+print(f'max_pickup (relay range): {max_pickup_range}')
+print(f'pickup_current_a: {pickup}')
+print(f'secondary_pickup_a: {secondary_pickup}')
+print(f'sensitivity_factor: {sens_factor}')
+print(f'time_delay_s: {time_delay}')
+print(f'feasible: {pickup >= min_pickup and min_fault/pickup >= sens and secondary_pickup >= 1.0 and secondary_pickup <= 10.0 and time_delay >= 0.65 and time_delay <= 2.0}')
+"
+
+min_pickup (load margin): 504.0
+max_pickup (sensitivity): 1200.0
+max_pickup (relay range): 1000.0
+pickup_current_a: 504.0
+secondary_pickup_a: 5.04
+sensitivity_factor: 3.5714285714285716
+time_delay_s: 0.6499999999999999
+feasible: False
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
