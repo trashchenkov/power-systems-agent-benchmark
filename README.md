@@ -160,6 +160,23 @@ The public benchmark covers a full **41-task balanced core**. Every public task 
 
 Inventory / реестр: `docs/bilingual_task_inventory.md`.
 
+
+## Citation
+
+If you use this benchmark or its experiment artifacts, cite the archived software
+release. The repository includes `CITATION.cff` and `.zenodo.json`; the Zenodo DOI
+will be added here after the first public GitHub release is archived.
+
+```bibtex
+@software{trashchenkov_power_systems_agent_benchmark_2026,
+  author = {Trashchenkov, Sergei},
+  title = {Power Systems Agent Benchmark: Executable Evaluation of AI Agents in Electric Power Engineering},
+  year = {2026},
+  version = {v0.1-paper-artifacts},
+  url = {https://github.com/trashchenkov/power-systems-agent-benchmark}
+}
+```
+
 ## Next steps beyond this MVP slice
 
 1. Replace selected deterministic surrogates with simulator-backed evaluators (`pandapower`, OpenDSS, or DC-SE where appropriate).
