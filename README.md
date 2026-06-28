@@ -1,5 +1,6 @@
 # Power Systems Agent Benchmark
 
+[![arXiv](https://img.shields.io/badge/arXiv-2606.20950-b31b1b.svg)](https://arxiv.org/abs/2606.20950)
 [![DOI](https://zenodo.org/badge/1265507049.svg)](https://doi.org/10.5281/zenodo.20753045)
 
 Executable benchmark prototype for tool-using AI agents in electric power systems.
