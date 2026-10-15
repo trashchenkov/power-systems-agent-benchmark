@@ -1,0 +1,131 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+
+# Read task
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+uc = task['public_inputs']['uc_case']
+emission_cap = uc['emission_cap_ton']
+hours = {h['hour_id']: h for h in uc['hours']}
+thermal = {u['unit_id']: u for u in uc['thermal_units']}
+
+# For each hour, calculate residual load after hydro and storage
+# Then determine cheapest thermal dispatch that meets residual load
+# Constraints: coal (40-100 MW, $22/MWh, 0.75 ton/MWh)
+#              gas (20-80 MW, $38/MWh, 0.35 ton/MWh)
+# Gas is more expensive but cleaner per MWh
+# However, coal is cheaper per MWh so we prefer coal if emission cap allows
+
+# Let's calculate what's needed for each hour
+results = {}
+for h in sorted(hours.keys()):
+    hour_data = hours[h]
+    load = hour_data['load_mw']
+    hydro = hour_data['hydro_mw']
+    storage = hour_data['storage_discharge_mw']
+    residual = load - hydro - storage
+    results[h] = {'residual_load': residual}
+
+print("Residual loads per hour:")
+for h in sorted(results.keys()):
+    print(f"  {h}: {results[h]['residual_load']} MW")
+
+# Hour h1: residual = 120 - 35 - 10 = 75 MW
+# Hour h2: residual = 150 - 40 - 20 = 90 MW  
+# Hour h3: residual = 130 - 30 - 15 = 85 MW
+
+# With gas (max 80 MW) and coal (min 40, max 100):
+# h1 needs 75 MW: gas=75, coal=0 works (gas within 20-80)
+# h2 needs 90 MW: gas=80 (max) + coal=10 but coal min is 40, so need coal=40+ gas=50 = 90
+# h3 needs 85 MW: gas=80 + coal=5 (but coal min=40), so coal=40 + gas=45 = 85
+
+# Let's verify emissions:
+# h1: gas=75 * 0.35 = 26.25 ton
+# h2: coal=40 * 0.75 + gas=50 * 0.35 = 30 + 17.5 = 47.5 ton
+# h3: coal=40 * 0.75 + gas=45 * 0.35 = 30 + 15.75 = 45.75 ton
+# Total: 26.25 + 47.5 + 45.75 = 119.5 ton < 200 cap
+
+# But wait - can we do cheaper by using more coal?
+# h1: coal=75 (within 40-100), gas=0 -> cost=75*22=1650, emissions=75*0.75=56.25
+# h2: need 90 MW. Options:
+#     - coal=90, gas=0 -> cost=90*22=1980, emissions=90*0.75=67.5
+#     - coal=40, gas=50 -> cost=40*22+50*38=880+1900=2780, emissions=40*0.75+50*0.35=30+17.5=47.5
+#     Cheaper is all coal: 1980 vs 2780
+# h3: need 85 MW
+#     - coal=85, gas=0 -> cost=85*22=1870, emissions=85*0.75=63.75
+#     - coal=40, gas=45 -> cost=40*22+45*38=880+1710=2590, emissions=40*0.75+45*0.35=30+15.75=45.75
+#     Cheaper is all coal: 1870 vs 2590
+
+# Let's recalculate with all coal when possible:
+# h1: coal=75 -> cost=1650, emissions=56.25
+# h2: coal=90 -> cost=1980, emissions=67.5
+# h3: coal=85 -> cost=1870, emissions=63.75
+# Total: cost=5500, emissions=187.5 < 200 cap
+
+# This is feasible and cheaper than mixing with gas
+
+thermal_dispatch = {
+    "h1": {"coal": 75, "gas": 0},
+    "h2": {"coal": 90, "gas": 0},
+    "h3": {"coal": 85, "gas": 0}
+}
+
+total_cost = 75*22 + 90*22 + 85*22
+total_emissions = 75*0.75 + 90*0.75 + 85*0.75
+
+print(f"\nTotal cost: ${total_cost}")
+print(f"Total emissions: {total_emissions} ton")
+
+submission = {
+    "thermal_dispatch_mw": thermal_dispatch,
+    "total_cost_usd": total_cost,
+    "emissions_ton": total_emissions,
+    "emission_cap_satisfied": total_emissions <= emission_cap
+}
+
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+print(json.dumps(submission, indent=2))
+EOF
+Residual loads per hour:
+  h1: 75 MW
+  h2: 90 MW
+  h3: 85 MW
+
+Total cost: $5500
+Total emissions: 187.5 ton
+
+Submission written to submission.json
+{
+  "thermal_dispatch_mw": {
+    "h1": {
+      "coal": 75,
+      "gas": 0
+    },
+    "h2": {
+      "coal": 90,
+      "gas": 0
+    },
+    "h3": {
+      "coal": 85,
+      "gas": 0
+    }
+  },
+  "total_cost_usd": 5500,
+  "emissions_ton": 187.5,
+  "emission_cap_satisfied": true
+}
+[0m
+[0m→ [0mRead submission.json

@@ -1,0 +1,41 @@
+Now I understand the task. I need to:
+1. Classify the MAS frequency state based on the deviation from nominal frequency
+2. Choose the lead-station handover based on the constraints
+
+Let me calculate:
+
+**Frequency State Classification:**
+- Nominal: 50 Hz
+- Current: 49.82 Hz
+- Deviation: |49.82 - 50| = 0.18 Hz
+- Alert threshold: 0.1 Hz
+- Emergency threshold: 0.3 Hz
+
+Since 0.1 < 0.18 < 0.3, the state is **alert**.
+
+**Lead Agent Selection:**
+Current frequency is low (49.82 < 50), so we need upward headroom.
+
+For each available agent, calculate upward headroom:
+- plant_a: available=true, pmax=100, current=88, latency=45 → upward headroom = 100 - 88 = 12 MW (insufficient, needs min 20 MW)
+- plant_b: available=true, pmax=120, current=70, latency=55 → upward headroom = 120 - 70 = 50 MW (sufficient)
+- battery_c: available=true, pmax=40, current=5, latency=20 → upward headroom = 40 - 5 = 35 MW (sufficient)
+- plant_d: available=false → not eligible
+
+Eligible agents with sufficient headroom (≥20 MW) and latency ≤ 80 ms:
+- plant_b: headroom=50 MW, latency=55 ms
+- battery_c: headroom=35 MW, latency=20 ms
+
+Maximize headroom first: plant_b (50 MW) > battery_c (35 MW)
+So **plant_b** should be selected.
+
+**Handover Required:**
+Current lead is plant_a, but plant_b should be the lead → handover is required.
+
+**Lead Headroom:**
+plant_b has 50 MW upward headroom.
+The task is complete. I've written the `submission.json` file with:
+- **frequency_state**: "alert" (deviation of 0.18 Hz is between alert threshold 0.1 Hz and emergency threshold 0.3 Hz)
+- **lead_agent**: "plant_b" (has maximum upward headroom of 50 MW among eligible agents meeting constraints)
+- **handover_required**: true (current lead is plant_a, but plant_b should take over)
+- **lead_headroom_mw**: 50 (upward headroom of plant_b: 120 - 70 = 50 MW)

@@ -1,0 +1,209 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13ad7-68e5-7a70-812e-4ac7c47124d7
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task files first, then write only the required `submission.json` in the current directory.
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/ev_v2g_voltage_support__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,240p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "ev_v2g_voltage_support_public_001",
+  "family": "ev_v2g_voltage_support",
+  "candidate_id": "REL-TASK-017",
+  "substrate": "executable_ev_v2g_voltage_support_case",
+  "objective": "Compute EV charger reactive-power commands for voltage support after feeder reconfiguration.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-017 — EV/V2G voltage support",
+      "ru": "REL-TASK-017 — Поддержка напряжения EV/V2G"
+    },
+    "objective": {
+      "en": "Use EV inverter reactive capability to raise low feeder voltages toward a target while respecting apparent-power limits.",
+      "ru": "Использовать реактивную мощность EV-инверторов для повышения низких напряжений фидера к целевому уровню с учётом ограничений полной мощности."
+    },
+    "instructions": {
+      "en": "Use v2g_voltage_support_case. For each bus, compute the reactive command needed to reach target_voltage_pu from the linear voltage sensitivity, clipping by the aggregate EV inverter capability at that bus. Report q_dispatch_kvar, corrected_voltage_pu, and total_abs_q_kvar.",
+      "ru": "Используйте v2g_voltage_support_case. Для каждой шины вычислите реактивную команду, необходимую для достижения target_voltage_pu по линейной чувствительности напряжения, с ограничением по суммарной capability EV-инверторов на этой шине. Укажите q_dispatch_kvar, corrected_voltage_pu и total_abs_q_kvar."
+    }
+  },
+  "subdomain": "distribution systems & DER/EV",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-017",
+    "subdomain": "distribution systems & DER/EV",
+    "input_fields": [
+      "v2g_voltage_support_case.base_voltage_pu",
+      "v2g_voltage_support_case.q_sensitivity_pu_per_kvar",
+      "v2g_voltage_support_case.evs"
+    ]
+  },
+  "v2g_voltage_support_case": {
+    "target_voltage_pu": 0.98,
+    "base_voltage_pu": {
+      "bus_2": 0.944,
+      "bus_3": 0.952
+    },
+    "q_sensitivity_pu_per_kvar": {
+      "bus_2": 0.0016,
+      "bus_3": 0.0012
+    },
+    "evs": {
+      "evse_1": {
+        "bus": "bus_2",
+        "s_rating_kva": 18.0,
+        "active_power_kw": 10.0
+      },
+      "evse_2": {
+        "bus": "bus_2",
+        "s_rating_kva": 12.0,
+        "active_power_kw": 6.0
+      },
+      "evse_3": {
+        "bus": "bus_3",
+        "s_rating_kva": 16.0,
+        "active_power_kw": 8.0
+      }
+    }
+  },
+  "submission_schema": {
+    "q_dispatch_kvar": "object mapping bus to aggregate reactive command",
+    "corrected_voltage_pu": "object mapping bus to voltage after support",
+    "total_abs_q_kvar": "sum of absolute bus reactive commands",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Reactive commands must match target-seeking commands clipped by aggregate EV inverter capability.",
+    "Corrected voltages and total absolute reactive effort must match the independent calculation within tolerance.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether submitted EV reactive support satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:DOI:10.1109/RTUCON51174.2020.9316604",
+    "source_card:docs/source_cards/ev_v2g_voltage_support.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "The Role of Electrical Vehicles for Power Quality and Security during Outages in the Distribution Grid",
+      "locator": "DOI:10.1109/RTUCON51174.2020.9316604",
+      "confidence": "medium",
+      "notes": "Grounds EV inverter support for distribution voltage during outages; the task uses compact Volt/VAR capability checks."
+    }
+  ]
+}
+
+exec
+/bin/bash -lc 'find . -maxdepth 2 -type f | sort' in <sandbox_a1>
+ succeeded in 0ms:
+./instructions.md
+./task.json
+
+codex
+The calculation is direct: target-seeking `q = (target - base_voltage) / sensitivity`, then clipped by the summed EV inverter kvar headroom per bus. I’m writing the JSON result now.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_ev_v2g_voltage_support__public__case_001_a1_m0pt3qve/submission.json b/bench_ev_v2g_voltage_support__public__case_001_a1_m0pt3qve/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2374309e6533947ceee1d25e9e702eb809a3d6f0
+--- /dev/null
++++ b/bench_ev_v2g_voltage_support__public__case_001_a1_m0pt3qve/submission.json
+@@ -0,0 +1,11 @@
++{
++  "q_dispatch_kvar": {
++    "bus_2": 22.5,
++    "bus_3": 13.856406460551018
++  },
++  "corrected_voltage_pu": {
++    "bus_2": 0.98,
++    "bus_3": 0.9686276877526612
++  },
++  "total_abs_q_kvar": 36.356406460551014
++}
+
+diff --git a/bench_ev_v2g_voltage_support__public__case_001_a1_m0pt3qve/submission.json b/bench_ev_v2g_voltage_support__public__case_001_a1_m0pt3qve/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2374309e6533947ceee1d25e9e702eb809a3d6f0
+--- /dev/null
++++ b/bench_ev_v2g_voltage_support__public__case_001_a1_m0pt3qve/submission.json
+@@ -0,0 +1,11 @@
++{
++  "q_dispatch_kvar": {
++    "bus_2": 22.5,
++    "bus_3": 13.856406460551018
++  },
++  "corrected_voltage_pu": {
++    "bus_2": 0.98,
++    "bus_3": 0.9686276877526612
++  },
++  "total_abs_q_kvar": 36.356406460551014
++}
+
+codex
+{"q_dispatch_kvar":{"bus_2":22.5,"bus_3":13.856406460551018},"corrected_voltage_pu":{"bus_2":0.98,"bus_3":0.9686276877526612},"total_abs_q_kvar":36.356406460551014}
+diff --git a/bench_ev_v2g_voltage_support__public__case_001_a1_m0pt3qve/submission.json b/bench_ev_v2g_voltage_support__public__case_001_a1_m0pt3qve/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2374309e6533947ceee1d25e9e702eb809a3d6f0
+--- /dev/null
++++ b/bench_ev_v2g_voltage_support__public__case_001_a1_m0pt3qve/submission.json
+@@ -0,0 +1,11 @@
++{
++  "q_dispatch_kvar": {
++    "bus_2": 22.5,
++    "bus_3": 13.856406460551018
++  },
++  "corrected_voltage_pu": {
++    "bus_2": 0.98,
++    "bus_3": 0.9686276877526612
++  },
++  "total_abs_q_kvar": 36.356406460551014
++}
+
+tokens used
+19,427

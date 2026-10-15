@@ -1,0 +1,58 @@
+I need to solve a power distribution system restoration task. Let me analyze the given information.
+
+The task involves:
+- A distribution feeder with buses s, b1, b2, b3, b4
+- Line l23 is faulted and must be opened
+- Need to keep the network radial while restoring high-priority load
+- There's a tie switch tie_24 between b2 and b4 that can be closed
+
+Network topology:
+- s — l_s1 — b1 — l12 — b2 — l23 (faulted) — b3 — l34 — b4
+- tie_24 connects b2 and b4 (normally open)
+
+After opening l23 (the faulted branch), b3 and b4 would be de-energized. I can use the tie switch tie_24 to restore power to b4, and through b4 to b3.
+
+If I:
+1. Open l23 (required for fault isolation)
+2. Close tie_24 to restore power from s → b1 → b2 → tie_24 → b4 → l34 → b3
+
+This would restore both b3 (priority 5, 80 kW) and b4 (priority 2, 40 kW).
+Priority restored = 5 + 2 = 7, which is below the minimum required 10.
+
+Alternative: Just close tie_24 to restore b4 only.
+- Priority = 2 < 10, still not enough.
+
+Wait, let me re-read: "min_priority_restored": 10.0 means the score must meet this threshold.
+
+To get priority ≥ 10:
+- b3 alone has priority 5, not enough
+- b4 alone has priority 2, not enough  
+- b2 has priority 3 but is already energized via s→b1→b2 (load 50 kW)
+
+b2 is already reachable from s without any switch changes (s→b1→b2). Its load is 50 kW, priority 3.
+
+So if I only restore b3 and b4 via tie_24:
+- b2: already energized, priority 3
+- b3: restored via b2→tie_24→b4→b3, priority 5
+- b4: restored, priority 2
+- Total priority = 3 + 5 + 2 = 10 ≥ 10 ✓
+
+The plan:
+- open_switches: ["l23"] (required to isolate fault)
+- close_switches: ["tie_24"] (to restore b3 and b4)
+
+Let me verify radiality: After opening l23 and closing tie_24, the network becomes:
+- s—b1—b2 connected to both l23 (open) and tie_24 (closed), b3—b4
+- From b2, power flows to b4 via tie_24, then to b3 via l34
+- This is still radial (no loops) because l23 is open
+
+The structure s-b1-b2-b4-b3 with b2 also connected to b4 through tie_24... wait, that creates a loop: b2→tie_24→b4→l34→b3→(but l23 is open)...
+
+Actually, with l23 open and tie_24 closed, the graph is:
+- s-b1-b2 (energized main path)
+- b2-tie_24-b4 (tie path)
+- b4-l34-b3
+
+There's no cycle because l23 is open. The path from b2 to b3 goes through b4, not directly.
+
+Switch count = 1 open + 1 close = 2.

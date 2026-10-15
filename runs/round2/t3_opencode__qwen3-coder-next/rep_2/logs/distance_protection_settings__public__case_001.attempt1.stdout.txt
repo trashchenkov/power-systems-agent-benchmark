@@ -1,0 +1,55 @@
+I'll start by reading the instructions and task files to understand what needs to be done.
+Now I understand the task. I need to calculate distance relay Zone 1/2/3 settings for a 110 kV line. Let me compute the required values:
+
+**Given data:**
+- Protected line L_AB: 80 km, R1=0.08 Ω/km, X1=0.32 Ω/km
+- Remote backup lines: L_BC (45 km) and L_BD (60 km)
+- Maximum load: 80 MVA, pf=0.9 lagging
+- Zone 1 fraction: [0.78, 0.85]
+- Zone 2 backup fraction: [0.45, 0.65], delay [0.3, 0.6]s
+- Zone 3 backup fraction: [1.1, 1.35], delay [0.85, 1.3]s
+- Load encroachment: 0.8
+
+**Calculations:**
+1. Protected line impedance: Z_line = 80 × (0.08 + j0.32) = 6.4 + j25.6 Ω
+   |Z_line| = √(6.4² + 25.6²) = √(40.96 + 655.36) = √696.32 = 26.39 Ω
+
+2. Zone 1: must underreach protected line
+   Using middle of range: 0.85 × 26.39 = 22.43 Ω
+
+3. Shortest backup line L_BC: 45 × (0.085 + j0.34) = 3.825 + j15.3 Ω
+   |Z_BC| = √(3.825² + 15.3²) = √(14.63 + 234.09) = √248.72 = 15.77 Ω
+   Zone 2: line + 0.45×shortest_backup = 26.39 + 0.45×15.77 = 33.50 Ω
+
+4. Longest backup line L_BD: 60 × (0.075 + j0.3) = 4.5 + j18 Ω
+   |Z_BD| = √(4.5² + 18²) = √(20.25 + 324) = √344.25 = 18.55 Ω
+   Zone 3: line + 1.35×longest_backup = 26.39 + 1.35×18.55 = 51.59 Ω
+
+5. Load-encroachment limit: 0.8 × |Z_line| = 0.8 × 26.39 = 21.11 Ω
+   Wait - this doesn't make sense. Let me recalculate what "load-encroachment limit" means.
+
+The load-encroachment limit should be the load impedance magnitude:
+S = 80 MVA, V = 110 kV (line-to-line)
+I = S/(√3×V) = 80/(√3×110) = 0.4196 kA = 419.6 A
+Z_load = V_phase/I_phase = (110/√3)/419.6 = 63.5/419.6 = 0.1513 kΩ = 151.3 Ω
+
+Load encroachment = 0.8 × 151.3 = 121.0 Ω (this is a limit, not compared directly to Z_line)
+
+Zone 3 must be below 121.0 Ω, and 51.59 Ω < 121.0 Ω ✓
+
+**Delays:**
+- Zone 1: max 0.05 s (using middle)
+- Zone 2: middle of [0.3, 0.6] = 0.45 s
+- Zone 3: middle of [0.85, 1.3] = 1.075 s
+
+Let me write a Python script for precise calculations:
+The load calculation is wrong - I need to recalculate load impedance properly. For load encroachment, we compare the relay reach setting to the load impedance. The load impedance should be calculated from the maximum load rating.
+
+For a 80 MVA load at 110 kV:
+Z_base = V²/S = 110²/80 = 151.25 Ω (this is per-phase using line-to-neutral voltage squared)
+
+Load-encroachment limit = 0.8 × Z_base = 0.8 × 151.25 = 121.0 Ω
+
+Zone 3 = 49.12 Ω < 121.0 Ω ✓
+
+The constraints are satisfied. Now let me create the submission.json:

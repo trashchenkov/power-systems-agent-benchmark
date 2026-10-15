@@ -1,0 +1,186 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+
+# Load task
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+# Extract data
+source_bus = task['source_bus']
+faulted_branches = task['faulted_branches']
+min_priority = task['min_priority_restored']
+buses = {b['id']: b for b in task['buses']}
+branches = {b['id']: b for b in task['branches']}
+
+print("=== Network Analysis ===")
+print(f"Source: {source_bus}")
+print(f"Faulted: {faulted_branches}")
+print(f"Min Priority: {min_priority}")
+print("\nBuses:")
+for bid, bus in buses.items():
+    print(f"  {bid}: load={bus['load_kw']} kW, priority={bus['priority']}")
+print("\nBranches:")
+for bid, branch in branches.items():
+    print(f"  {bid}: {branch['from_bus']}→{branch['to_bus']}, normally_closed={branch['normally_closed']}, capacity={branch['capacity_kw']}")
+
+# Solution approach:
+# 1. Must open l23 (faulted)
+# 2. Try to maximize priority restoration
+# 3. Keep network radial
+
+# Network topology when l23 is open:
+# s → b1 → b2 → (b4 via tie_24 OR b3 via l34)
+# But l34 goes b3→b4, so if l23 is open, b3 is isolated unless we route through l34
+
+# Current state: all normally_closed branches are ON, tie_24 is OFF
+
+# Option 1: Just open l23
+# - s → b1 (via l_s1)
+# - b1 → b2 (via l12)
+# - b2 → [nothing, l23 is faulted]
+# - b3 → b4 (via l34) but b3 is unreachable
+# Restored: b2 (priority 3, load 50 kW)
+
+# Option 2: Open l23, open l34, close tie_24
+# - s → b1 → b2 → b4 (via tie_24)
+# - b3 is isolated, b4 reached
+# Restored: b2 (priority 3, 50 kW) + b4 (priority 2, 40 kW) = priority 5, load 90 kW
+# Switches: open l23, open l34, close tie_24 = 3 switches
+
+# Option 3: Open l23, keep l34, close tie_24
+# - s → b1 → b2 → b4 (via tie_24) 
+# - but also b2 → b3 (via l23) - NO! l23 is faulted
+# - and b3 → b4 (via l34)
+# This creates a mesh: b2 → b4 (tie_24) and b2 → b3 → b4 (l23, l34)
+# But l23 is faulted, so this doesn't work
+# Restored: b2 + b4, priority = 5, load = 90 kW
+# Switches: open l23, close tie_24 = 2 switches
+
+# Option 4: Open l23, open l12, close tie_24
+# - s → b1 (via l_s1)
+# - b2 → b4 (via tie_24) but b2 is not reachable
+# This doesn't work
+
+# Best seems to be Option 3: open l23, close tie_24
+# Let's verify this is valid:
+
+open_switches = ['l23']
+close_switches = ['tie_24']
+
+print("\n=== Solution ===")
+print(f"Open: {open_switches}")
+print(f"Close: {close_switches}")
+
+# Simulate connectivity
+edges = {}
+for bid, branch in branches.items():
+    if bid in open_switches:
+        continue
+    if branch['normally_closed']:
+        state = "closed"
+    else:
+        state = "open" if bid not in close_switches else "closed"
+    
+    if state == "closed":
+        f = branch['from_bus']
+        t = branch['to_bus']
+        if f not in edges:
+            edges[f] = []
+        if t not in edges:
+            edges[t] = []
+        edges[f].append(t)
+        edges[t].append(f)
+
+print("\nConnectivity graph (after switching):")
+for node in sorted(edges.keys()):
+    print(f"  {node}: {edges[node]}")
+
+# BFS to find reachable nodes from source
+from collections import deque
+reachable = set()
+queue = deque([source_bus])
+reachable.add(source_bus)
+while queue:
+    node = queue.popleft()
+    for neighbor in edges.get(node, []):
+        if neighbor not in reachable:
+            reachable.add(neighbor)
+            queue.append(neighbor)
+
+print(f"\nReachable from {source_bus}: {reachable}")
+
+# Calculate priority restored
+priority_restored = sum(buses[b]['priority'] for b in reachable if b in buses and b != source_bus)
+load_restored = sum(buses[b]['load_kw'] for b in reachable if b in buses and b != source_bus)
+
+print(f"Priority restored: {priority_restored}")
+print(f"Load restored: {load_restored} kW")
+print(f"Meets min_priority ({min_priority})? {priority_restored >= min_priority}")
+
+# Check radiality (tree structure)
+# Count edges in final graph
+edge_count = sum(len(v) for v in edges.values()) // 2
+node_count = len(edges)
+print(f"\nGraph has {node_count} nodes and {edge_count} edges")
+print(f"Radiality check: edges should equal nodes - 1 = {node_count - 1}")
+print(f"Is radial? {edge_count == node_count - 1}")
+
+# Check faulted branches are open
+print(f"\nFaulted branches open? {all(b in open_switches for b in faulted_branches)}")
+
+EOF
+
+=== Network Analysis ===
+Source: s
+Faulted: ['l23']
+Min Priority: 10.0
+
+Buses:
+  s: load=0.0 kW, priority=0
+  b1: load=0.0 kW, priority=0
+  b2: load=50.0 kW, priority=3
+  b3: load=80.0 kW, priority=5
+  b4: load=40.0 kW, priority=2
+
+Branches:
+  l_s1: s→b1, normally_closed=True, capacity=250.0
+  l12: b1→b2, normally_closed=True, capacity=160.0
+  l23: b2→b3, normally_closed=True, capacity=120.0
+  l34: b3→b4, normally_closed=True, capacity=130.0
+  tie_24: b2→b4, normally_closed=False, capacity=120.0
+
+=== Solution ===
+Open: ['l23']
+Close: ['tie_24']
+
+Connectivity graph (after switching):
+  b1: ['s', 'b2']
+  b2: ['b1', 'b4']
+  b3: ['b4']
+  b4: ['b3', 'b2']
+  s: ['b1']
+
+Reachable from s: {'b1', 's', 'b3', 'b4', 'b2'}
+Priority restored: 10
+Load restored: 170.0 kW
+Meets min_priority (10.0)? True
+
+Graph has 5 nodes and 4 edges
+Radiality check: edges should equal nodes - 1 = 4
+Is radial? True
+
+Faulted branches open? True
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

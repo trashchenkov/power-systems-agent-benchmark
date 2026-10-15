@@ -1,0 +1,165 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+
+# Parse the task
+task_data = {
+    "nominal_voltage_pu": 1.0,
+    "rules": {
+        "normal_lower_deviation_pu": -0.1,
+        "normal_upper_deviation_pu": 0.1,
+        "absolute_lower_deviation_pu": -0.15,
+        "absolute_upper_deviation_pu": 0.1,
+        "minimum_percent_within_normal_band": 95.0
+    },
+    "candidate_tap_changes_pu": [-0.025, 0.0, 0.025, 0.05],
+    "voltage_series_pu": [
+        {"timestamp": "t00", "voltage_pu": 0.928},
+        {"timestamp": "t01", "voltage_pu": 0.914},
+        {"timestamp": "t02", "voltage_pu": 0.902},
+        {"timestamp": "t03", "voltage_pu": 0.889},
+        {"timestamp": "t04", "voltage_pu": 0.895},
+        {"timestamp": "t05", "voltage_pu": 0.936},
+        {"timestamp": "t06", "voltage_pu": 0.971},
+        {"timestamp": "t07", "voltage_pu": 1.012},
+        {"timestamp": "t08", "voltage_pu": 1.043},
+        {"timestamp": "t09", "voltage_pu": 1.066}
+    ]
+}
+
+nominal = task_data["nominal_voltage_pu"]
+rules = task_data["rules"]
+voltages = task_data["voltage_series_pu"]
+tap_options = task_data["candidate_tap_changes_pu"]
+
+# Define bands (in pu)
+normal_lower = nominal + rules["normal_lower_deviation_pu"]  # 0.9
+normal_upper = nominal + rules["normal_upper_deviation_pu"]  # 1.1
+absolute_lower = nominal + rules["absolute_lower_deviation_pu"]  # 0.85
+absolute_upper = nominal + rules["absolute_upper_deviation_pu"]  # 1.1
+
+print(f"Normal band: [{normal_lower}, {normal_upper}]")
+print(f"Absolute band: [{absolute_lower}, {absolute_upper}]")
+print()
+
+# Analyze original (no tap correction)
+voltage_values = [v["voltage_pu"] for v in voltages]
+min_voltage = min(voltage_values)
+max_voltage = max(voltage_values)
+
+print(f"Min voltage: {min_voltage}")
+print(f"Max voltage: {max_voltage}")
+print()
+
+# Count within normal band before mitigation
+within_normal = sum(1 for v in voltage_values if normal_lower <= v <= normal_upper)
+percent_within = (within_normal / len(voltage_values)) * 100
+
+print(f"Within normal band: {within_normal}/{len(voltage_values)} = {percent_within:.1f}%")
+print()
+
+# Identify out-of-band timestamps
+below_normal = [v["timestamp"] for v in voltages if v["voltage_pu"] < normal_lower]
+above_normal = [v["timestamp"] for v in voltages if v["voltage_pu"] > normal_upper]
+
+print(f"Below normal band: {below_normal}")
+print(f"Above normal band: {above_normal}")
+print()
+
+# Compliance decision before mitigation
+compliant_before = percent_within >= rules["minimum_percent_within_normal_band"]
+print(f"Compliant before mitigation: {compliant_before}")
+print()
+
+# Now find best tap correction
+print("Evaluating tap correction options:")
+print()
+
+best_tap = None
+best_score = -1
+
+for tap in tap_options:
+    adjusted_voltages = [v + tap for v in voltage_values]
+    
+    # Check absolute limits
+    abs_violations = sum(1 for v in adjusted_voltages if v < absolute_lower or v > absolute_upper)
+    
+    # Count within normal band
+    within = sum(1 for v in adjusted_voltages if normal_lower <= v <= normal_upper)
+    
+    print(f"Tap {tap:+.3f}: {within} within normal, {abs_violations} absolute violations")
+    
+    # If no absolute violations, this is a valid option
+    if abs_violations == 0:
+        if within > best_score:
+            best_score = within
+            best_tap = tap
+
+print()
+print(f"Best tap correction: {best_tap} with {best_score} values in normal band")
+
+# Build submission
+submission = {
+    "compliant": compliant_before,
+    "percent_within_normal_band": round(percent_within, 1),
+    "min_voltage_pu": min_voltage,
+    "max_voltage_pu": max_voltage,
+    "below_normal_timestamps": below_normal,
+    "above_normal_timestamps": above_normal,
+    "recommended_tap_change_pu": best_tap
+}
+
+print()
+print("Submission:")
+print(json.dumps(submission, indent=2))
+
+EOF
+
+Normal band: [0.9, 1.1]
+Absolute band: [0.85, 1.1]
+
+Min voltage: 0.889
+Max voltage: 1.066
+
+Within normal band: 8/10 = 80.0%
+
+Below normal band: ['t03', 't04']
+Above normal band: []
+
+Compliant before mitigation: False
+
+Evaluating tap correction options:
+
+Tap -0.025: 6 within normal, 0 absolute violations
+Tap +0.000: 8 within normal, 0 absolute violations
+Tap +0.025: 10 within normal, 0 absolute violations
+Tap +0.050: 9 within normal, 1 absolute violations
+
+Best tap correction: 0.025 with 10 values in normal band
+
+Submission:
+{
+  "compliant": false,
+  "percent_within_normal_band": 80.0,
+  "min_voltage_pu": 0.889,
+  "max_voltage_pu": 1.066,
+  "below_normal_timestamps": [
+    "t03",
+    "t04"
+  ],
+  "above_normal_timestamps": [],
+  "recommended_tap_change_pu": 0.025
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

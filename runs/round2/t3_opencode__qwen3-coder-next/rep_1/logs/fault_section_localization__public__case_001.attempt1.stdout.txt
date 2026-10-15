@@ -1,0 +1,20 @@
+I'll solve this fault section localization task. Let me analyze the radial network structure and FCI states.
+
+The network is radial with:
+- Source: n0
+- Sections: s01(n0→n1), s12(n1→n2), s23(n2→n3), s24(n2→n4), s45(n4→n5)
+- FCI locations: fci_n1 at n1, fci_n2 at n2, fci_n4 at n4
+- Observed FCI states: all three (fci_n1, fci_n2, fci_n4) = true
+- Outage complaints: n5
+
+For a fault on a section, all upstream FCIs should detect current (true) and all downstream customers should be outaged.
+
+Testing each candidate section:
+- **s01** (n0→n1): upstream of fault = none, downstream customers = {n2,n3,n4,n5}. FCIs upstream of n0: none expected true. But fci_n1,n2,n4 all observed true → mismatch.
+- **s12** (n1→n2): upstream = n1, downstream customers = {n3,n4,n5}. Expected FCI true: fci_n1. Expected outage: n3,n4,n5. But observed FCIs: fci_n1,n2,n4 all true → fci_n2,n4 mismatch.
+- **s23** (n2→n3): upstream = n1,n2, downstream customers = {n3}. Expected FCI true: fci_n1,fci_n2. Expected outage: n3. But observed FCIs include fci_n4 true → mismatch, and complaint is n5 not n3.
+- **s24** (n2→n4): upstream = n1,n2, downstream customers = {n4,n5}. Expected FCI true: fci_n1,fci_n2. Expected outage: n4,n5. Observed FCIs: fci_n1,n2,n4 all true → fci_n4 is downstream of fault so should be false. Mismatch.
+- **s45** (n4→n5): upstream = n1,n2,n4, downstream customers = {n5}. Expected FCI true: fci_n1,fci_n2,fci_n4. Expected outage: n5. This matches exactly!
+
+For s45, the fault is between n4 and n5. Upstream FCIs (n1, n2, 4) all see fault current = true (matches). Downstream customer nodes from fault = {n5} (matches complaint).
+Done.

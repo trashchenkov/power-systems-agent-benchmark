@@ -1,0 +1,154 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · moonshotai/kimi-k2.5
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import cmath
+import math
+
+# Given data
+base_mva = 50.0  # MVA
+voltage_kv = 13.8  # kV
+prefault_v_pu = 1.0
+fault_resistance_pu = 0.04
+
+# Sequence impedances in pu
+Z1 = complex(0.042, 0.31)
+Z2 = complex(0.045, 0.29)
+Z0 = complex(0.12, 0.82)
+
+# Calculate total impedance for SLG fault
+# I1 = I2 = I0 = V_prefault / (Z1 + Z2 + Z0 + 3*Zf)
+Z_total = Z1 + Z2 + Z0 + 3 * fault_resistance_pu
+print(f"Z1 = {Z1}")
+print(f"Z2 = {Z2}")
+print(f"Z0 = {Z0}")
+print(f"3*Zf = {3 * fault_resistance_pu}")
+print(f"Z_total = {Z_total}")
+
+# Calculate sequence currents in pu
+I1_pu = prefault_v_pu / Z_total
+I2_pu = I1_pu
+I0_pu = I1_pu
+
+print(f"\nI1_pu = {I1_pu}")
+print(f"I2_pu = {I2_pu}")
+print(f"I0_pu = {I0_pu}")
+
+# Calculate base current
+I_base = base_mva / (math.sqrt(3) * voltage_kv)
+print(f"\nI_base = {I_base} kA")
+
+# Convert to kA
+I1_ka = I1_pu * I_base
+I2_ka = I2_pu * I_base
+I0_ka = I0_pu * I_base
+
+print(f"\nI1_ka = {I1_ka}")
+print(f"I2_ka = {I2_ka}")
+print(f"I0_ka = {I0_ka}")
+
+# Calculate magnitudes and angles
+I1_mag = abs(I1_ka)
+I1_angle = math.degrees(cmath.phase(I1_ka))
+
+I2_mag = abs(I2_ka)
+I2_angle = math.degrees(cmath.phase(I2_ka))
+
+I0_mag = abs(I0_ka)
+I0_angle = math.degrees(cmath.phase(I0_ka))
+
+print(f"\nI1: mag={I1_mag:.6f} kA, angle={I1_angle:.6f} deg")
+print(f"I2: mag={I2_mag:.6f} kA, angle={I2_angle:.6f} deg")
+print(f"I0: mag={I0_mag:.6f} kA, angle={I0_angle:.6f} deg")
+
+# Fault current = 3*I0
+fault_current_ka = 3 * I0_ka
+fault_current_mag = abs(fault_current_ka)
+fault_current_angle = math.degrees(cmath.phase(fault_current_ka))
+
+print(f"\nFault current (3*I0): mag={fault_current_mag:.6f} kA, angle={fault_current_angle:.6f} deg")
+
+# Residual current magnitude
+residual_current_mag = 3 * I0_mag
+print(f"Residual current magnitude: {residual_current_mag:.6f} kA")
+
+# JSON output
+import json
+result = {
+    "sequence_currents_ka": {
+        "i1": {
+            "mag_ka": round(I1_mag, 6),
+            "angle_deg": round(I1_angle, 6)
+        },
+        "i2": {
+            "mag_ka": round(I2_mag, 6),
+            "angle_deg": round(I2_angle, 6)
+        },
+        "i0": {
+            "mag_ka": round(I0_mag, 6),
+            "angle_deg": round(I0_angle, 6)
+        }
+    },
+    "fault_current_ka": {
+        "mag_ka": round(fault_current_mag, 6),
+        "angle_deg": round(fault_current_angle, 6)
+    },
+    "residual_current_mag_ka": round(residual_current_mag, 6)
+}
+
+print("\n" + json.dumps(result, indent=2))
+EOF
+Z1 = (0.042+0.31j)
+Z2 = (0.045+0.29j)
+Z0 = (0.12+0.82j)
+3*Zf = 0.12
+Z_total = (0.32699999999999996+1.42j)
+
+I1_pu = (0.15400345401018872-0.668761176435682j)
+I2_pu = (0.15400345401018872-0.668761176435682j)
+I0_pu = (0.15400345401018872-0.668761176435682j)
+
+I_base = 2.0918488014116874 kA
+
+I1_ka = (0.3221519406844732-1.3989472653576513j)
+I2_ka = (0.3221519406844732-1.3989472653576513j)
+I0_ka = (0.3221519406844732-1.3989472653576513j)
+
+I1: mag=1.435561 kA, angle=-77.031908 deg
+I2: mag=1.435561 kA, angle=-77.031908 deg
+I0: mag=1.435561 kA, angle=-77.031908 deg
+
+Fault current (3*I0): mag=4.306683 kA, angle=-77.031908 deg
+Residual current magnitude: 4.306683 kA
+
+{
+  "sequence_currents_ka": {
+    "i1": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.031908
+    },
+    "i2": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.031908
+    },
+    "i0": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.031908
+    }
+  },
+  "fault_current_ka": {
+    "mag_ka": 4.306683,
+    "angle_deg": -77.031908
+  },
+  "residual_current_mag_ka": 4.306683
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

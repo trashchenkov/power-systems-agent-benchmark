@@ -1,0 +1,40 @@
+I need to solve a unit commitment problem with hydro, thermal, and storage resources under an emissions cap.
+
+**Understanding the problem:**
+- 3 hours with different loads
+- Hydro and storage have fixed outputs per hour
+- Need to dispatch thermal units (coal and gas) to meet residual load
+- Must respect min/max generation limits and emission cap of 200 tons
+- Minimize cost while being feasible
+
+**Calculations:**
+For each hour, residual load = load - hydro - storage_discharge:
+- h1: 120 - 35 - 10 = 75 MW
+- h2: 150 - 40 - 20 = 90 MW  
+- h3: 130 - 30 - 15 = 85 MW
+
+**Thermal units:**
+- Coal: 40-100 MW, $22/MWh, 0.75 ton/MWh
+- Gas: 20-80 MW, $38/MWh, 0.35 ton/MWh
+
+Since coal is cheaper, I should use it as much as possible. Let me find the cost-minimal feasible dispatch:
+
+**Hour 1 (75 MW residual):**
+- Use coal at min 40 MW, gas for remaining 35 MW
+- Cost: 40×22 + 35×38 = 880 + 1330 = $2210
+- Emissions: 40×0.75 + 35×0.35 = 30 + 12.25 = 42.25 tons
+
+**Hour 2 (90 MW residual):**
+- Use coal at max 100 MW (but need only 90, so coal at 90 MW)
+- Cost: 90×22 = $1980
+- Emissions: 90×0.75 = 67.5 tons
+
+**Hour 3 (85 MW residual):**
+- Use coal at max 100 MW (but need only 85, so coal at 85 MW)
+- Cost: 85×22 = $1870
+- Emissions: 85×0.75 = 63.75 tons
+
+**Total:**
+- Cost: 2210 + 1980 + 1870 = $6060
+- Emissions: 42.25 + 67.5 + 63.75 = 173.5 tons (under 200 cap ✓)
+Done.

@@ -1,0 +1,138 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import cmath
+import math
+
+# Task data
+base_mva = 50.0
+voltage_kv = 13.8
+prefault_voltage_pu = 1.0
+fault_resistance_pu = 0.04
+
+# Sequence impedances (Z = R + jX)
+z1 = complex(0.042, 0.31)
+z2 = complex(0.045, 0.29)
+z0 = complex(0.12, 0.82)
+zf = complex(fault_resistance_pu, 0)
+
+# For single-line-to-ground fault:
+# I1 = I2 = I0 = V / (Z1 + Z2 + Z0 + 3*Zf)
+z_total = z1 + z2 + z0 + 3 * zf
+i_seq_pu = prefault_voltage_pu / z_total
+
+print(f"Z1 = {z1}")
+print(f"Z2 = {z2}")
+print(f"Z0 = {z0}")
+print(f"Zf = {zf}")
+print(f"Z_total = {z_total}")
+print(f"I_seq (pu) = {i_seq_pu}")
+print(f"I_seq magnitude (pu) = {abs(i_seq_pu)}")
+print(f"I_seq angle (rad) = {cmath.phase(i_seq_pu)}")
+print(f"I_seq angle (deg) = {math.degrees(cmath.phase(i_seq_pu))}")
+
+# Convert to kA: Ibase = Sbase / (sqrt(3) * Vbase)
+sqrt3 = math.sqrt(3)
+i_base_ka = base_mva / (sqrt3 * voltage_kv)
+print(f"\nIbase = {base_mva} / ({sqrt3} * {voltage_kv}) = {i_base_ka} kA")
+
+# Convert sequence currents to kA
+i1_ka = i_seq_pu * i_base_ka
+i2_ka = i_seq_pu * i_base_ka
+i0_ka = i_seq_pu * i_base_ka
+
+print(f"\nI1 (kA) = {i1_ka}")
+print(f"I1 magnitude (kA) = {abs(i1_ka)}")
+print(f"I1 angle (deg) = {math.degrees(cmath.phase(i1_ka))}")
+
+# Fault current (residual current) = 3 * I0
+i_fault_ka = 3 * i0_ka
+i_residual_mag_ka = abs(i_fault_ka)
+
+print(f"\nFault current (3*I0) = {i_fault_ka}")
+print(f"Fault current magnitude (kA) = {abs(i_fault_ka)}")
+print(f"Fault current angle (deg) = {math.degrees(cmath.phase(i_fault_ka))}")
+
+# Build submission
+submission = {
+    "sequence_currents_ka": {
+        "i1": {
+            "mag_ka": round(abs(i1_ka), 6),
+            "angle_deg": round(math.degrees(cmath.phase(i1_ka)), 4)
+        },
+        "i2": {
+            "mag_ka": round(abs(i2_ka), 6),
+            "angle_deg": round(math.degrees(cmath.phase(i2_ka)), 4)
+        },
+        "i0": {
+            "mag_ka": round(abs(i0_ka), 6),
+            "angle_deg": round(math.degrees(cmath.phase(i0_ka)), 4)
+        }
+    },
+    "fault_current_ka": {
+        "mag_ka": round(abs(i_fault_ka), 6),
+        "angle_deg": round(math.degrees(cmath.phase(i_fault_ka)), 4)
+    },
+    "residual_current_mag_ka": round(i_residual_mag_ka, 6)
+}
+
+print("\n=== SUBMISSION ===")
+print(json.dumps(submission, indent=2))
+
+EOF
+
+Z1 = (0.042+0.31j)
+Z2 = (0.045+0.29j)
+Z0 = (0.12+0.82j)
+Zf = (0.04+0j)
+Z_total = (0.32699999999999996+1.42j)
+I_seq (pu) = (0.15400345401018872-0.668761176435682j)
+I_seq magnitude (pu) = 0.6862642165774824
+I_seq angle (rad) = -1.3444604178571602
+I_seq angle (deg) = -77.03190766561038
+
+Ibase = 50.0 / (1.7320508075688772 * 13.8) = 2.0918488014116874 kA
+
+I1 (kA) = (0.3221519406844732-1.3989472653576513j)
+I1 magnitude (kA) = 1.4355609788993373
+I1 angle (deg) = -77.03190766561038
+
+Fault current (3*I0) = (0.9664558220534196-4.196841796072954j)
+Fault current magnitude (kA) = 4.306682936698012
+Fault current angle (deg) = -77.03190766561038
+
+=== SUBMISSION ===
+{
+  "sequence_currents_ka": {
+    "i1": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.0319
+    },
+    "i2": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.0319
+    },
+    "i0": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.0319
+    }
+  },
+  "fault_current_ka": {
+    "mag_ka": 4.306683,
+    "angle_deg": -77.0319
+  },
+  "residual_current_mag_ka": 4.306683
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

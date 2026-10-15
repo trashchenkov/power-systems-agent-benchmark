@@ -1,0 +1,52 @@
+I need to analyze the contingency screening task. Based on the `public_inputs`:
+
+1. **4 branches** with base flows and ratings
+2. **4 contingencies** (one for each branch outage) with post-flow values
+3. **Critical loading threshold**: 100% (overload if post_flow >= rating)
+
+Let me analyze each contingency to determine severity and islanding:
+
+**Branch ratings:**
+- l12: 100 MW
+- l23: 100 MW
+- l13: 70 MW
+- l34: 60 MW
+
+**Contingency analysis:**
+
+1. **out_l12** (outage l12): l23=95, l13=88, l34=30
+   - l13: 88 > 70 (overload!) 
+   - l23: 95 < 100 (OK)
+   - l34: 30 < 60 (OK)
+
+2. **out_l23** (outage l23): l12=91, l13=55, l34=30
+   - l12: 91 < 100 (OK)
+   - l13: 55 < 70 (OK)
+   - l34: 30 < 60 (OK)
+   - No overload, but l13=55/70=78.6% usage
+
+3. **out_l13** (outage l13): l12=99, l23=80, l34=30
+   - l12: 99 < 100 (OK, but close)
+   - l23: 80 < 100 (OK)
+   - l34: 30 < 60 (OK)
+   - No overload, but l12=99/100=99% usage (most stressed remaining branch)
+
+4. **out_l34** (outage l34): l12=80, l23=60, l13=40
+   - All under ratings
+   - No overload
+
+Now for **islanding detection**: I need to check if removing a branch fragments the network. The network is: b1-l12-b2-l23-b3-l34-b4 with cross-link l13.
+
+- Removing l12: b1 connects to b3 via l13, then to b4 via l34 ✓ connected
+- Removing l23: b2 connects to b1 via l12, b1 to b3 via l13, b3 to b4 ✓ connected
+- Removing l13: b1-b2-b3-b4 chain still connected via l12 and l23 ✓ connected  
+- Removing l34: b4 becomes isolated! ✓ ISLANDING
+
+**Islanding**: out_l34 causes islanding
+
+**Ranking by severity** (most severe first - overloaded branches = most severe):
+1. out_l12 (l13 overloaded at 88/70 = 125.7%)
+2. out_l13 (l12 at 99% - no overload but highest utilization)
+3. out_l23 (no overload, max utilization 78.6%)
+4. out_l34 (no overload, but causes islanding - should be flagged)
+Done.

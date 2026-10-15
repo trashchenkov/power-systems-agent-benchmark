@@ -1,0 +1,50 @@
+Now I understand the task. I need to create a Volt-VAR curve for PV inverters that:
+1. Mitigates low-voltage sag (t_low: 0.94 pu) and high-voltage swell (t_high: 1.07 pu)
+2. Stays within voltage limits [0.95, 1.05] pu
+3. Respects inverter reactive power capability (sqrt(kVA² - kW²))
+4. Has strictly increasing voltage_pu and monotonic non-increasing q_fraction
+
+Let me analyze the timesteps:
+- t_low: base_voltage=0.94, pv_kw=60, inverter_kva=100, sensitivity=0.0007 pu/kvar
+- t_nom: base_voltage=1.0, pv_kw=80, inverter_kva=100, sensitivity=0.00055 pu/kvar  
+- t_high: base_voltage=1.07, pv_kw=60, inverter_kva=100, sensitivity=0.0007 pu/kvar
+
+For each timestep, max reactive power capability = sqrt(100² - pv_kw²):
+- t_low: sqrt(10000 - 3600) = sqrt(6400) = 80 kvar
+- t_nom: sqrt(10000 - 6400) = sqrt(3600) = 60 kvar
+- t_high: sqrt(10000 - 3600) = 80 kvar
+
+Voltage violations:
+- t_low: 0.94 < 0.95 (violation, need to raise voltage)
+- t_nom: 1.0 is within [0.95, 1.05] (no violation)
+- t_high: 1.07 > 1.05 (violation, need to lower voltage)
+
+To raise voltage at t_low (0.94 → need to reach 0.95):
+ΔV = 0.01 pu, sensitivity = 0.0007 pu/kvar
+Q_needed = 0.01 / 0.0007 ≈ 14.3 kvar (inject, positive)
+
+To lower voltage at t_high (1.07 → need to reach 1.05):
+ΔV = -0.02 pu, sensitivity = 0.0007 pu/kvar  
+Q_needed = -0.02 / 0.0007 ≈ -28.6 kvar (absorb, negative)
+
+As q_fraction (Q / kVA):
+- t_low: 14.3/100 = 0.143
+- t_high: -28.6/100 = -0.286
+
+I'll create a Volt-VAR curve with points that:
+- At low voltage (~0.94), inject reactive power to raise voltage
+- At nominal voltage (~1.0), minimal or no reactive power
+- At high voltage (~1.07), absorb reactive power to lower voltage
+
+Let me create a simple monotonic curve:
+Let me verify my solution by checking the calculations:
+The solution is verified:
+- Voltage points are strictly increasing: 0.94 < 0.95 < 1.0 < 1.05 < 1.07 ✓
+- Q fractions are monotonic non-increasing: 0.15 ≥ 0.15 ≥ 0.0 ≥ -0.30 ≥ -0.30 ✓
+- All timesteps stay within inverter Q capability ✓
+- All corrected voltages are within [0.95, 1.05] limits ✓
+- t_low corrected from 0.94 to 0.9505 (within limits)
+- t_nom stays at 1.0 (within limits)
+- t_high corrected from 1.07 to 1.049 (within limits)
+
+The submission.json file has been written successfully.

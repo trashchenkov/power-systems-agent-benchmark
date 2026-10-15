@@ -1,0 +1,145 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['wind_interval_case']
+reference_air_density = case['reference_air_density_kg_m3']
+turbine = case['turbine']
+power_curve = case['power_curve']
+horizons = case['horizons']
+
+count = turbine['count']
+rated_mw_each = turbine['rated_mw_each']
+cut_in_m_s = power_curve['cut_in_m_s']
+rated_m_s = power_curve['rated_m_s']
+cut_out_m_s = power_curve['cut_out_m_s']
+
+def calculate_power(wind_speed_m_s, air_density_kg_m3):
+    """Calculate power in MW using the power curve formula"""
+    # Corrected speed
+    v_c = wind_speed_m_s * ((air_density_kg_m3 / reference_air_density) ** (1/3))
+    
+    # Power curve logic
+    if v_c < cut_in_m_s or v_c >= cut_out_m_s:
+        power = 0
+    elif v_c >= rated_m_s:
+        power = count * rated_mw_each
+    else:
+        # Linear interpolation formula: power = count*rated_mw_each * ((v_c - cut_in_m_s)/(rated_m_s - cut_in_m_s))^3
+        normalized = (v_c - cut_in_m_s) / (rated_m_s - cut_in_m_s)
+        power = count * rated_mw_each * (normalized ** 3)
+    
+    return power
+
+def calculate_quantile(values, q):
+    """Calculate q-th quantile using linear interpolation"""
+    sorted_values = sorted(values)
+    n = len(sorted_values)
+    pos = q * (n - 1)
+    
+    lower_idx = math.floor(pos)
+    upper_idx = math.ceil(pos)
+    
+    if lower_idx == upper_idx:
+        return sorted_values[lower_idx]
+    
+    # Linear interpolation
+    frac = pos - lower_idx
+    return sorted_values[lower_idx] * (1 - frac) + sorted_values[upper_idx] * frac
+
+# Calculate prediction intervals for each timestamp
+prediction_interval_mw_by_timestamp = {}
+interval_widths = []
+
+for horizon in horizons:
+    timestamp = horizon['timestamp']
+    scenarios = horizon['scenarios']
+    
+    # Calculate power for each scenario
+    powers = []
+    for scenario in scenarios:
+        power = calculate_power(scenario['wind_speed_m_s'], scenario['air_density_kg_m3'])
+        powers.append(power)
+    
+    # Calculate quantiles
+    p10 = calculate_quantile(powers, 0.10)
+    p50 = calculate_quantile(powers, 0.50)
+    p90 = calculate_quantile(powers, 0.90)
+    
+    prediction_interval_mw_by_timestamp[timestamp] = {
+        "p10": round(p10, 4),
+        "p50": round(p50, 4),
+        "p90": round(p90, 4)
+    }
+    
+    interval_widths.append(p90 - p10)
+    
+    print(f"{timestamp}: powers={[round(p, 4) for p in powers]}, p10={round(p10, 4)}, p50={round(p50, 4)}, p90={round(p90, 4)}")
+
+# Calculate average interval width
+average_interval_width_mw = sum(interval_widths) / len(interval_widths)
+
+print(f"\nAverage interval width: {round(average_interval_width_mw, 4)}")
+
+# Create submission
+submission = {
+    "prediction_interval_mw_by_timestamp": prediction_interval_mw_by_timestamp,
+    "average_interval_width_mw": round(average_interval_width_mw, 4)
+}
+
+print("\nSubmission:")
+print(json.dumps(submission, indent=2))
+
+# Write to file
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nsubmission.json written successfully")
+
+EOF
+
+t01: powers=[1.1319, 2.8941, 4.0748, 6.1842, 9.1961], p10=1.8368, p50=4.0748, p90=7.9914
+t02: powers=[3.6847, 6.8061, 10.0008, 13.0288, 20.0], p10=4.9333, p50=10.0008, p90=17.2115
+t03: powers=[0.4172, 0.8637, 1.6687, 3.8511, 5.6014], p10=0.5958, p50=1.6687, p90=4.9013
+
+Average interval width: 7.5794
+
+Submission:
+{
+  "prediction_interval_mw_by_timestamp": {
+    "t01": {
+      "p10": 1.8368,
+      "p50": 4.0748,
+      "p90": 7.9914
+    },
+    "t02": {
+      "p10": 4.9333,
+      "p50": 10.0008,
+      "p90": 17.2115
+    },
+    "t03": {
+      "p10": 0.5958,
+      "p50": 1.6687,
+      "p90": 4.9013
+    }
+  },
+  "average_interval_width_mw": 7.5794
+}
+
+submission.json written successfully
+[0m
+[0m→ [0mRead submission.json

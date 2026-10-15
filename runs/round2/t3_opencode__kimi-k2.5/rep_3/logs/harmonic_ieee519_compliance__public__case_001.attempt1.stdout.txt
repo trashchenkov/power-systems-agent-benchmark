@@ -1,0 +1,80 @@
+Now I understand the task. I need to:
+1. Compute Isc/IL ratio (short-circuit current / max demand current)
+2. Select the appropriate current limit table row
+3. Calculate TDD (Total Demand Distortion)
+4. Calculate Voltage THD
+5. Check for violations
+6. Determine compliance verdict
+
+Let me calculate this step by step:
+
+**Given data:**
+- Max demand current (IL) = 480.0 A
+- Short-circuit current (Isc) = 12.0 kA = 12000 A
+- Harmonic currents: 5th=28.0, 7th=19.0, 11th=9.0, 13th=7.0, 17th=4.0, 19th=3.0, 23rd=1.5
+- Harmonic voltages: 5th=2.1%, 7th=1.6%, 11th=0.9%
+- Voltage limits: individual=3.0%, THD=5.0%
+
+**Step 1: Calculate Isc/IL ratio**
+Isc/IL = 12000 / 480 = 25
+
+**Step 2: Select limit row**
+The ratio 25 falls between isc_il_below 20 and 50, so we select the row with isc_il_below=50 (the first row whose isc_il_below exceeds the ratio).
+
+Limits from that row:
+- TDD: 8.0%
+- h_below_11: 7.0%
+- h_11_to_17: 3.5%
+- h_17_to_23: 2.5%
+- h_23_to_35: 1.0%
+- h_35_up: 0.5%
+
+**Step 3: Calculate TDD**
+TDD = sqrt(sum of squared harmonic currents) / IL * 100
+Sum of squares = 28² + 19² + 9² + 7² + 4² + 3² + 1.5²
+= 784 + 361 + 81 + 49 + 16 + 9 + 2.25
+= 1302.25
+
+TDD = sqrt(1302.25) / 480 * 100
+= 36.0867 / 480 * 100
+= 7.518%
+
+**Step 4: Calculate Voltage THD**
+THD = sqrt(sum of squared harmonic voltages)
+= sqrt(2.1² + 1.6² + 0.9²)
+= sqrt(4.41 + 2.56 + 0.81)
+= sqrt(7.78)
+= 2.789%
+
+**Step 5: Check current violations**
+- TDD: 7.518% vs limit 8.0% → OK (no violation)
+- Individual harmonics (as % of IL):
+  - h5: 28/480*100 = 5.83% vs limit 7.0% → OK
+  - h7: 19/480*100 = 3.96% vs limit 7.0% → OK
+  - h11: 9/480*100 = 1.875% vs limit 3.5% → OK
+  - h13: 7/480*100 = 1.46% vs limit 3.5% → OK
+  - h17: 4/480*100 = 0.83% vs limit 2.5% → OK
+  - h19: 3/480*100 = 0.625% vs limit 2.5% → OK
+  - h23: 1.5/480*100 = 0.3125% vs limit 1.0% → OK
+
+No current violations.
+
+**Step 6: Check voltage violations**
+- THD: 2.789% vs limit 5.0% → OK
+- Individual:
+  - h5: 2.1% vs limit 3.0% → OK
+  - h7: 1.6% vs limit 3.0% → OK
+  - h11: 0.9% vs limit 3.0% → OK
+
+No voltage violations.
+
+**Compliance verdict:** true (compliant)
+I've completed the task. The submission.json file has been created with the calculated values:
+
+- **isc_over_il**: 25.0 (12000A / 480A)
+- **tdd_pct**: 7.518% (calculated from harmonic currents)
+- **current_violations**: Empty list (all current harmonics and TDD are within limits)
+- **voltage_thd_pct**: 2.789% (calculated from harmonic voltages)
+- **voltage_violations**: Empty list (all voltage harmonics and THD are within limits)
+- **compliant**: true (no violations detected)
+- **rationale**: Explanation of the calculations and compliance determination

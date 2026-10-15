@@ -1,0 +1,43 @@
+Now I understand the task. I need to compute EV charger reactive-power commands for voltage support. Let me analyze the data:
+
+**Given:**
+- Target voltage: 0.98 pu
+- Bus 2: base voltage 0.944 pu, sensitivity 0.0016 pu/kvar
+- Bus 3: base voltage 0.952 pu, sensitivity 0.0012 pu/kvar
+
+**EVs:**
+- EVSE_1 at bus_2: S_rating = 18 kVA, P = 10 kW
+- EVSE_2 at bus_2: S_rating = 12 kVA, P = 6 kW
+- EVSE_3 at bus_3: S_rating = 16 kVA, P = 8 kW
+
+**Calculations:**
+
+For each EV, max reactive power capability: Q_max = sqrt(S² - P²)
+
+**Bus 2:**
+- EVSE_1: Q_max = sqrt(18² - 10²) = sqrt(324 - 100) = sqrt(224) = 14.967 kvar
+- EVSE_2: Q_max = sqrt(12² - 6²) = sqrt(144 - 36) = sqrt(108) = 10.392 kvar
+- Total capability at bus_2: 14.967 + 10.392 = 25.359 kvar
+
+Voltage error at bus_2: 0.98 - 0.944 = 0.036 pu
+Required Q = 0.036 / 0.0016 = 22.5 kvar
+This is within capability (22.5 ≤ 25.359), so Q_dispatch_bus_2 = 22.5 kvar
+
+**Bus 3:**
+- EVSE_3: Q_max = sqrt(16² - 8²) = sqrt(256 - 64) = sqrt(192) = 13.856 kvar
+- Total capability at bus_3: 13.856 kvar
+
+Voltage error at bus_3: 0.98 - 0.952 = 0.028 pu
+Required Q = 0.028 / 0.0012 = 23.333 kvar
+This exceeds capability (23.333 > 13.856), so Q_dispatch_bus_3 = 13.856 kvar (clipped)
+
+**Corrected voltages:**
+- Bus 2: 0.944 + 22.5 × 0.0016 = 0.944 + 0.036 = 0.98 pu
+- Bus 3: 0.952 + 13.856 × 0.0012 = 0.952 + 0.016627 = 0.968627 pu
+
+**Total absolute Q:** |22.5| + |13.856| = 36.356 kvar
+I have written the `submission.json` file with the computed EV charger reactive-power commands for voltage support. The solution:
+
+1. **Bus 2**: Required 22.5 kvar to reach target voltage (within the aggregate EV capability of ~25.36 kvar), achieving the target 0.98 pu
+2. **Bus 3**: Required 23.33 kvar but clipped to the maximum available capability of ~13.86 kvar, reaching 0.969 pu instead of the full target
+3. **Total absolute reactive power**: ~36.36 kvar

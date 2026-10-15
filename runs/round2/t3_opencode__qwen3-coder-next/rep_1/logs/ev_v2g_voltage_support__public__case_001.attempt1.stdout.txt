@@ -1,0 +1,39 @@
+I need to compute EV charger reactive-power commands for voltage support.
+
+Given:
+- Target voltage: 0.98 pu
+- Base voltages: bus_2 = 0.944 pu, bus_3 = 0.952 pu
+- Sensitivities: bus_2 = 0.0016 pu/kvar, bus_3 = 0.0012 pu/kvar
+- EVs at bus_2: evse_1 (18 kVA, 10 kW), evse_2 (12 kVA, 6 kW)
+- EVs at bus_3: evse_3 (16 kVA, 8 kW)
+
+First, compute how much reactive power is needed at each bus to reach target voltage:
+
+For bus_2: voltage deficit = 0.98 - 0.944 = 0.036 pu
+Required q = 0.036 / 0.0016 = 22.5 kvar
+
+For bus_3: voltage deficit = 0.98 - 0.952 = 0.028 pu
+Required q = 0.028 / 0.0012 = 23.333... kvar
+
+Now compute aggregate EV capability at each bus (using S² = P² + Q², so Q.max = √(S² - P²)):
+
+bus_2:
+- evse_1: Q_max = √(18² - 10²) = √(324 - 100) = √224 = 14.967 kvar
+- evse_2: Q_max = √(12² - 6²) = √(144 - 36) = √108 = 10.392 kvar
+- Total Q_max at bus_2 = 25.359 kvar
+
+bus_3:
+- evse_3: Q_max = √(16² - 8²) = √(256 - 64) = √192 = 13.856 kvar
+
+Since required q (22.5) < available Q_max (25.359) at bus_2, no clipping needed.
+Since required q (23.333) > available Q_max (13.856) at bus_3, clip to 13.856 kvar.
+
+So:
+- q_dispatch_kvar: bus_2 = 22.5, bus_3 = 13.856 (rounded)
+
+Corrected voltages:
+- bus_2: 0.944 + 22.5 × 0.0016 = 0.944 + 0.036 = 0.98 pu
+- bus_3: 0.952 + 13.856 × 0.0012 = 0.952 + 0.016627 = 0.968627 pu
+
+total_abs_q_kvar = |22.5| + |13.856| = 36.356 kvar
+Done. Created `submission.json` with computed reactive power dispatch, corrected voltages, and total absolute reactive effort.

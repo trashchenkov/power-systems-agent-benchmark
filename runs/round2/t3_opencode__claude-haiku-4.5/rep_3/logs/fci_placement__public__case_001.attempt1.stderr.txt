@@ -1,0 +1,126 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+from itertools import combinations
+
+# Data from task.json
+budget = 2
+fault_sections = {
+    "s12": {"annual_fault_rate": 0.18, "customers_interrupted": 120},
+    "s23": {"annual_fault_rate": 0.14, "customers_interrupted": 70},
+    "s24": {"annual_fault_rate": 0.12, "customers_interrupted": 90},
+    "s45": {"annual_fault_rate": 0.09, "customers_interrupted": 40},
+}
+
+candidate_locations = {
+    "n1": {"section_gain_minutes": {"s12": 18, "s23": 16, "s24": 15, "s45": 14}},
+    "n2": {"section_gain_minutes": {"s12": 6, "s23": 28, "s24": 26, "s45": 23}},
+    "n4": {"section_gain_minutes": {"s12": 0, "s23": 4, "s24": 18, "s45": 34}},
+    "n3": {"section_gain_minutes": {"s12": 0, "s23": 24, "s24": 2, "s45": 2}},
+}
+
+def calculate_objective(selected_locations, fault_sections, candidate_locations):
+    """Calculate total expected customer-minutes saved"""
+    total_saved = 0
+    section_reductions = {}
+    
+    for section_id, section_data in fault_sections.items():
+        # Find maximum gain for this section among selected locations
+        max_gain = 0
+        for loc_id in selected_locations:
+            gain = candidate_locations[loc_id]["section_gain_minutes"][section_id]
+            max_gain = max(max_gain, gain)
+        
+        # Calculate contribution of this section
+        annual_fault_rate = section_data["annual_fault_rate"]
+        customers_interrupted = section_data["customers_interrupted"]
+        contribution = annual_fault_rate * customers_interrupted * max_gain
+        total_saved += contribution
+        section_reductions[section_id] = max_gain
+    
+    return total_saved, section_reductions
+
+# Enumerate all combinations of size budget
+candidates = list(candidate_locations.keys())
+best_combo = None
+best_objective = -1
+best_section_reductions = None
+
+print("Evaluating all combinations of size", budget)
+print("-" * 70)
+
+for combo in combinations(candidates, budget):
+    objective, section_reductions = calculate_objective(combo, fault_sections, candidate_locations)
+    print(f"Combination {combo}: objective = {objective:.4f}")
+    print(f"  Section reductions: {section_reductions}")
+    
+    if objective > best_objective:
+        best_objective = objective
+        best_combo = combo
+        best_section_reductions = section_reductions
+
+print("-" * 70)
+print(f"\nBest combination: {list(best_combo)}")
+print(f"Best objective value: {best_objective:.4f}")
+print(f"Section patrol-time reductions: {best_section_reductions}")
+
+# Create submission
+submission = {
+    "selected_locations": list(best_combo),
+    "expected_customer_minutes_saved": best_objective,
+    "section_patrol_time_reduction_min": best_section_reductions,
+    "rationale": "Evaluated all 6 combinations of 2 locations from 4 candidates. Selected combination that maximizes sum of (annual_fault_rate × customers_interrupted × max_section_gain) across all fault sections."
+}
+
+print("\nFinal submission:")
+print(json.dumps(submission, indent=2))
+EOF
+
+Evaluating all combinations of size 2
+----------------------------------------------------------------------
+Combination ('n1', 'n2'): objective = 1026.8000
+  Section reductions: {'s12': 18, 's23': 28, 's24': 26, 's45': 23}
+Combination ('n1', 'n4'): objective = 862.4000
+  Section reductions: {'s12': 18, 's23': 16, 's24': 18, 's45': 34}
+Combination ('n1', 'n3'): objective = 836.4000
+  Section reductions: {'s12': 18, 's23': 24, 's24': 15, 's45': 14}
+Combination ('n2', 'n4'): objective = 807.2000
+  Section reductions: {'s12': 6, 's23': 28, 's24': 26, 's45': 34}
+Combination ('n2', 'n3'): objective = 767.6000
+  Section reductions: {'s12': 6, 's23': 28, 's24': 26, 's45': 23}
+Combination ('n4', 'n3'): objective = 552.0000
+  Section reductions: {'s12': 0, 's23': 24, 's24': 18, 's45': 34}
+----------------------------------------------------------------------
+
+Best combination: ['n1', 'n2']
+Best objective value: 1026.8000
+Section patrol-time reductions: {'s12': 18, 's23': 28, 's24': 26, 's45': 23}
+
+Final submission:
+{
+  "selected_locations": [
+    "n1",
+    "n2"
+  ],
+  "expected_customer_minutes_saved": 1026.8,
+  "section_patrol_time_reduction_min": {
+    "s12": 18,
+    "s23": 28,
+    "s24": 26,
+    "s45": 23
+  },
+  "rationale": "Evaluated all 6 combinations of 2 locations from 4 candidates. Selected combination that maximizes sum of (annual_fault_rate \u00d7 customers_interrupted \u00d7 max_section_gain) across all fault sections."
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

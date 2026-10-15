@@ -1,0 +1,159 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · moonshotai/kimi-k2.5
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import math
+
+# Input data
+design_current_a = 180.0
+power_factor = 0.9
+system_voltage_v = 400.0
+length_m = 250.0
+max_voltage_drop_pct = 5.0
+ambient_factor = 0.96
+grouping_factor = 0.8
+fault_current_ka = 12.0
+clearing_time_s = 0.4
+k_adiabatic = 143.0
+
+# Catalog data
+catalog = [
+    {"cross_section_mm2": 50, "base_ampacity_a": 192.0, "r_ohm_per_km": 0.387, "x_ohm_per_km": 0.085},
+    {"cross_section_mm2": 70, "base_ampacity_a": 246.0, "r_ohm_per_km": 0.268, "x_ohm_per_km": 0.082},
+    {"cross_section_mm2": 95, "base_ampacity_a": 298.0, "r_ohm_per_km": 0.193, "x_ohm_per_km": 0.082},
+    {"cross_section_mm2": 120, "base_ampacity_a": 346.0, "r_ohm_per_km": 0.153, "x_ohm_per_km": 0.08},
+    {"cross_section_mm2": 150, "base_ampacity_a": 399.0, "r_ohm_per_km": 0.124, "x_ohm_per_km": 0.08},
+    {"cross_section_mm2": 185, "base_ampacity_a": 456.0, "r_ohm_per_km": 0.0991, "x_ohm_per_km": 0.08},
+]
+
+# Calculate sin(phi) from power factor
+sin_phi = math.sqrt(1 - power_factor**2)
+print(f"sin(phi) = {sin_phi:.6f}")
+
+# Calculate minimum thermal section
+I_fault_a = fault_current_ka * 1000
+min_thermal_section_mm2 = I_fault_a * math.sqrt(clearing_time_s) / k_adiabatic
+print(f"\nMinimum thermal section = {I_fault_a} * sqrt({clearing_time_s}) / {k_adiabatic}")
+print(f"                        = {I_fault_a} * {math.sqrt(clearing_time_s):.6f} / {k_adiabatic}")
+print(f"                        = {min_thermal_section_mm2:.4f} mm²")
+
+# Check each cable
+print("\n" + "="*100)
+print("Checking each cable:")
+print("="*100)
+
+selected_cable = None
+
+for cable in catalog:
+    cs = cable["cross_section_mm2"]
+    base_amp = cable["base_ampacity_a"]
+    r = cable["r_ohm_per_km"]
+    x = cable["x_ohm_per_km"]
+    
+    # 1. Derated ampacity check
+    derated_ampacity = base_amp * ambient_factor * grouping_factor
+    ampacity_ok = derated_ampacity >= design_current_a
+    
+    # 2. Voltage drop calculation
+    # dU = sqrt(3) * I * (L_m/1000) * (r*pf + x*sin(phi))
+    # dU% = dU / V * 100
+    length_km = length_m / 1000.0
+    voltage_drop_v = math.sqrt(3) * design_current_a * length_km * (r * power_factor + x * sin_phi)
+    voltage_drop_pct = (voltage_drop_v / system_voltage_v) * 100
+    voltage_drop_ok = voltage_drop_pct <= max_voltage_drop_pct
+    
+    # 3. Adiabatic check
+    adiabatic_ok = cs >= min_thermal_section_mm2
+    
+    # Overall check
+    all_ok = ampacity_ok and voltage_drop_ok and adiabatic_ok
+    
+    print(f"\nCable {cs} mm²:")
+    print(f"  Base ampacity: {base_amp} A")
+    print(f"  Derated ampacity: {derated_ampacity:.3f} A (>= {design_current_a} A) -> {'PASS' if ampacity_ok else 'FAIL'}")
+    print(f"  Voltage drop: {voltage_drop_pct:.4f}% (<= {max_voltage_drop_pct}%) -> {'PASS' if voltage_drop_ok else 'FAIL'}")
+    print(f"  Adiabatic check: {cs} >= {min_thermal_section_mm2:.4f} mm² -> {'PASS' if adiabatic_ok else 'FAIL'}")
+    print(f"  Overall: {'PASS' if all_ok else 'FAIL'}")
+    
+    if all_ok and selected_cable is None:
+        selected_cable = {
+            "cross_section_mm2": cs,
+            "derated_ampacity_a": derated_ampacity,
+            "voltage_drop_pct": voltage_drop_pct
+        }
+
+print("\n" + "="*100)
+print(f"\nSelected cable: {selected_cable['cross_section_mm2']} mm²")
+print(f"  Derated ampacity: {selected_cable['derated_ampacity_a']:.3f} A")
+print(f"  Voltage drop: {selected_cable['voltage_drop_pct']:.4f}%")
+print(f"  Minimum thermal section: {min_thermal_section_mm2:.4f} mm²")
+EOF
+sin(phi) = 0.435890
+
+Minimum thermal section = 12000.0 * sqrt(0.4) / 143.0
+                        = 12000.0 * 0.632456 / 143.0
+                        = 53.0732 mm²
+
+====================================================================================================
+Checking each cable:
+====================================================================================================
+
+Cable 50 mm²:
+  Base ampacity: 192.0 A
+  Derated ampacity: 147.456 A (>= 180.0 A) -> FAIL
+  Voltage drop: 7.5088% (<= 5.0%) -> FAIL
+  Adiabatic check: 50 >= 53.0732 mm² -> FAIL
+  Overall: FAIL
+
+Cable 70 mm²:
+  Base ampacity: 246.0 A
+  Derated ampacity: 188.928 A (>= 180.0 A) -> PASS
+  Voltage drop: 5.3964% (<= 5.0%) -> FAIL
+  Adiabatic check: 70 >= 53.0732 mm² -> PASS
+  Overall: FAIL
+
+Cable 95 mm²:
+  Base ampacity: 298.0 A
+  Derated ampacity: 228.864 A (>= 180.0 A) -> PASS
+  Voltage drop: 4.0811% (<= 5.0%) -> PASS
+  Adiabatic check: 95 >= 53.0732 mm² -> PASS
+  Overall: PASS
+
+Cable 120 mm²:
+  Base ampacity: 346.0 A
+  Derated ampacity: 265.728 A (>= 180.0 A) -> PASS
+  Voltage drop: 3.3626% (<= 5.0%) -> PASS
+  Adiabatic check: 120 >= 53.0732 mm² -> PASS
+  Overall: PASS
+
+Cable 150 mm²:
+  Base ampacity: 399.0 A
+  Derated ampacity: 306.432 A (>= 180.0 A) -> PASS
+  Voltage drop: 2.8541% (<= 5.0%) -> PASS
+  Adiabatic check: 150 >= 53.0732 mm² -> PASS
+  Overall: PASS
+
+Cable 185 mm²:
+  Base ampacity: 456.0 A
+  Derated ampacity: 350.208 A (>= 180.0 A) -> PASS
+  Voltage drop: 2.4174% (<= 5.0%) -> PASS
+  Adiabatic check: 185 >= 53.0732 mm² -> PASS
+  Overall: PASS
+
+====================================================================================================
+
+Selected cable: 95 mm²
+  Derated ampacity: 228.864 A
+  Voltage drop: 4.0811%
+  Minimum thermal section: 53.0732 mm²
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m→ [0mRead submission.json

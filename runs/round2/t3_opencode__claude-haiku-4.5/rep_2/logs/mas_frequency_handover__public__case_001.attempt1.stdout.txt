@@ -1,0 +1,46 @@
+I'll read the instructions and task files to understand what needs to be done.
+Now I understand the task. Let me analyze what needs to be done:
+
+**Task**: Classify MAS (Multi-Agent System) frequency state and choose lead-station handover
+
+**Key Inputs**:
+- Nominal frequency: 50 Hz
+- Current frequency: 49.82 Hz
+- Alert threshold: ±0.1 Hz deviation
+- Emergency threshold: ±0.3 Hz deviation
+- Current lead agent: plant_a
+- Min headroom: 20 MW
+- Max latency: 80 ms
+- 4 agents with various capabilities
+
+**Analysis**:
+
+1. **Frequency State Classification**:
+   - Deviation = 49.82 - 50 = -0.18 Hz
+   - Absolute deviation = 0.18 Hz
+   - 0.1 < 0.18 < 0.3, so state = "alert"
+
+2. **Lead Agent Selection** (for low frequency, need upward headroom):
+   - Need to find available agent with sufficient upward headroom and latency ≤ 80ms
+   - Current lead is "plant_a" with 88 MW current, max 100 MW → headroom = 12 MW (insufficient, needs 20 MW)
+   
+   Available agents with latency ≤ 80ms:
+   - **plant_a**: headroom = 100 - 88 = 12 MW (insufficient)
+   - **plant_b**: headroom = 120 - 70 = 50 MW (sufficient), latency = 55 ms ✓
+   - **battery_c**: headroom = 40 - 5 = 35 MW (sufficient), latency = 20 ms ✓
+   - **plant_d**: not available
+   
+   Following the rule "maximize headroom then minimize latency":
+   - battery_c: 35 MW headroom, 20 ms latency
+   - plant_b: 50 MW headroom, 55 ms latency
+   
+   plant_b has more headroom (50 > 35), so **lead_agent = "plant_b"**
+
+3. **Handover Required**: Yes (plant_a is insufficient, need to switch to plant_b)
+
+4. **Lead Headroom**: 50 MW (upward, since frequency is low)
+Done. I've analyzed the MAS frequency handover task and written `submission.json` with:
+- **frequency_state**: "alert" (deviation of -0.18 Hz is between alert and emergency thresholds)
+- **lead_agent**: "plant_b" (has maximum upward headroom of 50 MW among available agents meeting constraints)
+- **handover_required**: true (current lead plant_a insufficient)
+- **lead_headroom_mw**: 50 (plant_b's available upward capacity)

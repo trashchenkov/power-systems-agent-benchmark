@@ -1,0 +1,30 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+from itertools import combinations
+units={'g1':(120,4.5,280),'g2':(180,5.0,360),'g3':(240,3.8,440),'g4':(90,6.0,190)}
+dem=1000; f0=50; loss=180; maxr=2.0; minscr=2.25; base=1180; ibr=720
+best=None
+for r in range(1,5):
+  for c in combinations(units,r):
+    P=sum(units[k][0] for k in c); E=sum(units[k][1]*units[k][0] for k in c)/1000
+    sc=sum(units[k][2] for k in c)
+    rocof=loss*f0/(2*E*1000); scr=(base+sc)/ibr
+    if rocof<=maxr and scr>=minscr:
+      key=(P,E)
+      if best is None or key<best[0]: best=(key,c,E,rocof,scr,P)
+print(best)
+"
+
+((510, 2.352), ('g2', 'g3', 'g4'), 2.352, 1.913265306122449, 3.013888888888889, 510)
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

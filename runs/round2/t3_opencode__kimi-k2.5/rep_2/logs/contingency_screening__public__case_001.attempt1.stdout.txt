@@ -1,0 +1,83 @@
+Now I understand the task. I need to:
+1. Rank N-1 branch outage contingencies by operational severity
+2. Flag outages that island the network
+3. Write the result to `submission.json`
+
+Let me analyze the data:
+- 4 branches: l12, l23, l13, l34 with their ratings
+- 4 contingencies (outages of each branch)
+- Critical loading threshold: 100%
+
+For each contingency, I need to:
+1. Check if any remaining branch exceeds 100% of its rating (critical/overload)
+2. Check if the outage causes islanding
+
+Let me analyze each contingency:
+
+**out_l12** (l12 outaged):
+- l23: 95 MW / 100 MW rating = 95% (ok)
+- l13: 88 MW / 70 MW rating = 125.7% (OVERLOAD!)
+- l34: 30 MW / 60 MW rating = 50% (ok)
+- Severity: High (overload on l13)
+
+**out_l23** (l23 outaged):
+- l12: 91 MW / 100 MW rating = 91% (ok)
+- l13: 55 MW / 70 MW rating = 78.6% (ok)
+- l34: 30 MW / 60 MW rating = 50% (ok)
+- Severity: Low (no overload)
+
+**out_l13** (l13 outaged):
+- l12: 99 MW / 100 MW rating = 99% (ok)
+- l23: 80 MW / 100 MW rating = 80% (ok)
+- l34: 30 MW / 60 MW rating = 50% (ok)
+- Severity: Low (no overload, but close on l12)
+
+**out_l34** (l34 outaged):
+- l12: 80 MW / 100 MW rating = 80% (ok)
+- l23: 60 MW / 100 MW rating = 60% (ok)
+- l13: 40 MW / 70 MW rating = 57.1% (ok)
+- Severity: Lowest (no overload)
+
+For islanding: Looking at the network topology:
+- b1 connects to b2 (l12) and b3 (l13)
+- b2 connects to b1 (l12) and b3 (l23)
+- b3 connects to b1 (l13), b2 (l23), and b4 (l34)
+- b4 connects only to b3 (l34)
+
+If l34 is outaged, b4 is isolated (only connected to b3 via l34). This causes islanding.
+
+Ranking by severity (most severe first):
+1. out_l12 (causes overload on l13 at 125.7%)
+2. out_l13 (l12 at 99%, close to limit)
+3. out_l23 (all within limits)
+4. out_l34 (all within limits, but causes islanding)
+
+Actually, let me reconsider. Islanding is a critical issue, so out_l34 should be ranked as most severe or at least flagged. Let me think about severity:
+- Overload is a critical operational issue
+- Islanding is also critical
+
+For ranking by operational severity, typically overloads are ranked by the severity of the overload. Let me calculate the maximum loading percentage for each contingency:
+
+**out_l12**: max(95%, 125.7%, 50%) = 125.7%
+**out_l23**: max(91%, 78.6%, 50%) = 91%
+**out_l13**: max(99%, 80%, 50%) = 99%
+**out_l34**: max(80%, 60%, 57.1%) = 80% (but causes islanding)
+
+Ranking from most severe to least severe:
+1. out_l12 (125.7% overload)
+2. out_l13 (99% - close to limit)
+3. out_l23 (91%)
+4. out_l34 (80% + islanding)
+
+Islanding should be flagged for out_l34.
+The task is complete. I've created the `submission.json` file with:
+
+1. **Ranking** (most severe to least severe):
+   - `out_l12`: Causes overload on l13 (88 MW on 70 MW rating = 125.7%)
+   - `out_l13`: Has l12 at 99% loading (close to limit)
+   - `out_l23`: Max loading 91%
+   - `out_l34`: Max loading 80%
+
+2. **Islanding flags**:
+   - `out_l34` is flagged as `true` because bus b4 becomes isolated when l34 is outaged (it's the only branch connecting b4 to the rest of the network)
+   - All other contingencies are flagged as `false`

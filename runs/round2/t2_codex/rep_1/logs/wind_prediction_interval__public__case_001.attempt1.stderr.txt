@@ -1,0 +1,285 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13af7-3499-7193-b246-c285d806dbef
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task files first, then compute the required submission and write only submission.json.
+exec
+/bin/bash -lc 'pwd && rg --files' in <sandbox_a1>
+ succeeded in 0ms:
+<sandbox_a1>
+task.json
+instructions.md
+
+exec
+/bin/bash -lc "sed -n '1,260p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "wind_prediction_interval_public_001",
+  "family": "wind_prediction_interval",
+  "candidate_id": "REL-TASK-012",
+  "substrate": "executable_wind_scenario_interval_case",
+  "objective": "Compute p10/p50/p90 wind-power prediction intervals from scenario wind forecasts and a turbine power curve.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-012 — Wind-power prediction intervals",
+      "ru": "REL-TASK-012 — Прогнозные интервалы ветровой генерации"
+    },
+    "objective": {
+      "en": "Convert scenario weather forecasts to power and report prediction intervals for each horizon.",
+      "ru": "Перевести сценарные прогнозы погоды в мощность и указать прогнозные интервалы для каждого горизонта."
+    },
+    "instructions": {
+      "en": "Use wind_interval_case. Power curve convention (use exactly this): corrected speed v_c = wind_speed_m_s * (air_density_kg_m3 / reference_air_density_kg_m3)^(1/3); power = 0 if v_c < cut_in_m_s or v_c >= cut_out_m_s; power = count*rated_mw_each if v_c >= rated_m_s; otherwise power = count*rated_mw_each * ((v_c - cut_in_m_s)/(rated_m_s - cut_in_m_s))^3. Quantile convention (use exactly this): sort the scenario powers ascending as x[0..n-1]; pos = q*(n-1); p_q = linear interpolation between x[floor(pos)] and x[ceil(pos)]. Report p10/p50/p90 per timestamp and average_interval_width_mw as the mean of (p90 - p10) over timestamps.",
+      "ru": "Используйте wind_interval_case. Конвенция кривой мощности (используйте ровно её): скорректированная скорость v_c = wind_speed_m_s * (air_density_kg_m3 / reference_air_density_kg_m3)^(1/3); мощность = 0, если v_c < cut_in_m_s или v_c >= cut_out_m_s; мощность = count*rated_mw_each, если v_c >= rated_m_s; иначе мощность = count*rated_mw_each * ((v_c - cut_in_m_s)/(rated_m_s - cut_in_m_s))^3. Конвенция квантилей (используйте ровно её): отсортируйте мощности сценариев по возрастанию x[0..n-1]; pos = q*(n-1); p_q — линейная интерполяция между x[floor(pos)] и x[ceil(pos)]. Укажите p10/p50/p90 по каждому моменту времени и average_interval_width_mw как среднее (p90 - p10)."
+    }
+  },
+  "subdomain": "forecasting & uncertainty",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-012",
+    "subdomain": "forecasting & uncertainty",
+    "input_fields": [
+      "wind_interval_case.turbine",
+      "wind_interval_case.power_curve",
+      "wind_interval_case.horizons"
+    ]
+  },
+  "wind_interval_case": {
+    "reference_air_density_kg_m3": 1.225,
+    "turbine": {
+      "count": 8,
+      "rated_mw_each": 2.5
+    },
+    "power_curve": {
+      "cut_in_m_s": 3.0,
+      "rated_m_s": 12.0,
+      "cut_out_m_s": 25.0
+    },
+    "horizons": [
+      {
+        "timestamp": "t01",
+        "scenarios": [
+          {
+            "id": "s1",
+            "wind_speed_m_s": 6.5,
+            "air_density_kg_m3": 1.2
+          },
+          {
+            "id": "s2",
+            "wind_speed_m_s": 7.8,
+            "air_density_kg_m3": 1.19
+          },
+          {
+            "id": "s3",
+            "wind_speed_m_s": 8.4,
+            "air_density_kg_m3": 1.18
+          },
+          {
+            "id": "s4",
+            "wind_speed_m_s": 9.2,
+            "air_density_kg_m3": 1.18
+          },
+          {
+            "id": "s5",
+            "wind_speed_m_s": 10.1,
+            "air_density_kg_m3": 1.17
+          }
+        ]
+      },
+      {
+        "timestamp": "t02",
+        "scenarios": [
+          {
+            "id": "s1",
+            "wind_speed_m_s": 8.2,
+            "air_density_kg_m3": 1.19
+          },
+          {
+            "id": "s2",
+            "wind_speed_m_s": 9.4,
+            "air_density_kg_m3": 1.18
+          },
+          {
+            "id": "s3",
+            "wind_speed_m_s": 10.3,
+            "air_density_kg_m3": 1.17
+          },
+          {
+            "id": "s4",
+            "wind_speed_m_s": 11.0,
+            "air_density_kg_m3": 1.16
+          },
+          {
+            "id": "s5",
+            "wind_speed_m_s": 12.4,
+            "air_density_kg_m3": 1.16
+          }
+        ]
+      },
+      {
+        "timestamp": "t03",
+        "scenarios": [
+          {
+            "id": "s1",
+            "wind_speed_m_s": 5.5,
+            "air_density_kg_m3": 1.21
+          },
+          {
+            "id": "s2",
+            "wind_speed_m_s": 6.2,
+            "air_density_kg_m3": 1.2
+          },
+          {
+            "id": "s3",
+            "wind_speed_m_s": 7.0,
+            "air_density_kg_m3": 1.19
+          },
+          {
+            "id": "s4",
+            "wind_speed_m_s": 8.3,
+            "air_density_kg_m3": 1.18
+          },
+          {
+            "id": "s5",
+            "wind_speed_m_s": 9.0,
+            "air_density_kg_m3": 1.18
+          }
+        ]
+      }
+    ]
+  },
+  "submission_schema": {
+    "prediction_interval_mw_by_timestamp": "object mapping timestamp to {p10, p50, p90}",
+    "average_interval_width_mw": "mean p90-p10 width over timestamps",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Each p10/p50/p90 value must match the independent scenario quantile calculation within 0.01 MW.",
+    "Intervals must satisfy p10 <= p50 <= p90.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted intervals satisfy all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:DOI:10.1109/TPWRS.2018.2848207",
+    "source_card:docs/source_cards/wind_prediction_interval.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "Benyamin Khorramdel, C. Y. Chung, Nima Safari, G. C. D. Price, A Fuzzy Adaptive Probabilistic Wind Power Prediction Framework Using Diffusion Kernel Density Estimators, IEEE Transactions on Power Systems, 2018",
+      "locator": "DOI:10.1109/TPWRS.2018.2848207",
+      "confidence": "medium",
+      "notes": "Replaces vague prediction-interval slide locator with DOI-resolved IEEE TPWRS source for wind-power probabilistic prediction intervals."
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "sed -n '1,220p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/wind_prediction_interval__public__case_001/submission.json`
+
+codex
+I have the formula and schema. I’ll calculate the scenario powers with the specified density correction and interpolation rule, then write the JSON result directly.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, math
+from pathlib import Path
+case=json.loads(Path('task.json').read_text())['wind_interval_case']
+ref=case['reference_air_density_kg_m3']
+count=case['turbine']['count']; rated_each=case['turbine']['rated_mw_each']; cap=count*rated_each
+pc=case['power_curve']; ci=pc['cut_in_m_s']; rated=pc['rated_m_s']; co=pc['cut_out_m_s']
+def power(ws,dens):
+    vc=ws*((dens/ref)**(1/3))
+    if vc < ci or vc >= co:
+        return 0.0
+    if vc >= rated:
+        return cap
+    return cap*((vc-ci)/(rated-ci))**3
+
+def quant(xs,q):
+    xs=sorted(xs); n=len(xs); pos=q*(n-1); lo=math.floor(pos); hi=math.ceil(pos)
+    if lo==hi: return xs[lo]
+    f=pos-lo
+    return xs[lo]*(1-f)+xs[hi]*f
+out={}
+widths=[]
+for h in case['horizons']:
+    ps=[power(s['wind_speed_m_s'],s['air_density_kg_m3']) for s in h['scenarios']]
+    p10=quant(ps,0.10); p50=quant(ps,0.50); p90=quant(ps,0.90)
+    out[h['timestamp']]={'p10':p10,'p50':p50,'p90':p90}
+    widths.append(p90-p10)
+submission={
+    'prediction_interval_mw_by_timestamp': out,
+    'average_interval_width_mw': sum(widths)/len(widths)
+}
+Path('submission.json').write_text(json.dumps(submission, indent=2) + '\\n')
+print(json.dumps(submission, indent=2))
+PY" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "prediction_interval_mw_by_timestamp": {
+    "t01": {
+      "p10": 1.8367910241273955,
+      "p50": 4.074846224333149,
+      "p90": 7.991365237489278
+    },
+    "t02": {
+      "p10": 4.9332762275782995,
+      "p50": 10.000752944051314,
+      "p90": 17.21150193212359
+    },
+    "t03": {
+      "p10": 0.5957736562654339,
+      "p50": 1.6686720523096965,
+      "p90": 4.901294503765996
+    }
+  },
+  "average_interval_width_mw": 7.5794402551359115
+}
+
+codex
+submission.json written.
+tokens used
+8,496

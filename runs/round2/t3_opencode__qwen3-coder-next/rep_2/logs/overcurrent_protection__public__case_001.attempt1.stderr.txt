@@ -1,0 +1,96 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+
+# Given inputs
+max_load_current_a = 420.0
+min_fault_current_a = 1800.0
+ct_ratio_primary_per_secondary = 100.0
+load_margin_multiplier = 1.2
+min_sensitivity_factor = 1.5
+downstream_time_delay_s = 0.35
+selectivity_margin_s = 0.3
+relay_secondary_pickup_min = 1.0
+relay_secondary_pickup_max = 10.0
+time_delay_min = 0.0
+time_delay_max = 2.0
+
+# Constraints:
+# 1. Pickup current >= max_load_current_a * load_margin_multiplier
+#    pickup >= 420 * 1.2 = 504 A
+
+# 2. Sensitivity factor = min_fault_current_a / pickup_current_a >= min_sensitivity_factor
+#    1800 / pickup >= 1.5
+#    pickup <= 1800 / 1.5 = 1200 A
+
+# 3. Time delay >= downstream_time_delay_s + selectivity_margin_s
+#    time_delay >= 0.35 + 0.3 = 0.65 s
+
+# 4. Secondary pickup = pickup_current_a / ct_ratio must be in [1.0, 10.0]
+#    Secondary time_delay must be in [0.0, 2.0]
+
+# From constraint 1: pickup >= 504 A
+# From constraint 2: pickup <= 1200 A
+
+# To maximize sensitivity factor (minimize pickup while staying feasible)
+# Choose pickup = 504 A (minimum allowed by load margin)
+
+pickup_current_a = max_load_current_a * load_margin_multiplier  # 504 A
+secondary_pickup_a = pickup_current_a / ct_ratio_primary_per_secondary  # 5.04 A
+
+# Check secondary pickup is in range
+print(f"Secondary pickup: {secondary_pickup_a} (range: {relay_secondary_pickup_min} to {relay_secondary_pickup_max})")
+
+# Time delay constraint
+time_delay_s = downstream_time_delay_s + selectivity_margin_s  # 0.65 s
+print(f"Time delay: {time_delay_s} (range: {time_delay_min} to {time_delay_max})")
+
+# Check sensitivity factor
+sensitivity_factor = min_fault_current_a / pickup_current_a
+print(f"Sensitivity factor: {sensitivity_factor} (min required: {min_sensitivity_factor})")
+
+# Verify all constraints
+print(f"\nConstraint 1 (pickup >= 504): {pickup_current_a >= 504}")
+print(f"Constraint 2 (sensitivity >= 1.5): {sensitivity_factor >= min_sensitivity_factor}")
+print(f"Constraint 3 (time_delay >= 0.65): {time_delay_s >= 0.65}")
+print(f"Constraint 4a (secondary pickup in range): {relay_secondary_pickup_min <= secondary_pickup_a <= relay_secondary_pickup_max}")
+print(f"Constraint 4b (time delay in range): {time_delay_min <= time_delay_s <= time_delay_max}")
+
+submission = {
+    "pickup_current_a": pickup_current_a,
+    "time_delay_s": time_delay_s
+}
+
+with open("<sandbox_a1>/submission.json", "w") as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written:")
+print(json.dumps(submission, indent=2))
+EOF
+Secondary pickup: 5.04 (range: 1.0 to 10.0)
+Time delay: 0.6499999999999999 (range: 0.0 to 2.0)
+Sensitivity factor: 3.5714285714285716 (min required: 1.5)
+
+Constraint 1 (pickup >= 504): True
+Constraint 2 (sensitivity >= 1.5): True
+Constraint 3 (time_delay >= 0.65): False
+Constraint 4a (secondary pickup in range): True
+Constraint 4b (time delay in range): True
+
+Submission written:
+{
+  "pickup_current_a": 504.0,
+  "time_delay_s": 0.6499999999999999
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

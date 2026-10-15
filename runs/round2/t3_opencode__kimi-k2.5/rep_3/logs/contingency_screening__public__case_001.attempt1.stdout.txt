@@ -1,0 +1,75 @@
+Let me analyze this contingency screening task. I need to:
+
+1. Rank N-1 branch outage contingencies by operational severity
+2. Flag outages that island the network
+
+Let me understand the data:
+- 4 branches: l12, l23, l13, l34
+- 4 contingencies (N-1 outages): out_l12, out_l23, out_l13, out_l34
+- Each contingency has post-flows on remaining branches
+- Critical loading threshold: 100% (meaning any flow at or above rating is critical)
+
+Let me calculate the severity for each contingency by checking post-flow loading percentages:
+
+**out_l12** (l12 outaged):
+- l23: 95 MW / 100 MW rating = 95%
+- l13: 88 MW / 70 MW rating = 125.7% (OVERLOAD!)
+- l34: 30 MW / 60 MW rating = 50%
+- Max loading: 125.7% - CRITICAL
+
+**out_l23** (l23 outaged):
+- l12: 91 MW / 100 MW rating = 91%
+- l13: 55 MW / 70 MW rating = 78.6%
+- l34: 30 MW / 60 MW rating = 50%
+- Max loading: 91% - Not critical
+
+**out_l13** (l13 outaged):
+- l12: 99 MW / 100 MW rating = 99%
+- l23: 80 MW / 100 MW rating = 80%
+- l34: 30 MW / 60 MW rating = 50%
+- Max loading: 99% - Not critical
+
+**out_l34** (l34 outaged):
+- l12: 80 MW / 100 MW rating = 80%
+- l23: 60 MW / 100 MW rating = 60%
+- l13: 40 MW / 70 MW rating = 57.1%
+- Max loading: 80% - Not critical
+
+Now for islanding detection:
+Looking at the network topology:
+- b1 connects to: b2 (l12), b3 (l13)
+- b2 connects to: b1 (l12), b3 (l23)
+- b3 connects to: b1 (l13), b2 (l23), b4 (l34)
+- b4 connects to: b3 (l34)
+
+If we remove l34 (the only connection to b4), bus b4 becomes isolated/islanded.
+
+Let me verify by checking each contingency's post-flows:
+- out_l34 only has flows for l12, l23, l13 - no flow on l34 (it's outaged), and bus b4 is not mentioned, suggesting it's isolated.
+
+So:
+- out_l12: CRITICAL (125.7% loading on l13) - most severe
+- out_l23: Not critical, no islanding
+- out_l13: Not critical, no islanding
+- out_l34: Islanding (b4 isolated)
+
+Ranking by severity (most to least severe):
+1. out_l12 (critical overload at 125.7%)
+2. out_l34 (islanding - operational severity)
+3. out_l13 (99% - highest non-critical)
+4. out_l23 (91% - lowest max loading)
+
+Actually, let me reconsider - islanding is typically considered very severe. Let me check the metrics again. The task says to "flag outages that island the network" - this suggests islanding is a separate concern from severity ranking. But typically islanding would be ranked as most severe.
+
+Let me create the submission:
+The task is complete. I've created the `submission.json` file with:
+
+1. **Ranking** (most severe to least severe):
+   - `out_l12`: Causes 125.7% loading on l13 (88 MW / 70 MW rating) - critical overload
+   - `out_l34`: Causes islanding of bus b4 (only connection via l34)
+   - `out_l13`: 99% loading on l12
+   - `out_l23`: 91% loading on l12
+
+2. **Islanding flags**: Only `out_l34` is flagged as true since removing l34 isolates bus b4 from the rest of the network.
+
+3. **Rationale**: Explains the severity calculations and islanding detection.

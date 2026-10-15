@@ -1,0 +1,47 @@
+Let me analyze the task and calculate the required values.
+
+From the task:
+- Normal band: [0.90, 1.10] pu (nominal 1.0 ± 0.1)
+- Absolute limits: [0.85, 1.10] pu (lower -0.15, upper +0.10)
+- Voltage series values: 0.928, 0.914, 0.902, 0.889, 0.895, 0.936, 0.971, 1.012, 1.043, 1.066
+- Tap change options: -0.025, 0.0, 0.025, 0.05
+
+Calculations:
+- Min voltage: 0.889
+- Max voltage: 1.066
+- Normal band [0.90, 1.10]: values within are 0.928, 0.914, 0.902, 0.936, 0.971 = 5 values
+- Below 0.90: t03 (0.889), t04 (0.895) = 2 values
+- Above 1.10: t08 (1.043), t09 (1.066) are NOT above 1.10, only t07 (1.012) is slightly above 1.10? No, 1.012 < 1.10. Actually none above 1.10.
+- Wait, let me recalculate: 1.043 and 1.066 are both < 1.10, so above_normal_timestamps is empty.
+- Actually 1.043 < 1.10 and 1.066 < 1.10, so all values are ≤ 1.10.
+
+Wait, I need to re-check. The normal band is [0.90, 1.10]. Values:
+- 0.928 ✓ in normal
+- 0.914 ✓ in normal
+- 0.902 ✓ in normal
+- 0.889 ✗ below
+- 0.895 ✗ below
+- 0.936 ✓ in normal
+- 0.971 ✓ in normal
+- 1.012 ✗ above (1.012 > 1.10? No, 1.012 < 1.10, so it's in normal)
+- 1.043 ✗ above (1.043 < 1.10, so in normal)
+- 1.066 ✗ above (1.066 < 1.10, so in normal)
+
+So 8 values in normal band, 2 below. 8/10 = 80% within normal band (< 95%), so NOT compliant.
+
+For tap change, apply each option and count within normal band without absolute violations:
+- Apply -0.025: new values = old - 0.025
+- Apply 0.0: no change
+- Apply 0.025: new values = old + 0.025
+- Apply 0.05: new values = old + 0.05
+
+I'll write a helper script to calculate the best tap change.
+Now I have all the values:
+- compliant: false (80% < 95%)
+- percent_within_normal_band: 80.0
+- min_voltage_pu: 0.889
+- max_voltage_pu: 1.066
+- below_normal_timestamps: ["t03", "t04"]
+- above_normal_timestamps: []
+- recommended_tap_change_pu: 0.025
+Done.

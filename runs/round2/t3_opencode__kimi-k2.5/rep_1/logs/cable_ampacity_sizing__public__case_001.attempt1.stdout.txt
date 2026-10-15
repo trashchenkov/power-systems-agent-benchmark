@@ -1,0 +1,58 @@
+Now I need to solve this cable sizing problem. Let me analyze the data and perform the calculations.
+
+Given data:
+- Design current: 180 A
+- Power factor: 0.9
+- System voltage: 400 V
+- Length: 250 m
+- Max voltage drop: 5%
+- Ambient factor: 0.96
+- Grouping factor: 0.8
+- Fault current: 12 kA = 12000 A
+- Clearing time: 0.4 s
+- k (adiabatic): 143 A·√s/mm²
+
+Catalog cables (sorted by cross-section):
+1. 50 mm²: base ampacity 192 A, r=0.387 Ω/km, x=0.085 Ω/km
+2. 70 mm²: base ampacity 246 A, r=0.268 Ω/km, x=0.082 Ω/km
+3. 95 mm²: base ampacity 298 A, r=0.193 Ω/km, x=0.082 Ω/km
+4. 120 mm²: base ampacity 346 A, r=0.153 Ω/km, x=0.08 Ω/km
+5. 150 mm²: base ampacity 399 A, r=0.124 Ω/km, x=0.08 Ω/km
+6. 185 mm²: base ampacity 456 A, r=0.0991 Ω/km, x=0.08 Ω/km
+
+Calculations needed for each cable:
+
+1. **Derated ampacity** = base_ampacity × ambient_factor × grouping_factor
+   = base_ampacity × 0.96 × 0.8 = base_ampacity × 0.768
+
+2. **Voltage drop** (three-phase):
+   dU% = (√3 × I × L × (R×pf + X×sin(φ))) / (1000 × V) × 100
+   Where:
+   - I = 180 A
+   - L = 250 m = 0.25 km
+   - pf = 0.9, so sin(φ) = √(1-0.9²) = √0.19 ≈ 0.4359
+   - R = r_ohm_per_km × L/1000 (but actually r is per km, so R = r × L_km)
+   - Actually: dU = √3 × I × (L_m/1000) × (r×pf + x×sin(φ))
+   - dU% = dU / V × 100
+
+3. **Adiabatic short-circuit check**:
+   Minimum section = I_fault × √t / k
+   = 12000 × √0.4 / 143
+   = 12000 × 0.6325 / 143
+   = 7589.4 / 143
+   ≈ 53.07 mm²
+
+Let me calculate for each cable:
+The calculations show that:
+- 50 mm² fails all three checks
+- 70 mm² passes ampacity and adiabatic, but fails voltage drop (5.3964% > 5%)
+- **95 mm²** is the smallest cable that passes all three checks
+- Minimum thermal section from adiabatic criterion: 53.0732 mm²
+
+Now I'll write the submission.json file:
+The submission.json file has been created with the calculated values:
+
+- **selected_cross_section_mm2**: 95 (smallest cable passing all three checks)
+- **selected_derated_ampacity_a**: 228.864 (298 × 0.96 × 0.8)
+- **selected_voltage_drop_pct**: 4.0811% (calculated using √3 × I × L × (R×pf + X×sin(φ)) / V × 100)
+- **min_thermal_section_mm2**: 53.0732 (I_fault × √t / k = 12000 × √0.4 / 143)

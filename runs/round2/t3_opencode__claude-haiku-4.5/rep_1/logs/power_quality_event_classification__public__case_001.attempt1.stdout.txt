@@ -1,0 +1,38 @@
+I'll start by reading the instructions and task files to understand what needs to be done.
+Now I understand the task. I need to:
+
+1. Analyze the RMS voltage/current trace from `power_quality_case.rms_trace`
+2. Classify the power quality event based on the classification rules
+3. Identify the non-normal interval and its characteristics
+4. Write the results to `submission.json`
+
+Let me analyze the data:
+
+**Classification Rules:**
+- **Interruption**: voltage_pu ≤ 0.1
+- **Sag**: 0.1 < voltage_pu < 0.9
+- **Swell**: voltage_pu ≥ 1.1
+- **Normal**: 0.9 ≤ voltage_pu < 1.1
+
+**RMS Trace Analysis:**
+- 0 ms: voltage=1.01 → Normal
+- 20 ms: voltage=1.0 → Normal
+- 40 ms: voltage=0.86 → Sag (0.1 < 0.86 < 0.9)
+- 60 ms: voltage=0.62 → Sag (0.1 < 0.62 < 0.9)
+- 80 ms: voltage=0.58 → Sag (0.1 < 0.58 < 0.9)
+- 100 ms: voltage=0.74 → Sag (0.1 < 0.74 < 0.9)
+- 120 ms: voltage=0.91 → Normal (0.9 ≤ 0.91 < 1.1)
+- 140 ms: voltage=0.99 → Normal (0.9 ≤ 0.99 < 1.1)
+
+The non-normal interval runs from **40 ms to 100 ms** (voltage sag event).
+
+**Event Details:**
+- Event class: **voltage_sag**
+- Start: **40 ms**
+- End: **100 ms**
+- Duration: (100 - 40) / 1000 + 0.020 = 0.060 + 0.020 = **0.080 s** (inclusive of one sample interval)
+- Min voltage: **0.58 pu** (at 80 ms)
+- Max current: **1.44 pu** (at 80 ms)
+
+Now I'll write the submission.json file:
+Done. The `submission.json` file has been written with the power quality event classification results. The analysis identified a **voltage sag event** from 40ms to 100ms, with the minimum voltage of 0.58 pu and maximum current of 1.44 pu occurring during the event.

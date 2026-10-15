@@ -1,0 +1,36 @@
+Now I understand the task. I need to compute the real-time ampacity of an overhead line using a steady-state heat-balance model. Let me calculate this step by step.
+
+Given parameters:
+- Conductor diameter: 22.4 mm
+- Resistance at 20°C: 0.118 ohm/km
+- Resistance temperature coefficient: 0.00403 per °C
+- Emissivity: 0.7
+- Solar absorptivity: 0.7
+- Convective coefficient: 0.72 W/(m·°C) at 1 m/s
+- Max conductor temperature: 75°C
+- Scheduled current: 520 A
+
+For each weather timestamp, I need to calculate:
+1. R_hot = (resistance_ohm_per_km_at_20c/1000) * (1 + resistance_temp_coeff_per_c*(T_max - 20))
+2. Convection = convective_w_per_m_c_at_1ms * max(wind_speed_m_s, 0.05)^0.6 * (T_max - ambient_temperature_c)
+3. Radiation = emissivity * 5.670374419e-8 * (pi * diameter_mm/1000) * ((T_max+273.15)^4 - (ambient+273.15)^4)
+4. Solar gain = solar_absorptivity * solar_w_per_m2 * (diameter_mm/1000)
+5. Ampacity = sqrt(max(convection + radiation - solar_gain, 0) / R_hot)
+
+Let me write a Python script to calculate this:
+The calculation is complete. Let me verify the submission.json file was written correctly:
+The submission.json file has been written successfully. Let me clean up the temporary Python script:
+The task is complete. I have:
+
+1. Read the task.json file and extracted the thermal rating case parameters
+2. Calculated the ampacity for each timestamp using the steady-state heat-balance model:
+   - **t00**: 810.66 A (ambient 18°C, wind 2.8 m/s, solar 150 W/m²)
+   - **t01**: 451.47 A (ambient 31°C, wind 0.7 m/s, solar 850 W/m²) - **limiting case**
+   - **t02**: 596.25 A (ambient 27°C, wind 1.4 m/s, solar 600 W/m²)
+   - **t03**: 811.60 A (ambient 22°C, wind 3.2 m/s, solar 100 W/m²)
+
+3. Identified:
+   - **Minimum ampacity**: 451.47 A at timestamp t01
+   - **Overload timestamps**: t01 (where scheduled current of 520 A exceeds the rating of 451.47 A)
+
+4. Written the submission.json file with all required fields matching the submission schema.

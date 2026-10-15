@@ -1,0 +1,204 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13ada-f132-7693-bd11-6b18c361d336
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the benchmark instructions and task definition first, then write only `submission.json` with the required answer.
+exec
+/bin/bash -lc "sed -n '1,240p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "fault_section_localization_public_001",
+  "family": "fault_section_localization",
+  "candidate_id": "REL-TASK-052",
+  "substrate": "executable_fci_fault_localization_case",
+  "objective": "Localize the faulted feeder section from fault-current-indicator states and outage complaints.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-052 — Faulted-section localization",
+      "ru": "REL-TASK-052 — Локализация повреждённого участка"
+    },
+    "objective": {
+      "en": "Use FCI states and outage complaints to infer the most likely faulted radial feeder section.",
+      "ru": "Использовать состояния FCI и жалобы об отключениях для определения наиболее вероятного повреждённого участка радиального фидера."
+    },
+    "instructions": {
+      "en": "Use fault_localization_case. Compare each candidate faulted section with the observed FCI states and customer outage complaint nodes. Report faulted_section and affected_customer_nodes.",
+      "ru": "Используйте fault_localization_case. Сопоставьте каждый кандидатный повреждённый участок с наблюдаемыми состояниями FCI и узлами жалоб потребителей. Укажите faulted_section и affected_customer_nodes."
+    }
+  },
+  "subdomain": "distribution reliability & outage management",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-052",
+    "subdomain": "distribution reliability & outage management",
+    "input_fields": [
+      "fault_localization_case.sections",
+      "fault_localization_case.fci_locations",
+      "fault_localization_case.observed_fci_state",
+      "fault_localization_case.outage_complaint_nodes"
+    ],
+    "calculation_spec": "For each candidate faulted section, derive which upstream FCI locations should see fault current and which downstream customer nodes should be outaged. Choose the section with minimum mismatch against observed FCI states and complaints."
+  },
+  "fault_localization_case": {
+    "source_node": "n0",
+    "nodes": [
+      "n0",
+      "n1",
+      "n2",
+      "n3",
+      "n4",
+      "n5"
+    ],
+    "customer_nodes": [
+      "n2",
+      "n3",
+      "n4",
+      "n5"
+    ],
+    "sections": {
+      "s01": {
+        "from": "n0",
+        "to": "n1"
+      },
+      "s12": {
+        "from": "n1",
+        "to": "n2"
+      },
+      "s23": {
+        "from": "n2",
+        "to": "n3"
+      },
+      "s24": {
+        "from": "n2",
+        "to": "n4"
+      },
+      "s45": {
+        "from": "n4",
+        "to": "n5"
+      }
+    },
+    "fci_locations": {
+      "fci_n1": "n1",
+      "fci_n2": "n2",
+      "fci_n4": "n4"
+    },
+    "observed_fci_state": {
+      "fci_n1": true,
+      "fci_n2": true,
+      "fci_n4": true
+    },
+    "outage_complaint_nodes": [
+      "n5"
+    ]
+  },
+  "submission_schema": {
+    "faulted_section": "section ID",
+    "affected_customer_nodes": "list of downstream customer nodes",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Faulted section must minimize FCI and complaint mismatch under the public radial model.",
+    "Affected customer nodes must match the inferred downstream customer set.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether submitted localization satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:DOI:10.1109/REPCON.2000.848037",
+    "source_card:docs/source_cards/fault_section_localization.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "Brown, Faulted Circuit Indicators and System Reliability",
+      "locator": "DOI:10.1109/REPCON.2000.848037",
+      "confidence": "medium",
+      "notes": "Grounds FCI indications, patrol direction and outage localization; the case is a compact radial-feeder graph instance."
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/fault_section_localization__public__case_001/submission.json`
+
+exec
+/bin/bash -lc 'rg --files' in <sandbox_a1>
+ succeeded in 0ms:
+task.json
+instructions.md
+
+codex
+The observed pattern has all three FCIs indicating fault current, so the fault must be downstream of `n4`; the only matching complaint set is `n5` downstream of section `s45`. I’m writing the required JSON now.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_fault_section_localization__public__case_001_a1_i2ky3uvw/submission.json b/bench_fault_section_localization__public__case_001_a1_i2ky3uvw/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..edefa75299db4b6ece8141cd8a60068554446417
+--- /dev/null
++++ b/bench_fault_section_localization__public__case_001_a1_i2ky3uvw/submission.json
+@@ -0,0 +1 @@
++{"faulted_section":"s45","affected_customer_nodes":["n5"],"rationale":"All observed FCIs at n1, n2, and n4 indicate fault current, which matches a fault downstream of n4. Section s45 has downstream affected customer node n5, matching the outage complaint."}
+
+diff --git a/bench_fault_section_localization__public__case_001_a1_i2ky3uvw/submission.json b/bench_fault_section_localization__public__case_001_a1_i2ky3uvw/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..edefa75299db4b6ece8141cd8a60068554446417
+--- /dev/null
++++ b/bench_fault_section_localization__public__case_001_a1_i2ky3uvw/submission.json
+@@ -0,0 +1 @@
++{"faulted_section":"s45","affected_customer_nodes":["n5"],"rationale":"All observed FCIs at n1, n2, and n4 indicate fault current, which matches a fault downstream of n4. Section s45 has downstream affected customer node n5, matching the outage complaint."}
+
+codex
+Done
+diff --git a/bench_fault_section_localization__public__case_001_a1_i2ky3uvw/submission.json b/bench_fault_section_localization__public__case_001_a1_i2ky3uvw/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..edefa75299db4b6ece8141cd8a60068554446417
+--- /dev/null
++++ b/bench_fault_section_localization__public__case_001_a1_i2ky3uvw/submission.json
+@@ -0,0 +1 @@
++{"faulted_section":"s45","affected_customer_nodes":["n5"],"rationale":"All observed FCIs at n1, n2, and n4 indicate fault current, which matches a fault downstream of n4. Section s45 has downstream affected customer node n5, matching the outage complaint."}
+
+tokens used
+25,187

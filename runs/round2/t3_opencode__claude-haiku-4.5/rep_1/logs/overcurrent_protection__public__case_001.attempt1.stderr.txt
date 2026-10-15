@@ -1,0 +1,124 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+# Overcurrent Protection Relay Calculation
+
+# Public inputs
+max_load_current_a = 420.0
+min_fault_current_a = 1800.0
+ct_ratio_primary_per_secondary = 100.0
+load_margin_multiplier = 1.2
+min_sensitivity_factor = 1.5
+downstream_time_delay_s = 0.35
+selectivity_margin_s = 0.3
+relay_secondary_pickup_min = 1.0
+relay_secondary_pickup_max = 10.0
+time_delay_range_min = 0.0
+time_delay_range_max = 2.0
+
+print("=== Overcurrent Relay Coordination ===\n")
+
+# Constraint 1: Pickup current must be at least max_load_current_a × load_margin_multiplier
+min_pickup_load = max_load_current_a * load_margin_multiplier
+print(f"Constraint 1 (load margin): pickup_current >= {max_load_current_a} × {load_margin_multiplier} = {min_pickup_load} A")
+
+# Constraint 2: Sensitivity factor min_fault_current_a / pickup_current_a >= min_sensitivity_factor
+# This means: pickup_current_a <= min_fault_current_a / min_sensitivity_factor
+max_pickup_sensitivity = min_fault_current_a / min_sensitivity_factor
+print(f"Constraint 2 (sensitivity): pickup_current <= {min_fault_current_a} / {min_sensitivity_factor} = {max_pickup_sensitivity} A")
+
+# Constraint 3: Time delay
+min_time_delay = downstream_time_delay_s + selectivity_margin_s
+print(f"Constraint 3 (selectivity): time_delay >= {downstream_time_delay_s} + {selectivity_margin_s} = {min_time_delay} s")
+
+# Constraint 4: Secondary relay pickup must be within [relay_secondary_pickup_min, relay_secondary_pickup_max]
+# secondary_pickup = primary_pickup / ct_ratio_primary_per_secondary
+# So: relay_secondary_pickup_min <= primary_pickup / ct_ratio <= relay_secondary_pickup_max
+# primary_pickup must be in range [relay_secondary_pickup_min * ct_ratio, relay_secondary_pickup_max * ct_ratio]
+min_pickup_ct = relay_secondary_pickup_min * ct_ratio_primary_per_secondary
+max_pickup_ct = relay_secondary_pickup_max * ct_ratio_primary_per_secondary
+print(f"Constraint 4a (CT secondary range): pickup_current in [{min_pickup_ct}, {max_pickup_ct}] A")
+
+# Combining all constraints:
+# pickup_current must be in [max(min_pickup_load, min_pickup_ct), min(max_pickup_sensitivity, max_pickup_ct)]
+pickup_min = max(min_pickup_load, min_pickup_ct)
+pickup_max = min(max_pickup_sensitivity, max_pickup_ct)
+
+print(f"\nFeasible pickup range: [{pickup_min}, {pickup_max}] A")
+
+# Choose a value that maximizes sensitivity factor while staying feasible
+# Higher pickup = lower sensitivity, but we want to maximize it, so choose minimum feasible pickup
+pickup_current_a = pickup_min
+
+# Secondary pickup
+secondary_pickup = pickup_current_a / ct_ratio_primary_per_secondary
+print(f"Secondary pickup: {secondary_pickup} A (within [{relay_secondary_pickup_min}, {relay_secondary_pickup_max}]? {relay_secondary_pickup_min <= secondary_pickup <= relay_secondary_pickup_max})")
+
+# Sensitivity factor
+sensitivity_factor = min_fault_current_a / pickup_current_a
+print(f"Sensitivity factor: {sensitivity_factor} (>= {min_sensitivity_factor}? {sensitivity_factor >= min_sensitivity_factor})")
+
+# Time delay: maximize selectivity by choosing minimum required delay
+time_delay_s = min_time_delay
+print(f"Time delay: {time_delay_s} s (>= {min_time_delay}? {time_delay_s >= min_time_delay})")
+print(f"Time delay within device range [{time_delay_range_min}, {time_delay_range_max}]? {time_delay_range_min <= time_delay_s <= time_delay_range_max}")
+
+# Verify all constraints
+print("\n=== Constraint Verification ===")
+print(f"1. Pickup >= load margin: {pickup_current_a} >= {min_pickup_load}? {pickup_current_a >= min_pickup_load}")
+print(f"2. Sensitivity factor: {sensitivity_factor} >= {min_sensitivity_factor}? {sensitivity_factor >= min_sensitivity_factor}")
+print(f"3. Time delay >= selectivity: {time_delay_s} >= {min_time_delay}? {time_delay_s >= min_time_delay}")
+print(f"4a. Secondary pickup in range: {secondary_pickup} in [{relay_secondary_pickup_min}, {relay_secondary_pickup_max}]? {relay_secondary_pickup_min <= secondary_pickup <= relay_secondary_pickup_max}")
+print(f"4b. Time delay in device range: {time_delay_s} in [{time_delay_range_min}, {time_delay_range_max}]? {time_delay_range_min <= time_delay_s <= time_delay_range_max}")
+
+# All feasible?
+feasible = (pickup_current_a >= min_pickup_load and 
+            sensitivity_factor >= min_sensitivity_factor and 
+            time_delay_s >= min_time_delay and
+            relay_secondary_pickup_min <= secondary_pickup <= relay_secondary_pickup_max and
+            time_delay_range_min <= time_delay_s <= time_delay_range_max)
+
+print(f"\nAll constraints satisfied: {feasible}")
+print(f"\n=== ANSWER ===")
+print(f"Pickup current (primary): {pickup_current_a} A")
+print(f"Time delay: {time_delay_s} s")
+
+EOF
+
+=== Overcurrent Relay Coordination ===
+
+Constraint 1 (load margin): pickup_current >= 420.0 × 1.2 = 504.0 A
+Constraint 2 (sensitivity): pickup_current <= 1800.0 / 1.5 = 1200.0 A
+Constraint 3 (selectivity): time_delay >= 0.35 + 0.3 = 0.6499999999999999 s
+Constraint 4a (CT secondary range): pickup_current in [100.0, 1000.0] A
+
+Feasible pickup range: [504.0, 1000.0] A
+Secondary pickup: 5.04 A (within [1.0, 10.0]? True)
+Sensitivity factor: 3.5714285714285716 (>= 1.5? True)
+Time delay: 0.6499999999999999 s (>= 0.6499999999999999? True)
+Time delay within device range [0.0, 2.0]? True
+
+=== Constraint Verification ===
+1. Pickup >= load margin: 504.0 >= 504.0? True
+2. Sensitivity factor: 3.5714285714285716 >= 1.5? True
+3. Time delay >= selectivity: 0.6499999999999999 >= 0.6499999999999999? True
+4a. Secondary pickup in range: 5.04 in [1.0, 10.0]? True
+4b. Time delay in device range: 0.6499999999999999 in [0.0, 2.0]? True
+
+All constraints satisfied: True
+
+=== ANSWER ===
+Pickup current (primary): 504.0 A
+Time delay: 0.6499999999999999 s
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

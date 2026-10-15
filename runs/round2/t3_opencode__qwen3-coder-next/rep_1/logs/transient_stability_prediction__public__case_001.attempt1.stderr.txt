@@ -1,0 +1,116 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+
+# Public inputs
+angle_limit_deg = 180.0
+voltage_floor_pu = 0.7
+min_damping_pct = 3.0
+
+cases = [
+    {
+        "case_id": "fault_a",
+        "fault_clearing_time_s": 0.1,
+        "estimated_cct_s": 0.17,
+        "max_rotor_angle_deg": 142.0,
+        "min_voltage_pu": 0.76,
+        "damping_ratio_pct": 5.0
+    },
+    {
+        "case_id": "fault_b",
+        "fault_clearing_time_s": 0.16,
+        "estimated_cct_s": 0.14,
+        "max_rotor_angle_deg": 188.0,
+        "min_voltage_pu": 0.68,
+        "damping_ratio_pct": 2.2
+    },
+    {
+        "case_id": "fault_c",
+        "fault_clearing_time_s": 0.08,
+        "estimated_cct_s": 0.11,
+        "max_rotor_angle_deg": 171.0,
+        "min_voltage_pu": 0.72,
+        "damping_ratio_pct": 3.4
+    }
+]
+
+def compute_case(case):
+    angle_margin = angle_limit_deg - case["max_rotor_angle_deg"]
+    voltage_margin = case["min_voltage_pu"] - voltage_floor_pu
+    clearing_margin_s = case["estimated_cct_s"] - case["fault_clearing_time_s"]
+    damping_margin = case["damping_ratio_pct"] - min_damping_pct
+    
+    is_stable = angle_margin >= 0 and voltage_margin >= 0 and clearing_margin_s >= 0 and damping_margin >= 0
+    
+    risk_score = (
+        max(0, -angle_margin/60) +
+        max(0, -voltage_margin/0.1) +
+        max(0, -clearing_margin_s/0.1) +
+        max(0, -damping_margin/5) +
+        max(0, 1 - clearing_margin_s/0.2) * 0.1
+    )
+    risk_score = round(risk_score, 3)
+    
+    return {
+        "label": "stable" if is_stable else "unstable",
+        "risk_score": risk_score,
+        "clearing_margin_s": round(clearing_margin_s, 3)
+    }, is_stable
+
+results = {}
+stable_count = 0
+highest_risk_case = None
+highest_risk_score = -1
+
+for case in cases:
+    result, is_stable = compute_case(case)
+    results[case["case_id"]] = result
+    if is_stable:
+        stable_count += 1
+    if (result["risk_score"] > highest_risk_score or 
+        (result["risk_score"] == highest_risk_score and 
+         (highest_risk_case is None or case["case_id"] > highest_risk_case))):
+        highest_risk_score = result["risk_score"]
+        highest_risk_case = case["case_id"]
+
+submission = {
+    "case_results": results,
+    "stable_case_count": stable_count,
+    "highest_risk_case": highest_risk_case
+}
+
+print(json.dumps(submission, indent=2))
+EOF
+{
+  "case_results": {
+    "fault_a": {
+      "label": "stable",
+      "risk_score": 0.065,
+      "clearing_margin_s": 0.07
+    },
+    "fault_b": {
+      "label": "unstable",
+      "risk_score": 0.803,
+      "clearing_margin_s": -0.02
+    },
+    "fault_c": {
+      "label": "stable",
+      "risk_score": 0.085,
+      "clearing_margin_s": 0.03
+    }
+  },
+  "stable_case_count": 2,
+  "highest_risk_case": "fault_b"
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

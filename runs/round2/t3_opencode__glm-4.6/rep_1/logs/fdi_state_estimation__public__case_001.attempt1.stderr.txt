@@ -1,0 +1,150 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · z-ai/glm-4.6
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m← [0mWrite solve.py
+Wrote file successfully.
+[0m
+[0m$ [0mpython solve.py
+/bin/bash: line 1: python: command not found
+[0m
+[0m$ [0mpython3 solve.py
+Initial H matrix:
+[[10.  0.]
+ [ 0.  8.]
+ [ 5. -5.]
+ [15. -5.]
+ [-5. 13.]]
+Initial measurements z: [ 0.402  0.557  0.151 -0.1   -0.713]
+
+Iteration with 5 measurements:
+State estimate: theta_2 = 0.013935, theta_3 = -0.009783
+Normalized residuals:
+  flow_l12: 32.797042
+  flow_l13: 76.156688
+  flow_l23: 3.423462
+  inj_b2: 57.477283
+  inj_b3: 83.843809
+Largest normalized residual: inj_b3 with value 83.843809
+Removing measurement inj_b3
+
+Iteration with 4 measurements:
+State estimate: theta_2 = 0.026537, theta_3 = 0.060129
+Normalized residuals:
+  flow_l12: 17.370107
+  flow_l13: 15.168635
+  flow_l23: 36.132139
+  inj_b2: 33.312387
+Largest normalized residual: flow_l23 with value 36.132139
+Removing measurement flow_l23
+
+Iteration with 3 measurements:
+State estimate: theta_2 = 0.025579, theta_3 = 0.077240
+Normalized residuals:
+  flow_l12: 18.598907
+  flow_l13: 18.598907
+  inj_b2: 18.598907
+Largest normalized residual: flow_l12 with value 18.598907
+Removing measurement flow_l12
+
+Iteration with 2 measurements:
+State estimate: theta_2 = 0.016542, theta_3 = 0.069625
+Traceback (most recent call last):
+  File "<sandbox_a1>/solve.py", line 126, in <module>
+    normalized_residuals.append(nr[0,0])
+                                ~~^^^^^
+TypeError: 'int' object is not subscriptable
+[0m
+[0m← [0mEdit solve.py
+Index: <sandbox_a1>/solve.py
+===================================================================
+--- <sandbox_a1>/solve.py
++++ <sandbox_a1>/solve.py
+@@ -120,11 +120,13 @@
+     h_i = H_current[i:i+1, :]  # Row vector
+     denominator = np.sqrt(sigma_current[i]**2 - h_i @ G_inv @ h_i.T)
+     if denominator > 0:
+         nr = abs(residuals[i]) / denominator
++        if isinstance(nr, np.ndarray):
++            nr = nr[0,0]
+     else:
+         nr = 0
+-    normalized_residuals.append(nr[0,0])
++    normalized_residuals.append(nr)
+ 
+ print("Normalized residuals:")
+ for i, (meas_id, nr) in enumerate(zip(measurement_ids_current, normalized_residuals)):
+     print(f"  {meas_id}: {nr:.6f}")
+
+[0m
+[0m$ [0mpython3 solve.py
+Initial H matrix:
+[[10.  0.]
+ [ 0.  8.]
+ [ 5. -5.]
+ [15. -5.]
+ [-5. 13.]]
+Initial measurements z: [ 0.402  0.557  0.151 -0.1   -0.713]
+
+Iteration with 5 measurements:
+State estimate: theta_2 = 0.013935, theta_3 = -0.009783
+Normalized residuals:
+  flow_l12: 32.797042
+  flow_l13: 76.156688
+  flow_l23: 3.423462
+  inj_b2: 57.477283
+  inj_b3: 83.843809
+Largest normalized residual: inj_b3 with value 83.843809
+Removing measurement inj_b3
+
+Iteration with 4 measurements:
+State estimate: theta_2 = 0.026537, theta_3 = 0.060129
+Normalized residuals:
+  flow_l12: 17.370107
+  flow_l13: 15.168635
+  flow_l23: 36.132139
+  inj_b2: 33.312387
+Largest normalized residual: flow_l23 with value 36.132139
+Removing measurement flow_l23
+
+Iteration with 3 measurements:
+State estimate: theta_2 = 0.025579, theta_3 = 0.077240
+Normalized residuals:
+  flow_l12: 18.598907
+  flow_l13: 18.598907
+  inj_b2: 18.598907
+Largest normalized residual: flow_l12 with value 18.598907
+Removing measurement flow_l12
+
+Iteration with 2 measurements:
+State estimate: theta_2 = 0.016542, theta_3 = 0.069625
+Normalized residuals:
+  flow_l13: 0.000000
+  inj_b2: 0.000000
+Largest normalized residual: flow_l13 with value 0.000000
+No more measurements exceed the threshold
+
+Final attacked measurements: ['inj_b3', 'flow_l23', 'flow_l12']
+Final state estimate: theta_2 = 0.016542, theta_3 = 0.069625
+
+Submission:
+{
+  "attacked_measurements": [
+    "inj_b3",
+    "flow_l23",
+    "flow_l12"
+  ],
+  "corrected_state": {
+    "theta_2": 0.016541666666666673,
+    "theta_3": 0.069625
+  }
+}
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

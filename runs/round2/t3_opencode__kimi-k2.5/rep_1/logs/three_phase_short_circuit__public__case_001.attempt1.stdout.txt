@@ -1,0 +1,47 @@
+Now I understand the task. I need to compute IEC 60909-style maximum and minimum three-phase short-circuit currents. Let me calculate the values:
+
+**Given data:**
+- Base MVA: 100.0
+- Voltage: 10.5 kV
+- Voltage factor c_max: 1.1
+- Voltage factor c_min: 1.0
+- Fault resistance (for min current): 0.005 pu
+
+**Positive-sequence impedances:**
+1. Grid source: R = 0.018, X = 0.155
+2. Station transformer: R = 0.012, X = 0.095
+3. Bus duct: R = 0.002, X = 0.011
+
+**Calculations:**
+
+1. **Sum the impedances for Z_network (bolted fault):**
+   - R_total = 0.018 + 0.012 + 0.002 = 0.032 pu
+   - X_total = 0.155 + 0.095 + 0.011 = 0.261 pu
+   - |Z_network| = √(0.032² + 0.261²) = √(0.001024 + 0.068121) = √0.069145 = 0.262958 pu
+
+2. **Z with fault resistance (for min current):**
+   - R_total_with_fault = 0.032 + 0.005 = 0.037 pu
+   - X_total = 0.261 pu
+   - |Z_min| = √(0.037² + 0.261²) = √(0.001369 + 0.068121) = √0.06949 = 0.263609 pu
+
+3. **Base current calculation:**
+   - I_base = base_mVA / (√3 × voltage_kV) = 100 / (√3 × 10.5) = 100 / 18.1865 = 5.4986 kA
+
+4. **Maximum current (bolted fault, c_max = 1.1):**
+   - Ik_max = c_max / |Z_network| × I_base = 1.1 / 0.262958 × 5.4986 = 23.007 kA
+
+5. **Maximum short-circuit apparent power:**
+   - Sk_max = √3 × voltage_kV × Ik_max = √3 × 10.5 × 23.007 = 418.52 MVA
+
+6. **Minimum current (with fault resistance, c_min = 1.0):**
+   - Ik_min = c_min / |Z_min| × I_base = 1.0 / 0.263609 × 5.4986 = 20.859 kA
+
+Let me write a Python script to verify these calculations:
+Now I have the calculated values. Let me write the submission.json file:
+The submission.json file has been created with the calculated values:
+
+- **ik_max_ka**: 23.002 kA (maximum short-circuit current with c_max=1.1, bolted fault)
+- **sk_max_mva**: 418.324 MVA (maximum short-circuit apparent power)
+- **ik_min_ka**: 20.859 kA (minimum short-circuit current with c_min=1.0, including fault resistance)
+- **z_bolted_mag_pu**: 0.26295 pu (network impedance magnitude without fault resistance)
+- **z_min_mag_pu**: 0.26361 pu (network impedance magnitude with fault resistance)

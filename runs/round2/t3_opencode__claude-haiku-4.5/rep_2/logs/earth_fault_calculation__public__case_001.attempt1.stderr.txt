@@ -1,0 +1,143 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import cmath
+import math
+
+# Read the task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+# Extract parameters
+base_mva = task['earth_fault_case']['base_mva']
+voltage_kv = task['earth_fault_case']['voltage_kv']
+z1_data = task['earth_fault_case']['sequence_impedances_pu']['positive']
+z2_data = task['earth_fault_case']['sequence_impedances_pu']['negative']
+z0_data = task['earth_fault_case']['sequence_impedances_pu']['zero']
+zf = task['earth_fault_case']['fault_resistance_pu']
+prefault_voltage_pu = task['earth_fault_case']['prefault_phase_voltage_pu']
+
+# Form impedances as complex numbers
+Z1 = complex(z1_data['r_pu'], z1_data['x_pu'])
+Z2 = complex(z2_data['r_pu'], z2_data['x_pu'])
+Z0 = complex(z0_data['r_pu'], z0_data['x_pu'])
+
+print(f"Z1: {Z1}")
+print(f"Z2: {Z2}")
+print(f"Z0: {Z0}")
+print(f"Zf: {zf}")
+
+# For single-line-to-ground fault:
+# I1 = I2 = I0 = V_prefault / (Z1 + Z2 + Z0 + 3*Zf)
+denominator = Z1 + Z2 + Z0 + 3 * zf
+I_seq_pu = prefault_voltage_pu / denominator  # In pu
+
+print(f"\nDenominator (Z1+Z2+Z0+3*Zf): {denominator}")
+print(f"I_seq (pu): {I_seq_pu}")
+print(f"Magnitude (pu): {abs(I_seq_pu)}")
+print(f"Angle (degrees): {cmath.phase(I_seq_pu) * 180 / math.pi}")
+
+# Convert from pu to kA
+# Ibase = Sbase / (sqrt(3) * Vbase)
+# where Sbase is in MVA and Vbase is in kV
+Ibase_ka = base_mva / (math.sqrt(3) * voltage_kv)
+print(f"\nIbase: {Ibase_ka} kA")
+
+# Convert sequence currents to kA
+I1_ka = I_seq_pu * Ibase_ka
+I2_ka = I_seq_pu * Ibase_ka
+I0_ka = I_seq_pu * Ibase_ka
+
+# Fault current is 3*I0
+I_fault_ka = 3 * I0_ka
+
+print(f"\nI1 (kA): {I1_ka}, Magnitude: {abs(I1_ka)}, Angle: {cmath.phase(I1_ka) * 180 / math.pi}°")
+print(f"I2 (kA): {I2_ka}, Magnitude: {abs(I2_ka)}, Angle: {cmath.phase(I2_ka) * 180 / math.pi}°")
+print(f"I0 (kA): {I0_ka}, Magnitude: {abs(I0_ka)}, Angle: {cmath.phase(I0_ka) * 180 / math.pi}°")
+print(f"I_fault (3*I0) (kA): {I_fault_ka}, Magnitude: {abs(I_fault_ka)}, Angle: {cmath.phase(I_fault_ka) * 180 / math.pi}°")
+
+# Prepare submission
+submission = {
+    "sequence_currents_ka": {
+        "i1": {
+            "mag_ka": round(abs(I1_ka), 6),
+            "angle_deg": round(cmath.phase(I1_ka) * 180 / math.pi, 6)
+        },
+        "i2": {
+            "mag_ka": round(abs(I2_ka), 6),
+            "angle_deg": round(cmath.phase(I2_ka) * 180 / math.pi, 6)
+        },
+        "i0": {
+            "mag_ka": round(abs(I0_ka), 6),
+            "angle_deg": round(cmath.phase(I0_ka) * 180 / math.pi, 6)
+        }
+    },
+    "fault_current_ka": {
+        "mag_ka": round(abs(I_fault_ka), 6),
+        "angle_deg": round(cmath.phase(I_fault_ka) * 180 / math.pi, 6)
+    },
+    "residual_current_mag_ka": round(abs(I_fault_ka), 6)
+}
+
+print("\n=== SUBMISSION ===")
+print(json.dumps(submission, indent=2))
+
+# Write submission
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nsubmission.json written successfully")
+EOF
+
+Z1: (0.042+0.31j)
+Z2: (0.045+0.29j)
+Z0: (0.12+0.82j)
+Zf: 0.04
+
+Denominator (Z1+Z2+Z0+3*Zf): (0.32699999999999996+1.42j)
+I_seq (pu): (0.15400345401018872-0.668761176435682j)
+Magnitude (pu): 0.6862642165774824
+Angle (degrees): -77.03190766561038
+
+Ibase: 2.0918488014116874 kA
+
+I1 (kA): (0.3221519406844732-1.3989472653576513j), Magnitude: 1.4355609788993373, Angle: -77.03190766561038°
+I2 (kA): (0.3221519406844732-1.3989472653576513j), Magnitude: 1.4355609788993373, Angle: -77.03190766561038°
+I0 (kA): (0.3221519406844732-1.3989472653576513j), Magnitude: 1.4355609788993373, Angle: -77.03190766561038°
+I_fault (3*I0) (kA): (0.9664558220534196-4.196841796072954j), Magnitude: 4.306682936698012, Angle: -77.03190766561038°
+
+=== SUBMISSION ===
+{
+  "sequence_currents_ka": {
+    "i1": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.031908
+    },
+    "i2": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.031908
+    },
+    "i0": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.031908
+    }
+  },
+  "fault_current_ka": {
+    "mag_ka": 4.306683,
+    "angle_deg": -77.031908
+  },
+  "residual_current_mag_ka": 4.306683
+}
+
+submission.json written successfully
+[0m
+[0m→ [0mRead submission.json

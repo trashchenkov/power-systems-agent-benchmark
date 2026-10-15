@@ -1,0 +1,105 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · z-ai/glm-4.6
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m← [0mWrite solve.py
+Wrote file successfully.
+[0m
+[0m$ [0mcd <sandbox_a1> && python solve.py
+/bin/bash: line 1: python: command not found
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 solve.py
+Network:
+  Slack bus: b1
+  Branches: [{'id': 'l12', 'from_bus': 'b1', 'to_bus': 'b2', 'x_pu': 0.1}, {'id': 'l13', 'from_bus': 'b1', 'to_bus': 'b3', 'x_pu': 0.125}, {'id': 'l23', 'from_bus': 'b2', 'to_bus': 'b3', 'x_pu': 0.2}]
+
+Measurements:
+  flow_l12: flow = 0.402, sigma = 0.01
+  flow_l13: flow = 0.557, sigma = 0.01
+  flow_l23: flow = 0.151, sigma = 0.01
+  inj_b2: injection = -0.1, sigma = 0.01
+  inj_b3: injection = -0.713, sigma = 0.01
+
+Residual threshold: 3.0
+State variables: ['theta_2', 'theta_3']
+
+H matrix shape: (5, 2)
+H matrix:
+[[  0. -10.]
+ [  0.  -8.]
+ [  5.  -5.]
+ [ 15.  -5.]
+ [ -5.  13.]]
+
+Measurement vector z: [ 0.402  0.557  0.151 -0.1   -0.713]
+Sigma vector: [0.01 0.01 0.01 0.01 0.01]
+
+Weight matrix W diagonal: [10000. 10000. 10000. 10000. 10000.]
+
+--- Iteration 1 ---
+Current measurements: ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b2', 'inj_b3']
+Gain matrix G:
+[[ 2750000. -1650000.]
+ [-1650000.  3830000.]]
+RHS: [  28200. -180000.]
+Estimated state: theta_2 = -0.024199, theta_3 = -0.057423
+Residuals: [-0.17222535  0.09761972 -0.0151178  -0.02412804 -0.08750192]
+Normalized residuals: [21.39672672 11.09137476  1.59799516  6.81137108 11.72461185]
+Largest normalized residual: 21.396727 (measurement: flow_l12)
+Flagging measurement: flow_l12
+
+--- Iteration 2 ---
+Current measurements: ['flow_l13', 'flow_l23', 'inj_b2', 'inj_b3']
+Gain matrix G:
+[[ 2750000. -1650000.]
+ [-1650000.  2830000.]]
+RHS: [  28200. -139800.]
+Estimated state: theta_2 = -0.029815, theta_3 = -0.066783
+Residuals: [ 0.02273913 -0.03383794  0.01331225  0.00609881]
+Normalized residuals: [2.81573735 3.59216324 4.32221336 1.00863678]
+Largest normalized residual: 4.322213 (measurement: inj_b2)
+Flagging measurement: inj_b2
+
+--- Iteration 3 ---
+Current measurements: ['flow_l13', 'flow_l23', 'inj_b3']
+Gain matrix G:
+[[ 500000. -900000.]
+ [-900000. 2580000.]]
+RHS: [  43200. -144800.]
+Estimated state: theta_2 = -0.039300, theta_3 = -0.069833
+Residuals: [-0.00166667 -0.00166667 -0.00166667]
+Normalized residuals: [0.28867513 0.28867513 0.28867513]
+Largest normalized residual: 0.288675 (measurement: flow_l13)
+Below threshold 3.0, stopping
+
+Final flagged measurements: ['flow_l12', 'inj_b2']
+
+--- Final Solution ---
+Using measurements: ['flow_l13', 'flow_l23', 'inj_b3']
+Gain matrix G:
+[[ 500000. -900000.]
+ [-900000. 2580000.]]
+RHS: [  43200. -144800.]
+Final estimated state: theta_2 = -0.039300, theta_3 = -0.069833
+
+Submission:
+{
+  "attacked_measurements": [
+    "flow_l12",
+    "inj_b2"
+  ],
+  "corrected_state": {
+    "theta_2": -0.039300000000000064,
+    "theta_3": -0.06983333333333336
+  },
+  "rationale": "Applied largest normalized residual test with threshold 3.0. Flagged 2 measurement(s) and recomputed WLS state estimate."
+}
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

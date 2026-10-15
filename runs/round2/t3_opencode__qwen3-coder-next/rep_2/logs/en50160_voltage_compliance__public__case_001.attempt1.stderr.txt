@@ -1,0 +1,57 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+voltage_series = [0.928, 0.914, 0.902, 0.889, 0.895, 0.936, 0.971, 1.012, 1.043, 1.066]
+timestamps = ['t00', 't01', 't02', 't03', 't04', 't05', 't06', 't07', 't08', 't09']
+
+normal_lower = 0.90
+normal_upper = 1.10
+abs_lower = 0.85
+abs_upper = 1.10
+
+print('=== Before mitigation ===')
+within = [v for v in voltage_series if normal_lower <= v <= normal_upper]
+below = [(timestamps[i], voltage_series[i]) for i in range(len(voltage_series)) if voltage_series[i] < normal_lower]
+above = [(timestamps[i], voltage_series[i]) for i in range(len(voltage_series)) if voltage_series[i] > normal_upper]
+percent = len(within) / len(voltage_series) * 100
+print(f'Min: {min(voltage_series)}, Max: {max(voltage_series)}')
+print(f'Within normal band: {len(within)}/{len(voltage_series)} = {percent}%')
+print(f'Below: {below}')
+print(f'Above: {above}')
+print(f'Compliant (>=95%): {percent >= 95}')
+print(f'All within absolute bounds: {all(abs_lower <= v <= abs_upper for v in voltage_series)}')
+
+print()
+print('=== Tap change analysis ===')
+tap_changes = [-0.025, 0.0, 0.025, 0.05]
+for tap in tap_changes:
+    adjusted = [v + tap for v in voltage_series]
+    within_count = sum(1 for v in adjusted if normal_lower <= v <= normal_upper)
+    abs_violations = sum(1 for v in adjusted if v < abs_lower or v > abs_upper)
+    print(f'Tap {tap:+.3f}: within={within_count}/10, abs_violations={abs_violations}')
+"
+
+=== Before mitigation ===
+Min: 0.889, Max: 1.066
+Within normal band: 8/10 = 80.0%
+Below: [('t03', 0.889), ('t04', 0.895)]
+Above: []
+Compliant (>=95%): False
+All within absolute bounds: True
+
+=== Tap change analysis ===
+Tap -0.025: within=6/10, abs_violations=0
+Tap +0.000: within=8/10, abs_violations=0
+Tap +0.025: within=10/10, abs_violations=0
+Tap +0.050: within=9/10, abs_violations=1
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

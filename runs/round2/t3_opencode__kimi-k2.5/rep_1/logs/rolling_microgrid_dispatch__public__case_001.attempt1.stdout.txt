@@ -1,0 +1,25 @@
+Let me analyze this problem. I need to compute a rolling-horizon battery and diesel dispatch for a renewable microgrid.
+
+**Problem Summary:**
+- 4 time periods: t00, t05, t10, t15 (5-minute intervals, so interval_hours = 0.08333 hours)
+- Load: [38, 42, 48, 44] MW
+- PV generation: [18, 15, 11, 9] MW
+- Diesel generator: pmin=12 MW, pmax=55 MW, cost=$92/MWh
+- Battery: initial SOC=5 MWh, SOC min=2.5, SOC max=8.0, charge max=6 MW, discharge max=10 MW, charge efficiency=0.94, discharge efficiency=0.9
+
+**Constraints:**
+- Battery positive = discharge, negative = charge
+- Must serve all load (no shedding)
+- PV curtailment allowed
+- Must respect SOC bounds
+
+Let me write a Python script to solve this optimization problem.
+The solution has been computed. Let me verify the submission file was created correctly:
+The submission.json file has been created successfully with the optimal dispatch solution. The solution:
+
+- **t00**: Battery charges at 2 MW (negative = charge), diesel runs at 22 MW, SOC increases to 5.16 MWh
+- **t05**: Battery discharges at 10 MW, diesel runs at 17 MW, SOC decreases to 4.23 MWh  
+- **t10**: Battery discharges at 8 MW, diesel runs at 29 MW, SOC decreases to 3.49 MWh
+- **t15**: Battery discharges at 10 MW, diesel runs at 25 MW, SOC decreases to 2.56 MWh
+
+The total diesel cost is **$713.00**, which is the minimum cost found through enumeration of all feasible battery schedules. The final SOC (2.56 MWh) is within the allowed bounds [2.5, 8.0] MWh, and all load is served without shedding.

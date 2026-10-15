@@ -1,0 +1,91 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+from itertools import combinations
+
+# Data from task.json
+budget = 2
+fault_sections = {
+    "s12": {"annual_fault_rate": 0.18, "customers_interrupted": 120},
+    "s23": {"annual_fault_rate": 0.14, "customers_interrupted": 70},
+    "s24": {"annual_fault_rate": 0.12, "customers_interrupted": 90},
+    "s45": {"annual_fault_rate": 0.09, "customers_interrupted": 40}
+}
+
+candidate_locations = {
+    "n1": {"section_gain_minutes": {"s12": 18, "s23": 16, "s24": 15, "s45": 14}},
+    "n2": {"section_gain_minutes": {"s12": 6, "s23": 28, "s24": 26, "s45": 23}},
+    "n4": {"section_gain_minutes": {"s12": 0, "s23": 4, "s24": 18, "s45": 34}},
+    "n3": {"section_gain_minutes": {"s12": 0, "s23": 24, "s24": 2, "s45": 2}}
+}
+
+candidates = list(candidate_locations.keys())
+best_combo = None
+best_score = -1
+best_result = None
+
+# Enumerate all combinations of budget locations
+for combo in combinations(candidates, budget):
+    # For each section, find the maximum gain from selected locations
+    section_reduction = {}
+    total_customer_minutes = 0
+    
+    for section_id, section_info in fault_sections.items():
+        # Get max gain for this section from selected locations
+        max_gain = max(candidate_locations[loc]["section_gain_minutes"][section_id] for loc in combo)
+        section_reduction[section_id] = max_gain
+        
+        # Calculate contribution to objective
+        contribution = section_info["annual_fault_rate"] * section_info["customers_interrupted"] * max_gain
+        total_customer_minutes += contribution
+    
+    # Check if this is the best so far
+    if total_customer_minutes > best_score:
+        best_score = total_customer_minutes
+        best_combo = combo
+        best_result = {
+            "selected_locations": list(combo),
+            "expected_customer_minutes_saved": total_customer_minutes,
+            "section_patrol_time_reduction_min": section_reduction
+        }
+    
+    print(f"Combination {combo}: score = {total_customer_minutes}")
+    print(f"  Section reductions: {section_reduction}")
+
+print("\n=== BEST SOLUTION ===")
+print(f"Selected locations: {best_result['selected_locations']}")
+print(f"Expected customer minutes saved: {best_result['expected_customer_minutes_saved']}")
+print(f"Section patrol time reductions: {best_result['section_patrol_time_reduction_min']}")
+
+EOF
+
+Combination ('n1', 'n2'): score = 1026.8
+  Section reductions: {'s12': 18, 's23': 28, 's24': 26, 's45': 23}
+Combination ('n1', 'n4'): score = 862.3999999999999
+  Section reductions: {'s12': 18, 's23': 16, 's24': 18, 's45': 34}
+Combination ('n1', 'n3'): score = 836.4
+  Section reductions: {'s12': 18, 's23': 24, 's24': 15, 's45': 14}
+Combination ('n2', 'n4'): score = 807.1999999999999
+  Section reductions: {'s12': 6, 's23': 28, 's24': 26, 's45': 34}
+Combination ('n2', 'n3'): score = 767.5999999999999
+  Section reductions: {'s12': 6, 's23': 28, 's24': 26, 's45': 23}
+Combination ('n4', 'n3'): score = 552.0
+  Section reductions: {'s12': 0, 's23': 24, 's24': 18, 's45': 34}
+
+=== BEST SOLUTION ===
+Selected locations: ['n1', 'n2']
+Expected customer minutes saved: 1026.8
+Section patrol time reductions: {'s12': 18, 's23': 28, 's24': 26, 's45': 23}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

@@ -1,0 +1,322 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13ae1-2af1-7110-acd6-d16d5dce9b02
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task files first, then inspect only what is needed to produce `submission.json`.
+exec
+/bin/bash -lc "pwd && rg --files -g 'instructions.md' -g 'task.json' -g 'submission.json'" in <sandbox_a1>
+ succeeded in 0ms:
+<sandbox_a1>
+task.json
+instructions.md
+
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/flisr_restoration__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,240p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "flisr_restoration_public_001",
+  "family": "flisr_restoration",
+  "substrate": "deterministic_distribution_graph_restoration_surrogate",
+  "objective": "Choose a switching plan that isolates a faulted distribution feeder section, keeps the energized network radial, and restores high-priority load through available tie switches.",
+  "public_inputs": {
+    "source_bus": "s",
+    "faulted_branches": [
+      "l23"
+    ],
+    "buses": [
+      {
+        "id": "s",
+        "load_kw": 0.0,
+        "priority": 0
+      },
+      {
+        "id": "b1",
+        "load_kw": 0.0,
+        "priority": 0
+      },
+      {
+        "id": "b2",
+        "load_kw": 50.0,
+        "priority": 3
+      },
+      {
+        "id": "b3",
+        "load_kw": 80.0,
+        "priority": 5
+      },
+      {
+        "id": "b4",
+        "load_kw": 40.0,
+        "priority": 2
+      }
+    ],
+    "branches": [
+      {
+        "id": "l_s1",
+        "from_bus": "s",
+        "to_bus": "b1",
+        "normally_closed": true,
+        "capacity_kw": 250.0
+      },
+      {
+        "id": "l12",
+        "from_bus": "b1",
+        "to_bus": "b2",
+        "normally_closed": true,
+        "capacity_kw": 160.0
+      },
+      {
+        "id": "l23",
+        "from_bus": "b2",
+        "to_bus": "b3",
+        "normally_closed": true,
+        "capacity_kw": 120.0
+      },
+      {
+        "id": "l34",
+        "from_bus": "b3",
+        "to_bus": "b4",
+        "normally_closed": true,
+        "capacity_kw": 130.0
+      },
+      {
+        "id": "tie_24",
+        "from_bus": "b2",
+        "to_bus": "b4",
+        "normally_closed": false,
+        "capacity_kw": 120.0
+      }
+    ]
+  },
+  "source_bus": "s",
+  "faulted_branches": [
+    "l23"
+  ],
+  "min_priority_restored": 10.0,
+  "switch_penalty": 2.0,
+  "buses": [
+    {
+      "id": "s",
+      "load_kw": 0.0,
+      "priority": 0
+    },
+    {
+      "id": "b1",
+      "load_kw": 0.0,
+      "priority": 0
+    },
+    {
+      "id": "b2",
+      "load_kw": 50.0,
+      "priority": 3
+    },
+    {
+      "id": "b3",
+      "load_kw": 80.0,
+      "priority": 5
+    },
+    {
+      "id": "b4",
+      "load_kw": 40.0,
+      "priority": 2
+    }
+  ],
+  "branches": [
+    {
+      "id": "l_s1",
+      "from_bus": "s",
+      "to_bus": "b1",
+      "normally_closed": true,
+      "capacity_kw": 250.0
+    },
+    {
+      "id": "l12",
+      "from_bus": "b1",
+      "to_bus": "b2",
+      "normally_closed": true,
+      "capacity_kw": 160.0
+    },
+    {
+      "id": "l23",
+      "from_bus": "b2",
+      "to_bus": "b3",
+      "normally_closed": true,
+      "capacity_kw": 120.0
+    },
+    {
+      "id": "l34",
+      "from_bus": "b3",
+      "to_bus": "b4",
+      "normally_closed": true,
+      "capacity_kw": 130.0
+    },
+    {
+      "id": "tie_24",
+      "from_bus": "b2",
+      "to_bus": "b4",
+      "normally_closed": false,
+      "capacity_kw": 120.0
+    }
+  ],
+  "submission_schema": {
+    "open_switches": "List of branch/switch IDs to open before restoration.",
+    "close_switches": "List of normally-open tie switch IDs to close for restoration.",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "All faulted branches must be open in the final switching state.",
+    "The energized graph must remain radial; meshed final states are rejected.",
+    "Restored load is counted only for load buses reachable from the source bus.",
+    "Priority-restored score must meet min_priority_restored for this public case."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether fault isolation, radiality, and required priority restoration are all satisfied."
+    },
+    {
+      "name": "priority_restored",
+      "direction": "maximize",
+      "description": "Sum of priority weights for restored load buses."
+    },
+    {
+      "name": "restored_load_kw",
+      "direction": "maximize",
+      "description": "Total restored load reachable from the source bus."
+    },
+    {
+      "name": "switch_count",
+      "direction": "minimize",
+      "description": "Number of open and close switching actions."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] priority restoration score minus a scaled switch-count penalty if feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:arXiv:2004.07921v1",
+    "source_status:external_arxiv_not_in_private_pdf_corpus",
+    "source_card:docs/source_cards/flisr_restoration.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "A Two-Stage Service Restoration Method for Electric Power Distribution Systems",
+      "locator": "arXiv:2004.07921v1",
+      "confidence": "medium",
+      "notes": "Primary source for distribution service restoration and feeder switching; task is a compact restored-load optimization instance."
+    }
+  ],
+  "candidate_id": "REL-TASK-003",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-003 — Decentralized network restoration after short circuit",
+      "ru": "REL-TASK-003 — Децентрализованное восстановление сети после короткого замыкания"
+    },
+    "objective": {
+      "en": "Choose a switching plan that isolates a faulted distribution feeder section, keeps the energized network radial, and restores high-priority load through available tie switches.",
+      "ru": "Децентрализованное восстановление сети после короткого замыкания"
+    },
+    "instructions": {
+      "en": "Solve the executable power-systems task and submit JSON matching the published schema.",
+      "ru": "Решите исполняемую задачу по электроэнергетике и отправьте JSON согласно опубликованной схеме."
+    }
+  }
+}
+
+codex
+The feasible minimum-action plan is to open the faulted `l23` and close `tie_24`; this reconnects `b4` and `b3` from `b2` while leaving a radial topology and restores priority score 10.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_flisr_restoration__public__case_001_a1_82519ilf/submission.json b/bench_flisr_restoration__public__case_001_a1_82519ilf/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..689076d1449ef5ba6376be0b680bc18d7ece7670
+--- /dev/null
++++ b/bench_flisr_restoration__public__case_001_a1_82519ilf/submission.json
+@@ -0,0 +1,9 @@
++{
++  "open_switches": [
++    "l23"
++  ],
++  "close_switches": [
++    "tie_24"
++  ],
++  "rationale": "Open the faulted branch l23 and close tie_24. The resulting energized network is radial and reconnects b4 and b3 through b2, restoring all load buses with a priority-restored score of 10 using two switching actions."
++}
+
+diff --git a/bench_flisr_restoration__public__case_001_a1_82519ilf/submission.json b/bench_flisr_restoration__public__case_001_a1_82519ilf/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..689076d1449ef5ba6376be0b680bc18d7ece7670
+--- /dev/null
++++ b/bench_flisr_restoration__public__case_001_a1_82519ilf/submission.json
+@@ -0,0 +1,9 @@
++{
++  "open_switches": [
++    "l23"
++  ],
++  "close_switches": [
++    "tie_24"
++  ],
++  "rationale": "Open the faulted branch l23 and close tie_24. The resulting energized network is radial and reconnects b4 and b3 through b2, restoring all load buses with a priority-restored score of 10 using two switching actions."
++}
+
+codex
+Done
+diff --git a/bench_flisr_restoration__public__case_001_a1_82519ilf/submission.json b/bench_flisr_restoration__public__case_001_a1_82519ilf/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..689076d1449ef5ba6376be0b680bc18d7ece7670
+--- /dev/null
++++ b/bench_flisr_restoration__public__case_001_a1_82519ilf/submission.json
+@@ -0,0 +1,9 @@
++{
++  "open_switches": [
++    "l23"
++  ],
++  "close_switches": [
++    "tie_24"
++  ],
++  "rationale": "Open the faulted branch l23 and close tie_24. The resulting energized network is radial and reconnects b4 and b3 through b2, restoring all load buses with a priority-restored score of 10 using two switching actions."
++}
+
+tokens used
+21,630

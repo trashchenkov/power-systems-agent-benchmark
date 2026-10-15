@@ -1,0 +1,71 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import cmath
+import math
+
+# Given values
+base_mva = 50.0
+voltage_kv = 13.8
+prefault_voltage_pu = 1.0
+
+# Sequence impedances (per unit)
+Z1 = complex(0.042, 0.31)
+Z2 = complex(0.045, 0.29)
+Z0 = complex(0.12, 0.82)
+Zf = 0.04  # fault resistance in pu
+
+# Calculate total impedance for SLG fault
+Z_total = Z1 + Z2 + Z0 + 3*Zf
+print(f"Z_total = {Z_total}")
+
+# Sequence currents (I1 = I2 = I0 for SLG fault)
+I_seq = prefault_voltage_pu / Z_total
+print(f"I_seq = {I_seq}")
+
+# Magnitude and angle
+I_mag = abs(I_seq)
+I_angle = math.degrees(cmath.phase(I_seq))
+print(f"I_mag = {I_mag}, I_angle = {I_angle}")
+
+# Convert to kA
+I_base = base_mva / (math.sqrt(3) * voltage_kv)
+print(f"I_base = {I_base} kA")
+
+I_ka = I_mag * I_base
+print(f"I in kA = {I_ka}")
+
+# Fault current = 3 * I0
+fault_current_ka = 3 * I_ka
+print(f"Fault current (3*I0) = {fault_current_ka}")
+
+# Results
+print(f"\nI1: mag_ka={I_ka:.6f}, angle_deg={I_angle:.6f}")
+print(f"I2: mag_ka={I_ka:.6f}, angle_deg={I_angle:.6f}")
+print(f"I0: mag_ka={I_ka:.6f}, angle_deg={I_angle:.6f}")
+print(f"Fault current 3*I0: mag_ka={fault_current_ka:.6f}, angle_deg={I_angle:.6f}")
+print(f"Residual current mag_ka: {fault_current_ka:.6f}")
+EOF
+Z_total = (0.32699999999999996+1.42j)
+I_seq = (0.15400345401018872-0.668761176435682j)
+I_mag = 0.6862642165774824, I_angle = -77.03190766561038
+I_base = 2.0918488014116874 kA
+I in kA = 1.435560978899337
+Fault current (3*I0) = 4.306682936698011
+
+I1: mag_ka=1.435561, angle_deg=-77.031908
+I2: mag_ka=1.435561, angle_deg=-77.031908
+I0: mag_ka=1.435561, angle_deg=-77.031908
+Fault current 3*I0: mag_ka=4.306683, angle_deg=-77.031908
+Residual current mag_ka: 4.306683
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

@@ -1,0 +1,77 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+from itertools import combinations
+
+# Fault sections data
+fault_sections = {
+    "s12": {"annual_fault_rate": 0.18, "customers_interrupted": 120},
+    "s23": {"annual_fault_rate": 0.14, "customers_interrupted": 70},
+    "s24": {"annual_fault_rate": 0.12, "customers_interrupted": 90},
+    "s45": {"annual_fault_rate": 0.09, "customers_interrupted": 40}
+}
+
+# Candidate locations with gains per section
+candidate_locations = {
+    "n1": {"s12": 18, "s23": 16, "s24": 15, "s45": 14},
+    "n2": {"s12": 6, "s23": 28, "s24": 26, "s45": 23},
+    "n4": {"s12": 0, "s23": 4, "s24": 18, "s45": 34},
+    "n3": {"s12": 0, "s23": 24, "s24": 2, "s45": 2}
+}
+
+def calc_objective(selected):
+    total = 0
+    section_reductions = {}
+    for sec_id, sec_data in fault_sections.items():
+        gains = [candidate_locations[loc][sec_id] for loc in selected]
+        max_gain = max(gains)
+        section_reductions[sec_id] = max_gain
+        total += sec_data["annual_fault_rate"] * sec_data["customers_interrupted"] * max_gain
+    return total, section_reductions
+
+locations = list(candidate_locations.keys())
+best_obj = -1
+best_set = None
+best_reductions = None
+
+for combo in combinations(locations, 2):
+    obj, reductions = calc_objective(combo)
+    print(f"{combo}: objective = {obj:.2f}, reductions = {reductions}")
+    if obj > best_obj:
+        best_obj = obj
+        best_set = combo
+        best_reductions = reductions
+
+print(f"\nBest: {best_set} with objective {best_obj:.2f}")
+print(f"Section reductions: {best_reductions}")
+
+# Output submission
+submission = {
+    "selected_locations": list(best_set),
+    "expected_customer_minutes_saved": round(best_obj, 2),
+    "section_patrol_time_reduction_min": best_reductions
+}
+print(f"\nSubmission: {submission}")
+EOF
+('n1', 'n2'): objective = 1026.80, reductions = {'s12': 18, 's23': 28, 's24': 26, 's45': 23}
+('n1', 'n4'): objective = 862.40, reductions = {'s12': 18, 's23': 16, 's24': 18, 's45': 34}
+('n1', 'n3'): objective = 836.40, reductions = {'s12': 18, 's23': 24, 's24': 15, 's45': 14}
+('n2', 'n4'): objective = 807.20, reductions = {'s12': 6, 's23': 28, 's24': 26, 's45': 34}
+('n2', 'n3'): objective = 767.60, reductions = {'s12': 6, 's23': 28, 's24': 26, 's45': 23}
+('n4', 'n3'): objective = 552.00, reductions = {'s12': 0, 's23': 24, 's24': 18, 's45': 34}
+
+Best: ('n1', 'n2') with objective 1026.80
+Section reductions: {'s12': 18, 's23': 28, 's24': 26, 's45': 23}
+
+Submission: {'selected_locations': ['n1', 'n2'], 'expected_customer_minutes_saved': 1026.8, 'section_patrol_time_reduction_min': {'s12': 18, 's23': 28, 's24': 26, 's45': 23}}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

@@ -1,0 +1,39 @@
+I'll analyze this power-systems benchmark task. The goal is to schedule thermal generation to cover the worst-case net load (load - renewable) plus reserve at minimum cost.
+
+Let me calculate:
+
+**Time periods t1, t2, t3**
+**Reserve requirement: 8.0 MW**
+
+**Scenarios - net load (load - renewable):**
+- Normal: t1=60, t2=61, t3=55
+- High load: t1=72, t2=76, t3=69
+- Low renewable: t1=72, t2=77, t3=68
+
+**Worst-case net load per period:**
+- t1: max(60, 72, 72) = 72 MW
+- t2: max(61, 76, 77) = 77 MW  
+- t3: max(55, 69, 68) = 69 MW
+
+**Required generation (worse_case + reserve):**
+- t1: 72 + 8 = 80 MW
+- t2: 77 + 8 = 85 MW
+- t3: 69 + 8 = 77 MW
+
+**Generators:**
+- g1: pmin=10, pmax=70, cost=18/MWh (cheaper)
+- g2: pmin=5, pmax=45, cost=36/MWh (more expensive)
+
+To minimize cost, use g1 as much as possible (cheaper), then g2 if needed.
+
+**Optimal dispatch:**
+- t1: Need 80 MW. g1=70 (max), g2=10 → cost = 70*18 + 10*36 = 1260 + 360 = 1620
+- t2: Need 85 MW. g1=70 (max), g2=15 → cost = 70*18 + 15*36 = 1260 + 540 = 1800
+- t3: Need 77 MW. g1=70 (max), g2=7 → cost = 70*18 + 7*36 = 1260 + 252 = 1512
+
+**Total cost: 1620 + 1800 + 1512 = 4932**
+
+**Worst-case margin (actual gen - worst net load):**
+- t1: 80 - 72 = 8 MW
+- t2: 85 - 77 = 8 MW
+- t3: 77 - 69 = 8 MW

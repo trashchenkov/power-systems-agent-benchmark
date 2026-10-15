@@ -1,0 +1,141 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mls -la <sandbox_a1>
+total 392
+drwx------    2 root root   4096 Oct 14 17:19 .
+drwxrwxrwt 2058 root root 380928 Oct 14 17:19 ..
+-rw-r--r--    1 root root   1177 Oct 14 17:19 instructions.md
+-rw-r--r--    1 root root   4113 Oct 14 17:19 task.json
+[0m
+[0m$ [0mcat << 'EOF' > <sandbox_a1>/scratch.py
+import itertools, json
+
+periods=["t1","t2","t3"]
+dt=0.5
+load={"t1":10.0,"t2":12.0,"t3":9.0}
+evs={
+ "ev_a":{"cap":40.0,"soc0":24.0,"res":16.0,"cmax":4.0,"dmax":8.0,"ech":0.95,"edis":0.9,"step":4.0},
+ "ev_b":{"cap":32.0,"soc0":20.0,"res":12.0,"cmax":3.0,"dmax":6.0,"ech":0.95,"edis":0.9,"step":3.0},
+}
+def opts(e):
+    o=[]
+    x=-evs[e]["cmax"]
+    while x<=evs[e]["dmax"]+1e-9:
+        o.append(round(x,6))
+        x+=evs[e]["step"]
+    return o
+for e in evs: print(e, opts(e))
+
+def eval_model(mode):
+    best=None
+    bestsch=None
+    choices={e:opts(e) for e in evs}
+    for combo in itertools.product(*[itertools.product(choices[e], repeat=3) for e in evs]):
+        pass
+    # easier nested
+    import numpy as np
+    allcombos=itertools.product(*[list(itertools.product(choices[e],repeat=3)) for e in evs])
+    for combo in allcombos:
+        # combo is tuple of schedules per ev
+        soc={e:evs[e]["soc0"] for e in evs}
+        served=0.0
+        feas=True
+        for ti,t in enumerate(periods):
+            dis_bus=0.0
+            for ei,e in enumerate(evs):
+                d=combo[ei][ti]
+                if d>=0:
+                    if mode=="A":
+                        soc[e]-= d*dt/evs[e]["edis"]
+                        dis_bus+= d
+                    elif mode=="B":
+                        soc[e]-= d*dt
+                        dis_bus+= d*evs[e]["edis"]
+                    elif mode=="C":
+                        soc[e]-= d*dt
+                        dis_bus+= d
+                else:
+                    # charging: draws from bus, soc increases with eff
+                    c=-d
+                    soc[e]+= c*dt*evs[e]["ech"]
+                    dis_bus -= c
+            if soc[e]<evs[e]["res"]-1e-9 or soc[e]>evs[e]["cap"]+1e-9:
+                feas=False
+                break
+            served+=min(load[t], max(0.0,dis_bus))*dt
+        if not feas: continue
+        for e in evs:
+            if soc[e]<evs[e]["res"]-1e-9:
+                feas=False
+        if not feas: continue
+        if best is None or served>best+1e-12:
+            best=served; bestsch=(combo,{e:soc[e] for e in evs})
+    return best,bestsch
+
+for mode in ["A","B","C"]:
+    b,s=eval_model(mode)
+    print("mode",mode,"served",b,"soc",s[1] if s else None)
+    print("  schedule",s[0] if s else None)
+EOF
+python3 <sandbox_a1>/scratch.py
+ev_a [-4.0, 0.0, 4.0, 8.0]
+ev_b [-3.0, 0.0, 3.0, 6.0]
+mode A served 12.0 soc {'ev_a': 17.333333333333336, 'ev_b': 13.333333333333336}
+  schedule ((0.0, 4.0, 8.0), (6.0, 6.0, 0.0))
+mode B served 13.95 soc {'ev_a': 16.0, 'ev_b': 12.5}
+  schedule ((4.0, 8.0, 4.0), (6.0, 3.0, 6.0))
+mode C served 15.0 soc {'ev_a': 16.0, 'ev_b': 12.5}
+  schedule ((4.0, 8.0, 4.0), (6.0, 3.0, 6.0))
+[0m
+[0m$ [0mcat << 'EOF' > /tmp/opencode/check.py
+import itertools
+periods=["t1","t2","t3"]; dt=0.5
+load={"t1":10.0,"t2":12.0,"t3":9.0}
+E={"ev_a":dict(cap=40.0,soc0=24.0,res=16.0,cmax=4.0,dmax=8.0,ech=0.95,edis=0.9,step=4.0),
+   "ev_b":dict(cap=32.0,soc0=20.0,res=12.0,cmax=3.0,dmax=6.0,ech=0.95,edis=0.9,step=3.0)}
+def opts(e):
+    o=[];x=-E[e]["cmax"]
+    while x<=E[e]["dmax"]+1e-9:o.append(round(x,6));x+=E[e]["step"]
+    return o
+def run(mode):
+    best=None;bs=None
+    for combo in itertools.product(*[list(itertools.product(opts(e),repeat=3)) for e in E]):
+        soc={e:E[e]["soc0"] for e in E};served=0.0;ok=True
+        for ti,t in enumerate(periods):
+            bus=0.0
+            for ei,e in enumerate(E):
+                d=combo[ei][ti]
+                if d>=0:
+                    if mode=="B": soc[e]-=d*dt; bus+=d*E[e]["edis"]
+                    else: soc[e]-=d*dt/E[e]["edis"]; bus+=d
+                else:
+                    c=-d
+                    if mode=="B": soc[e]+=c*dt*E[e]["ech"]; bus-=c/E[e]["ech"]
+                    else: soc[e]+=c*dt*E[e]["ech"]; bus-=c
+            served+=min(load[t],max(0.0,bus))*dt
+        if any(soc[e]<E[e]["res"]-1e-9 or soc[e]>E[e]["cap"]+1e-9 for e in E):ok=False
+        if ok and (best is None or served>best+1e-12): best=served;bs=(combo,{e:round(soc[e],6) for e in E})
+    return best,bs
+for m in "AB":
+    print(m,run(m))
+EOF
+python3 /tmp/opencode/check.py
+A (12.0, (((0.0, 4.0, 8.0), (6.0, 6.0, 0.0)), {'ev_a': 17.333333, 'ev_b': 13.333333}))
+B (13.95, (((4.0, 8.0, 4.0), (6.0, 3.0, 6.0)), {'ev_a': 16.0, 'ev_b': 12.5}))
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mrm -f <sandbox_a1>/scratch.py; python3 -c "import json;print(json.load(open('<sandbox_a1>/submission.json')))"; ls <sandbox_a1>
+{'dispatch_kw': {'t1': {'ev_a': 4.0, 'ev_b': 6.0}, 't2': {'ev_a': 8.0, 'ev_b': 3.0}, 't3': {'ev_a': 4.0, 'ev_b': 6.0}}, 'served_energy_kwh': 13.95, 'final_soc_kwh': {'ev_a': 16.0, 'ev_b': 12.5}, 'rationale': "With 0.5 h intervals the critical load totals 15.5 kWh. EV discharge commands are limited to dispatch_step grid (ev_a: 0/4/8 kW; ev_b: 0/3/6 kW) and to each battery's usable margin above reserve (ev_a 8 kWh, ev_b 8 kWh). The best feasible grid schedule draws 8 kWh from ev_a (ending exactly at its 16 kWh reserve) and 7.5 kWh from ev_b (ending at 12.5 kWh), for 15.5 kWh of battery energy. At 0.9 discharge efficiency this delivers 13.95 kWh to the critical-load bus. Per-interval bus powers 4.5, 4.95 and 4.5 kWh stay within the 5, 6 and 4.5 kWh load caps, so no curtailment occurs."}
+instructions.md
+submission.json
+task.json
+[0m

@@ -1,0 +1,33 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m$ [0mls -la <sandbox_a1>
+total 412
+drwx------    2 root root   4096 Oct 14 18:04 .
+drwxrwxrwt 2057 root root 401408 Oct 14 18:04 ..
+-rw-r--r--    1 root root   1168 Oct 14 18:04 instructions.md
+-rw-r--r--    1 root root   4944 Oct 14 18:04 task.json
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import itertools, json
+c=json.load(open('<sandbox_a1>/task.json'))['fci_placement_case']
+sec=c['fault_sections']; cand=c['candidate_locations']; b=c['budget']
+w={s:sec[s]['annual_fault_rate']*sec[s]['customers_interrupted'] for s in sec}
+best=None
+for combo in itertools.combinations(cand,b):
+    red={s:max(cand[n]['section_gain_minutes'][s] for n in combo) for s in sec}
+    obj=sum(w[s]*red[s] for s in sec)
+    if best is None or obj>best[1]: best=(combo,obj,red)
+print(best)
+EOF
+(('n1', 'n2'), 1026.8, {'s12': 18, 's23': 28, 's24': 26, 's45': 23})
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

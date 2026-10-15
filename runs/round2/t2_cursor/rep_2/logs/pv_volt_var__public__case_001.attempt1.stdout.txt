@@ -1,0 +1,13 @@
+Completed the PV Volt-VAR benchmark and wrote **`submission.json`** in the packet directory.
+
+The curve is a five-point, piecewise-linear Volt-VAR profile with strictly increasing voltages and non-increasing `q_fraction`:
+
+| Voltage (pu) | q_fraction |
+|--------------|------------|
+| 0.90 | 1.0 (max injection) |
+| 0.94 | 0.179 |
+| 1.00 | 0.0 |
+| 1.07 | -0.358 |
+| 1.10 | -1.0 (max absorption) |
+
+Breakpoints at **0.94 pu** and **1.07 pu** match the sag/swell timesteps; reactive commands use \(Q = q\_\text{fraction} \times \sqrt{\text{kVA}^2 - \text{kW}^2}\) and \(V_\text{corr} = V_\text{base} + \text{sensitivity} \times Q\). Under that model, all three timesteps stay within **0.95–1.05 pu**, respect inverter Q limits, and total control effort is about **43 kvar** (14.3 kvar inject at `t_low`, 0 at `t_nom`, 28.6 kvar absorb at `t_high`).

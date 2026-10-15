@@ -1,0 +1,52 @@
+Let me analyze the task:
+
+1. **Frequency State Classification:**
+   - Nominal frequency: 50 Hz
+   - Current frequency: 49.82 Hz
+   - Deviation: |49.82 - 50| = 0.18 Hz
+   - Alert deviation threshold: 0.1 Hz
+   - Emergency deviation threshold: 0.3 Hz
+   - Since 0.18 Hz > 0.1 Hz (alert) but < 0.3 Hz (emergency), the state is **"alert"**
+
+2. **Lead Agent Selection (for low frequency - need upward headroom):**
+   - Current lead: plant_a
+   - Need: upward headroom and latency constraints
+   
+   Calculate upward headroom for each available agent:
+   - plant_a: available, pmax=100, current=88 → headroom = 100-88 = 12 MW (insufficient, needs min 20 MW)
+   - plant_b: available, pmax=120, current=70 → headroom = 120-70 = 50 MW (sufficient), latency=55 ms
+   - battery_c: available, pmax=40, current=5 → headroom = 40-5 = 35 MW (sufficient), latency=20 ms
+   - plant_d: not available
+
+   Both plant_b and battery_c have sufficient headroom (>20 MW) and latency < 80 ms.
+   
+   Maximize headroom first:
+   - plant_b: 50 MW
+   - battery_c: 35 MW
+   
+   plant_b has more headroom, so it's selected as lead agent.
+
+3. **Handover Required:**
+   - Current lead is plant_a
+   - New lead should be plant_b
+   - So handover is required: **true**
+
+4. **Lead Headroom:**
+   - plant_b has 50 MW upward headroom
+Task completed. I've analyzed the MAS frequency handover case:
+
+1. **Frequency State**: The deviation is |49.82 - 50| = 0.18 Hz, which exceeds the alert threshold (0.1 Hz) but is below emergency (0.3 Hz), so the state is **"alert"**.
+
+2. **Lead Agent Selection**: For low frequency, we need upward headroom:
+   - plant_a: Only 12 MW headroom (insufficient, needs ≥20 MW)
+   - plant_b: 50 MW headroom, 55 ms latency ✓
+   - battery_c: 35 MW headroom, 20 ms latency ✓
+   - plant_d: Not available
+   
+   Following the rule to maximize headroom first, **plant_b** is selected (50 MW > 35 MW).
+
+3. **Handover Required**: Yes, since current lead (plant_a) differs from selected lead (plant_b).
+
+4. **Lead Headroom**: 50 MW for plant_b.
+
+The submission has been written to `<sandbox_a1>/submission.json`.

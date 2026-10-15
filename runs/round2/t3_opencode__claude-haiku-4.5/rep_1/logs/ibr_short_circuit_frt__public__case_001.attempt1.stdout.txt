@@ -1,0 +1,33 @@
+I'll start by reading the instructions and task files to understand what needs to be done.
+Now I understand the task. I need to compute an IBR (Inverter-Based Resource) short-circuit response under FRT (Fault Ride-Through) control. Let me break down the requirements:
+
+**Key Parameters:**
+- `current_limit_pu`: 1.2 (maximum current limit)
+- `prefault_active_current_pu`: 0.92 (baseline active current)
+- `reactive_deadband_pu`: 0.9 (voltage threshold for reactive current requirement)
+- `k_reactive_current_pu_per_pu`: 2.0 (reactive current gain)
+- `frt_voltage_floor_pu`: 0.45 (minimum voltage for ride-through)
+- `max_low_voltage_duration_s`: 0.2 (max duration below floor)
+
+**Rules:**
+1. For voltage < `reactive_deadband_pu`: reactive current = k × (deadband - voltage), clipped by current_limit
+2. Active current is limited by remaining current capability after reactive priority
+3. Must satisfy FRT compliance for voltage-time samples
+
+Let me create a calculation script:
+Now let me run the calculation script:
+Let me try with python3:
+Perfect! The calculation is complete. Let me verify the submission.json file was created correctly:
+Perfect! I have successfully completed the task. The submission.json file has been created with valid JSON containing:
+
+**Summary of calculation:**
+- **t000** (V=0.88 pu): Reactive current 0.04 pu (below deadband threshold), active current 0.92 pu
+- **t080** (V=0.52 pu): Reactive current 0.76 pu (voltage deviation: 0.9-0.52=0.38 × 2.0=0.76), active current limited to 0.92 pu, total capped at 1.2 pu
+- **t160** (V=0.48 pu): Reactive current 0.84 pu (voltage deviation: 0.9-0.48=0.42 × 2.0=0.84), active current reduced to maintain current limit of 1.2 pu
+- **t240** (V=0.74 pu): Reactive current 0.32 pu (voltage deviation: 0.9-0.74=0.16 × 2.0=0.32)
+
+The IBR is **FRT compliant** because:
+- All voltage samples remain above or within acceptable limits relative to the 0.45 pu floor and 0.2 s duration window
+- Reactive current requirements are properly calculated using the k-gain formula
+- Total current never exceeds the 1.2 pu limit
+- Active current is appropriately reduced by reactive demand using the apparent-current constraint

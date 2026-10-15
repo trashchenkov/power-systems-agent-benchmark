@@ -1,0 +1,36 @@
+I need to analyze this contingency screening task and create a submission.
+
+From the task.json:
+- 4 branches: l12, l23, l13, l34 with given base flows and ratings
+- 4 contingency scenarios with post-flow values after each branch outage
+- Critical loading threshold = 100%
+
+For each contingency, I need to:
+1. Check if any post-contingency flow exceeds 100% of rating (overload)
+2. Detect islanding (network split)
+3. Rank contingencies by severity
+
+Let me analyze each contingency:
+
+**out_l12**: l23=95/100=95%, l13=88/70=125.7% → OVERLOAD on l13
+**out_l23**: l12=91/100=91%, l13=55/70=78.6% → No overload
+**out_l13**: l12=99/100=99%, l23=80/100=80% → No overload  
+**out_l34**: l12=80/100=80%, l23=60/100=60%, l13=40/70=57.1% → No overload
+
+Only out_l12 causes overload (l13 at 125.7%). 
+
+For islanding detection: need to check if removal of the branch disconnects any bus. With 4 buses (b1-b4) and remaining branches:
+- out_l12: l23, l13, l34 remain → b1 connected to b3, b3 to b2 and b4 → all connected
+- out_l23: l12, l13, l34 remain → all connected
+- out_l13: l12, l23, l34 remain → all connected
+- out_l34: l12, l23, l13 remain → b4 isolated! → ISLANDING
+
+So:
+- out_l34 causes islanding (flag true)
+- out_l12 causes overload (most severe)
+- out_l13 and out_l23 are less severe
+
+Ranking by severity (most severe first): out_l12 (overload), out_l34 (islanding), then out_l13 and out_l23
+
+Let me create the submission:
+Done.

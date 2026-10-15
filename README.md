@@ -73,7 +73,8 @@ tests/
 literature/
   v0_executable_benchmark_slice.*.md
 runs/
-  canonical_round1/                  # curated aggregate reference summaries
+  round2/                            # repeated-run evaluation reported in the paper
+  canonical_round1/                  # earlier single-run reference round
   extra_models/                      # curated aggregate model-harness summaries
   generator_validation/              # hidden-generator validation summary
 ```
@@ -142,7 +143,28 @@ preserved (`*.attemptN.stdout.txt`), every result row records
 (`feasible_count`, `mean_score`) metrics plus `infra_unresolved_count`, so
 provider reliability never masquerades as agent capability.
 
-## Reference evaluation
+## Repeated-run evaluation (paper results)
+
+The results reported in the paper come from repeated runs (`runs/round2/REPORT.md`):
+five runs per configuration on 41 public and 41 freshly generated held-out instances,
+and three runs per cell for the model-harness grid. Means ± run-to-run SD:
+
+| agent (model) | public mean | held-out mean |
+|---|---|---|
+| codex (gpt-5.5 medium) | 0.968 ± 0.011 | 0.972 ± 0.000 |
+| cursor (composer-2.5) | 0.995 ± 0.011 | 0.969 ± 0.021 |
+| opencode (deepseek-v4-flash) | 0.878 ± 0.039 | 0.902 ± 0.048 |
+
+Run `k` independent repeats of any command-line agent and summarize them with:
+
+```bash
+python scripts/run_repeated_agent.py --packets runs/agent_packets/public_v0 \
+  --out runs/repeats/<agent-name> --agent-name <agent-name> \
+  --command '<agent command>' --repeats 5 --parallel 3 --timeout-s 600 --max-attempts 2
+python scripts/summarize_repeats.py runs/repeats/<agent-name> --k 1 3 5
+```
+
+## Earlier single-run reference round
 
 The canonical reference round — three command-line agents, one public and one freshly
 generated held-out case per family, optimum-normalized scoring — is summarized in

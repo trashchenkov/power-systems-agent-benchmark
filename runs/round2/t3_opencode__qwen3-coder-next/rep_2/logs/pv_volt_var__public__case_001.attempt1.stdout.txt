@@ -1,0 +1,17 @@
+I need to design a Volt-VAR curve for PV inverter reactive power control. Let me analyze the task:
+
+- **Objective**: Choose a monotonic Volt-VAR curve that keeps corrected voltage within [0.95, 1.05] p.u. across 3 timesteps
+- **Volt-VAR curve**: Points with strictly increasing voltage_pu and monotonic non-increasing q_fraction
+- **Reactive power**: q_command = q_fraction * inverter_kva, must satisfy |q_command| ≤ sqrt(kVA² - kW²)
+- ** corrected voltage**: base_voltage + voltage_sensitivity * q_command
+
+Let me compute the reactive power limits and required corrections:
+The t_low and t_high timesteps cannot be fully corrected to 1.0 p.u. with the available reactive power. Let me compute what corrections are maximally achievable and find the best Volt-VAR curve:
+The best achievable corrected voltages are:
+- t_low: 0.996 p.u. (still within [0.95, 1.05])
+- t_nom: 1.0 p.u. (within range)
+- t_high: 1.014 p.u. (within range)
+
+All are within limits! Now let me design the Volt-VAR curve:
+The t_high timestep exceeds capability because the interpolated q_fraction (-0.95) gives -95 kvar but the max is 80 kvar. Let me adjust the curve to be more conservative:
+All constraints are satisfied. The Volt-VAR curve with points `[(0.92, 0.8), (0.98, 0.0), (1.04, -0.8), (1.08, -0.8)]` is valid. Let me write the submission:

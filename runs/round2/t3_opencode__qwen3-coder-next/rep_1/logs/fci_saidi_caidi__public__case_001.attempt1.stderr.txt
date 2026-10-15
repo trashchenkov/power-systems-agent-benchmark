@@ -1,0 +1,125 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+
+# Given data
+total_customers = 320
+minimum_restoration_minutes = 25
+deployed_fci_locations = ["n2", "n4"]
+
+fault_sections = {
+    "s12": {"annual_fault_rate": 0.18, "customers_interrupted": 120, "base_restoration_minutes": 95},
+    "s23": {"annual_fault_rate": 0.14, "customers_interrupted": 70, "base_restoration_minutes": 80},
+    "s24": {"annual_fault_rate": 0.12, "customers_interrupted": 90, "base_restoration_minutes": 85},
+    "s45": {"annual_fault_rate": 0.09, "customers_interrupted": 40, "base_restoration_minutes": 75}
+}
+
+fci_locations = {
+    "n2": {"restoration_time_reduction_min": {"s12": 6, "s23": 28, "s24": 26, "s45": 23}},
+    "n4": {"restoration_time_reduction_min": {"s12": 0, "s23": 4, "s24": 18, "s45": 34}}
+}
+
+# For each section, find the best reduction from deployed FCI locations
+section_best_reduction = {}
+for section in fault_sections.keys():
+    reductions = []
+    for loc in deployed_fci_locations:
+        reductions.append(fci_locations[loc]["restoration_time_reduction_min"][section])
+    section_best_reduction[section] = max(reductions)
+
+# Calculate baseline customer-minutes/year
+baseline_customer_minutes = 0.0
+customer_interruptions = 0.0
+
+for section_id, section_data in fault_sections.items():
+    annual_fault_rate = section_data["annual_fault_rate"]
+    customers_interrupted = section_data["customers_interrupted"]
+    baseline_customer_minutes += annual_fault_rate * customers_interrupted * section_data["base_restoration_minutes"]
+    customer_interruptions += annual_fault_rate * customers_interrupted
+
+# Baseline indices
+baseline_saidi = baseline_customer_minutes / total_customers
+baseline_caidi = baseline_customer_minutes / customer_interruptions
+baseline_saifi = customer_interruptions / total_customers
+
+# Calculate with FCI - apply best reduction bounded by minimum_restoration_minutes
+with_fci_customer_minutes = 0.0
+
+for section_id, section_data in fault_sections.items():
+    annual_fault_rate = section_data["annual_fault_rate"]
+    customers_interrupted = section_data["customers_interrupted"]
+    
+    best_reduction = section_best_reduction[section_id]
+    new_restoration_minutes = max(minimum_restoration_minutes, section_data["base_restoration_minutes"] - best_reduction)
+    
+    with_fci_customer_minutes += annual_fault_rate * customers_interrupted * new_restoration_minutes
+
+with_fci_saidi = with_fci_customer_minutes / total_customers
+with_fci_caidi = with_fci_customer_minutes / customer_interruptions
+with_fci_saifi = customer_interruptions / total_customers
+
+# Improvements
+saidi_improvement = baseline_saidi - with_fci_saidi
+caidi_improvement = baseline_caidi - with_fci_caidi
+
+print("Baseline:")
+print(f"  SAIDI: {baseline_saidi:.6f} min/customer/year")
+print(f"  CAIDI: {baseline_caidi:.6f} min/interruption")
+print(f"  SAIFI: {baseline_saifi:.6f} interruptions/customer/year")
+
+print("\nWith FCI:")
+print(f"  SAIDI: {with_fci_saidi:.6f} min/customer/year")
+print(f"  CAIDI: {with_fci_caidi:.6f} min/interruption")
+print(f"  SAIFI: {with_fci_saifi:.6f} interruptions/customer/year")
+
+print(f"\nImprovements:")
+print(f"  SAIDI: {saidi_improvement:.6f} min/customer/year")
+print(f"  CAIDI: {caidi_improvement:.6f} min/interruption")
+
+# Create submission
+submission = {
+    "baseline": {
+        "saidi_min_per_customer_year": round(baseline_saidi, 6),
+        "caidi_min_per_interruption": round(baseline_caidi, 6),
+        "saifi_interruptions_per_customer_year": round(baseline_saifi, 6)
+    },
+    "with_fci": {
+        "saidi_min_per_customer_year": round(with_fci_saidi, 6),
+        "caidi_min_per_interruption": round(with_fci_caidi, 6),
+        "saifi_interruptions_per_customer_year": round(with_fci_saifi, 6)
+    },
+    "saidi_improvement_min_per_customer_year": round(saidi_improvement, 6),
+    "caidi_improvement_min_per_interruption": round(caidi_improvement, 6)
+}
+
+with open("<sandbox_a1>/submission.json", "w") as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+EOF
+
+Baseline:
+  SAIDI: 12.575000 min/customer/year
+  CAIDI: 87.860262 min/interruption
+  SAIFI: 0.143125 interruptions/customer/year
+
+With FCI:
+  SAIDI: 10.052500 min/customer/year
+  CAIDI: 70.235808 min/interruption
+  SAIFI: 0.143125 interruptions/customer/year
+
+Improvements:
+  SAIDI: 2.522500 min/customer/year
+  CAIDI: 17.624454 min/interruption
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

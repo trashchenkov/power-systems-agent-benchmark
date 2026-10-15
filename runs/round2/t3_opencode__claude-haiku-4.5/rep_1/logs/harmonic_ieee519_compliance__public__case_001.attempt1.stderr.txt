@@ -1,0 +1,155 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Load the task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+# Extract data from harmonic_case (under public_inputs)
+harmonic_case = task['public_inputs']['harmonic_case']
+
+# Extract relevant fields
+pcc = harmonic_case['pcc']
+measured = harmonic_case['measured']
+current_limit_table = harmonic_case['current_limit_table']
+voltage_limits = harmonic_case['voltage_limits']
+
+# Step 1: Compute Isc/IL ratio
+IL = pcc['max_demand_current_a']  # 480 A
+Isc_ka = pcc['short_circuit_current_ka']  # 12 kA
+Isc_a = Isc_ka * 1000  # Convert to amperes
+isc_over_il = Isc_a / IL
+print(f"Isc = {Isc_a} A, IL = {IL} A")
+print(f"Isc/IL ratio = {isc_over_il}")
+
+# Step 2: Select the limit row (first row where isc_il_below exceeds the ratio)
+selected_row = None
+for row in current_limit_table:
+    if row['isc_il_below'] > isc_over_il:
+        selected_row = row
+        break
+
+if selected_row is None:
+    selected_row = current_limit_table[-1]  # Use last row if none exceed
+
+print(f"Selected row (isc_il_below): {selected_row['isc_il_below']}")
+
+# Step 3: Calculate TDD
+# TDD = sqrt(sum of squared harmonic currents) / IL * 100
+harmonic_currents = measured['harmonic_currents_a']
+sum_of_squares = sum(i**2 for i in harmonic_currents.values())
+tdd_pct = math.sqrt(sum_of_squares) / IL * 100
+print(f"Sum of squares: {sum_of_squares}")
+print(f"TDD = {tdd_pct:.4f}%")
+
+# Step 4: Calculate voltage THD
+# Voltage THD = sqrt(sum of squared voltage harmonics) / 100
+voltage_harmonics = measured['harmonic_voltages_pct']
+sum_of_voltage_squares = sum(v**2 for v in voltage_harmonics.values())
+voltage_thd_pct = math.sqrt(sum_of_voltage_squares)
+print(f"Voltage THD = {voltage_thd_pct:.4f}%")
+
+# Step 5: Check for violations
+
+current_violations = []
+
+# Check TDD violation
+if tdd_pct > selected_row['tdd_pct']:
+    current_violations.append('tdd')
+    print(f"TDD violation: {tdd_pct:.4f}% > {selected_row['tdd_pct']}%")
+
+# Check individual current harmonics
+harmonic_limits = {
+    'below_11': (selected_row['h_below_11_pct'], lambda h: h < 11),
+    '11_to_17': (selected_row['h_11_to_17_pct'], lambda h: 11 <= h < 17),
+    '17_to_23': (selected_row['h_17_to_23_pct'], lambda h: 17 <= h < 23),
+    '23_to_35': (selected_row['h_23_to_35_pct'], lambda h: 23 <= h < 35),
+    '35_up': (selected_row['h_35_up_pct'], lambda h: h >= 35),
+}
+
+for harmonic_order, current_a in harmonic_currents.items():
+    harmonic_num = int(harmonic_order)
+    current_pct = current_a / IL * 100
+    
+    # Find which limit range this harmonic belongs to
+    for range_name, (limit_pct, condition) in harmonic_limits.items():
+        if condition(harmonic_num):
+            if current_pct > limit_pct:
+                current_violations.append(harmonic_order)
+                print(f"Harmonic {harmonic_order} violation: {current_pct:.4f}% > {limit_pct}%")
+            break
+
+# Check voltage violations
+voltage_violations = []
+
+# Check voltage THD violation
+if voltage_thd_pct > voltage_limits['thd_pct']:
+    voltage_violations.append('thd')
+    print(f"Voltage THD violation: {voltage_thd_pct:.4f}% > {voltage_limits['thd_pct']}%")
+
+# Check individual voltage harmonics
+for harmonic_order, voltage_pct in voltage_harmonics.items():
+    if voltage_pct > voltage_limits['individual_pct']:
+        voltage_violations.append(harmonic_order)
+        print(f"Voltage harmonic {harmonic_order} violation: {voltage_pct}% > {voltage_limits['individual_pct']}%")
+
+# Step 6: Determine compliance
+compliant = len(current_violations) == 0 and len(voltage_violations) == 0
+
+print(f"\nCurrent violations: {current_violations}")
+print(f"Voltage violations: {voltage_violations}")
+print(f"Compliant: {compliant}")
+
+# Create submission
+submission = {
+    "isc_over_il": isc_over_il,
+    "tdd_pct": round(tdd_pct, 2),
+    "current_violations": current_violations,
+    "voltage_thd_pct": round(voltage_thd_pct, 2),
+    "voltage_violations": voltage_violations,
+    "compliant": compliant
+}
+
+print(f"\nSubmission: {json.dumps(submission, indent=2)}")
+
+# Write to file
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+EOF
+
+Isc = 12000.0 A, IL = 480.0 A
+Isc/IL ratio = 25.0
+Selected row (isc_il_below): 50
+Sum of squares: 1302.25
+TDD = 7.5181%
+Voltage THD = 2.7893%
+
+Current violations: []
+Voltage violations: []
+Compliant: True
+
+Submission: {
+  "isc_over_il": 25.0,
+  "tdd_pct": 7.52,
+  "current_violations": [],
+  "voltage_thd_pct": 2.79,
+  "voltage_violations": [],
+  "compliant": true
+}
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

@@ -1,0 +1,135 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · moonshotai/kimi-k2.5
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import math
+
+# Protected line L_AB
+L_AB = 80.0  # km
+r1_AB = 0.08  # ohm/km
+x1_AB = 0.32  # ohm/km
+
+R_AB = L_AB * r1_AB
+X_AB = L_AB * x1_AB
+Z_AB = math.sqrt(R_AB**2 + X_AB**2)
+print(f"Protected line L_AB: R={R_AB:.4f} Ω, X={X_AB:.4f} Ω, |Z|={Z_AB:.4f} Ω")
+
+# Remote backup line L_BC (shortest)
+L_BC = 45.0
+r1_BC = 0.085
+x1_BC = 0.34
+R_BC = L_BC * r1_BC
+X_BC = L_BC * x1_BC
+Z_BC = math.sqrt(R_BC**2 + X_BC**2)
+print(f"Remote backup L_BC: R={R_BC:.4f} Ω, X={X_BC:.4f} Ω, |Z|={Z_BC:.4f} Ω")
+
+# Remote backup line L_BD (longest)
+L_BD = 60.0
+r1_BD = 0.075
+x1_BD = 0.30
+R_BD = L_BD * r1_BD
+X_BD = L_BD * x1_BD
+Z_BD = math.sqrt(R_BD**2 + X_BD**2)
+print(f"Remote backup L_BD: R={R_BD:.4f} Ω, X={X_BD:.4f} Ω, |Z|={Z_BD:.4f} Ω")
+
+# Load impedance
+V_kv = 110.0
+S_mva = 80.0
+pf = 0.9
+
+# Load impedance magnitude
+Z_load = (V_kv ** 2) / S_mva
+print(f"\nLoad impedance magnitude: |Z_load| = {Z_load:.4f} Ω")
+
+# Load encroachment limit
+load_encroachment_fraction = 0.8
+Z_load_encroachment = load_encroachment_fraction * Z_load
+print(f"Load encroachment limit (0.8 * Z_load): {Z_load_encroachment:.4f} Ω")
+
+# Zone 1: underreach protected line with fraction [0.78, 0.85]
+zone1_min = Z_AB * 0.78
+zone1_max = Z_AB * 0.85
+print(f"\nZone 1 range: [{zone1_min:.4f}, {zone1_max:.4f}] Ω")
+zone1 = Z_AB * 0.80  # Use 0.80
+print(f"Zone 1 selected: {zone1:.4f} Ω")
+
+# Zone 2: cover protected line + fraction [0.45, 0.65] of shortest backup (L_BC)
+zone2_backup_min = Z_BC * 0.45
+zone2_backup_max = Z_BC * 0.65
+zone2_min = Z_AB + zone2_backup_min
+zone2_max = Z_AB + zone2_backup_max
+print(f"\nZone 2 range: [{zone2_min:.4f}, {zone2_max:.4f}] Ω")
+zone2 = Z_AB + Z_BC * 0.50  # Use 0.50
+print(f"Zone 2 selected: {zone2:.4f} Ω")
+
+# Zone 3: cover protected line + fraction [1.1, 1.35] of longest backup (L_BD)
+zone3_backup_min = Z_BD * 1.1
+zone3_backup_max = Z_BD * 1.35
+zone3_min = Z_AB + zone3_backup_min
+zone3_max = Z_AB + zone3_backup_max
+print(f"\nZone 3 range: [{zone3_min:.4f}, {zone3_max:.4f}] Ω")
+zone3 = Z_AB + Z_BD * 1.20  # Use 1.20
+print(f"Zone 3 selected: {zone3:.4f} Ω")
+
+# Check load encroachment
+print(f"\nZone 3 ({zone3:.4f} Ω) < Load encroachment ({Z_load_encroachment:.4f} Ω)? {zone3 < Z_load_encroachment}")
+
+# Check strictly increasing
+print(f"\nStrictly increasing check: {zone1:.4f} < {zone2:.4f} < {zone3:.4f} = {zone1 < zone2 < zone3}")
+
+# Delays
+zone1_delay = 0.05  # max 0.05
+zone2_delay = 0.4   # in [0.3, 0.6]
+zone3_delay = 1.0   # in [0.85, 1.3]
+
+print(f"\nDelays: Z1={zone1_delay}s, Z2={zone2_delay}s, Z3={zone3_delay}s")
+print(f"Non-decreasing delays: {zone1_delay} <= {zone2_delay} <= {zone3_delay} = {zone1_delay <= zone2_delay <= zone3_delay}")
+
+print("\n--- FINAL VALUES ---")
+print(f'"zone1_ohm": {zone1:.6f},')
+print(f'"zone2_ohm": {zone2:.6f},')
+print(f'"zone3_ohm": {zone3:.6f},')
+print(f'"zone1_delay_s": {zone1_delay},')
+print(f'"zone2_delay_s": {zone2_delay},')
+print(f'"zone3_delay_s": {zone3_delay}')
+EOF
+Protected line L_AB: R=6.4000 Ω, X=25.6000 Ω, |Z|=26.3879 Ω
+Remote backup L_BC: R=3.8250 Ω, X=15.3000 Ω, |Z|=15.7709 Ω
+Remote backup L_BD: R=4.5000 Ω, X=18.0000 Ω, |Z|=18.5540 Ω
+
+Load impedance magnitude: |Z_load| = 151.2500 Ω
+Load encroachment limit (0.8 * Z_load): 121.0000 Ω
+
+Zone 1 range: [20.5825, 22.4297] Ω
+Zone 1 selected: 21.1103 Ω
+
+Zone 2 range: [33.4848, 36.6389] Ω
+Zone 2 selected: 34.2733 Ω
+
+Zone 3 range: [46.7972, 51.4357] Ω
+Zone 3 selected: 48.6526 Ω
+
+Zone 3 (48.6526 Ω) < Load encroachment (121.0000 Ω)? True
+
+Strictly increasing check: 21.1103 < 34.2733 < 48.6526 = True
+
+Delays: Z1=0.05s, Z2=0.4s, Z3=1.0s
+Non-decreasing delays: 0.05 <= 0.4 <= 1.0 = True
+
+--- FINAL VALUES ---
+"zone1_ohm": 21.110301,
+"zone2_ohm": 34.273316,
+"zone3_ohm": 48.652646,
+"zone1_delay_s": 0.05,
+"zone2_delay_s": 0.4,
+"zone3_delay_s": 1.0
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

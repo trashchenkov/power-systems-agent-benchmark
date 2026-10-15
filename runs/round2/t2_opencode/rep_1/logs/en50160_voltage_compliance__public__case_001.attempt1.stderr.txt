@@ -1,0 +1,48 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mls -la <sandbox_a1>/ && ls -la <packets>/en50160_voltage_compliance__public__case_001/ 2>&1 | head
+total 392
+drwx------    2 root root   4096 Oct 14 17:17 .
+drwxrwxrwt 2058 root root 380928 Oct 14 17:18 ..
+-rw-r--r--    1 root root   1181 Oct 14 17:17 instructions.md
+-rw-r--r--    1 root root   5293 Oct 14 17:17 task.json
+total 28
+drwxr-xr-x  2 root root  4096 Oct 14 17:07 .
+drwxr-xr-x 84 root root 12288 Oct 14 17:07 ..
+-rw-r--r--  1 root root  1181 Oct 14 17:07 instructions.md
+-rw-r--r--  1 root root  5293 Oct 14 17:07 task.json
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import json
+d=json.load(open('task.json'))
+vs=[(x['timestamp'],x['voltage_pu']) for x in d['voltage_compliance_case']['voltage_series_pu']]
+lo,hi=0.90,1.10
+alo,ahi=0.85,1.10
+within=sum(1 for _,v in vs if lo<=v<=hi)
+below=[t for t,v in vs if v<lo]
+above=[t for t,v in vs if v>hi]
+pct=within/len(vs)*100
+mn=min(v for _,v in vs); mx=max(v for _,v in vs)
+print(within,pct,mn,mx,below,above)
+for tap in d['voltage_compliance_case']['mitigation_options']['candidate_tap_changes_pu']:
+    c=sum(1 for _,v in vs if lo<=v+tap<=hi)
+    viol=[t for t,v in vs if not (alo<=v+tap<=ahi)]
+    print(tap,c,viol)
+EOF
+8 80.0 0.889 1.066 ['t03', 't04'] []
+-0.025 6 []
+0.0 8 []
+0.025 10 []
+0.05 9 ['t09']
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/en50160_voltage_compliance__public__case_001/*); auto-rejecting

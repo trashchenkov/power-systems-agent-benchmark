@@ -1,0 +1,440 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13ac5-a8e7-7933-8686-6953b5ecd058
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task inputs first, then write only `submission.json` once the required behavior is clear.
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+exec
+/bin/bash -lc "pwd && rg --files -g 'instructions.md' -g 'task.json' -g '"'!submission.json'"'" in <sandbox_a1>
+exec
+/bin/bash -lc "sed -n '1,260p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "corrective_transmission_switching_public_001",
+  "family": "corrective_transmission_switching",
+  "candidate_id": "GAP-TASK-002",
+  "substrate": "dc_power_flow_corrective_switching_public_instance",
+  "objective": "Choose a corrective transmission switching action that removes post-contingency overloads without islanding the network.",
+  "bilingual": {
+    "title": {
+      "en": "GAP-TASK-002 — Corrective transmission switching after contingency",
+      "ru": "GAP-TASK-002 — Корректирующие переключения в передающей сети после аварии"
+    },
+    "objective": {
+      "en": "Given a post-contingency DC network state with one overloaded branch, choose at most one candidate switching action that restores all emergency line limits without islanding.",
+      "ru": "Для послеаварийного состояния DC-сети с перегруженной ветвью выберите не более одного допустимого переключения, которое устранит все перегрузки без разделения сети на острова."
+    },
+    "instructions": {
+      "en": "Use the bus injections, branch reactances/ratings, and candidate switches to run or implement a DC power-flow check. Return close_branches/open_branches in submission.json; reported flows are optional and are independently recomputed by the evaluator.",
+      "ru": "Используйте узловые инъекции, реактивности/допустимые токи ветвей и список допустимых переключений, чтобы выполнить DC power-flow. Верните close_branches/open_branches в submission.json; указанные потоки необязательны и пересчитываются оценивателем независимо."
+    }
+  },
+  "subdomain": "transmission operations, contingency & congestion management",
+  "public_inputs": {
+    "contingency": "Branch l13 is out of service after the initiating contingency. Branch l14 is an available normally-open tie that may be closed as a corrective action.",
+    "dc_power_flow_model": "Lossless DC model. Bus p_mw injections sum to zero. Branch flow is (theta_from - theta_to) / x_pu. Slack bus is the first bus listed.",
+    "candidate_switches": [
+      {
+        "branch_id": "l14",
+        "action": "close",
+        "cost": 1.0
+      },
+      {
+        "branch_id": "l23",
+        "action": "open",
+        "cost": 1.0
+      },
+      {
+        "branch_id": "l24",
+        "action": "open",
+        "cost": 1.0
+      },
+      {
+        "branch_id": "l34",
+        "action": "open",
+        "cost": 1.0
+      }
+    ]
+  },
+  "buses": [
+    {
+      "id": "b1",
+      "p_mw": 100.0
+    },
+    {
+      "id": "b2",
+      "p_mw": -20.0
+    },
+    {
+      "id": "b3",
+      "p_mw": -50.0
+    },
+    {
+      "id": "b4",
+      "p_mw": -30.0
+    }
+  ],
+  "branches": [
+    {
+      "id": "l12",
+      "from_bus": "b1",
+      "to_bus": "b2",
+      "x_pu": 0.1,
+      "rating_mw": 75.0,
+      "closed": true,
+      "role": "post-contingency active branch"
+    },
+    {
+      "id": "l13",
+      "from_bus": "b1",
+      "to_bus": "b3",
+      "x_pu": 0.1,
+      "rating_mw": 40.0,
+      "closed": false,
+      "role": "initiating contingency outage; not a corrective candidate"
+    },
+    {
+      "id": "l23",
+      "from_bus": "b2",
+      "to_bus": "b3",
+      "x_pu": 0.1,
+      "rating_mw": 50.0,
+      "closed": true,
+      "role": "post-contingency active branch"
+    },
+    {
+      "id": "l24",
+      "from_bus": "b2",
+      "to_bus": "b4",
+      "x_pu": 0.1,
+      "rating_mw": 50.0,
+      "closed": true,
+      "role": "post-contingency active branch"
+    },
+    {
+      "id": "l34",
+      "from_bus": "b3",
+      "to_bus": "b4",
+      "x_pu": 0.1,
+      "rating_mw": 50.0,
+      "closed": true,
+      "role": "post-contingency active branch"
+    },
+    {
+      "id": "l14",
+      "from_bus": "b1",
+      "to_bus": "b4",
+      "x_pu": 0.3,
+      "rating_mw": 50.0,
+      "closed": false,
+      "role": "normally-open corrective tie"
+    }
+  ],
+  "candidate_switches": [
+    {
+      "branch_id": "l14",
+      "action": "close",
+      "cost": 1.0
+    },
+    {
+      "branch_id": "l23",
+      "action": "open",
+      "cost": 1.0
+    },
+    {
+      "branch_id": "l24",
+      "action": "open",
+      "cost": 1.0
+    },
+    {
+      "branch_id": "l34",
+      "action": "open",
+      "cost": 1.0
+    }
+  ],
+  "switching_budget": 1,
+  "flow_tolerance_pct": 1e-06,
+  "submission_schema": {
+    "close_branches": "list[str] of candidate branch ids to close",
+    "open_branches": "list[str] of candidate branch ids to open",
+    "reported_flows_mw": "optional object branch_id -> MW, diagnostic only",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Use at most one corrective switching action.",
+    "Only branches listed in candidate_switches may be opened or closed.",
+    "The resulting topology must remain connected; islanding is infeasible.",
+    "Every active branch loading must be at or below 100% of its emergency rating under the DC power-flow model."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "True when the switching action satisfies budget, candidate, connectivity, and line-loading constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized score based on feasibility, switch count, and max loading versus enumerated feasible actions."
+    },
+    {
+      "name": "max_loading_pct",
+      "direction": "minimize",
+      "description": "Maximum absolute branch loading after the submitted switching action."
+    },
+    {
+      "name": "switch_count",
+      "direction": "minimize",
+      "description": "Number of corrective switching actions used."
+    }
+  ],
+  "source_evidence": [
+    "primary:arXiv:2001.00597v1",
+    "source_status:external_arxiv_not_in_private_pdf_corpus",
+    "source_card:docs/source_cards/corrective_transmission_switching.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "Security Constrained Unit Commitment with Corrective Transmission Switching",
+      "locator": "arXiv:2001.00597v1",
+      "confidence": "medium",
+      "notes": "Primary source for post-contingency corrective switching; public case is a compact DC-flow adaptation, not the full SCUC MILP."
+    }
+  ]
+}
+
+ succeeded in 116ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/corrective_transmission_switching__public__case_001/submission.json`
+
+ succeeded in 123ms:
+<sandbox_a1>
+task.json
+instructions.md
+
+codex
+The task is a small DC power-flow enumeration: I’m checking the base case and each one-switch candidate for connectivity and line ratings so the submitted action is defensible.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import numpy as np
+buses=[('b1',100),('b2',-20),('b3',-50),('b4',-30)]
+branches=[('l12','b1','b2',0.1,75,True),('l13','b1','b3',0.1,40,False),('l23','b2','b3',0.1,50,True),('l24','b2','b4',0.1,50,True),('l34','b3','b4',0.1,50,True),('l14','b1','b4',0.3,50,False)]
+cands=[('none',None,None),('close','l14','close'),('open','l23','open'),('open','l24','open'),('open','l34','open')]
+idx={b:i for i,(b,p) in enumerate(buses)}
+p=np.array([p for b,p in buses],float)
+
+def connected(active):
+    adj={b:set() for b,p in buses}
+    for id,f,t,x,r,c in active:
+        adj[f].add(t); adj[t].add(f)
+    seen=set(); stack=[buses[0][0]]
+    while stack:
+        u=stack.pop()
+        if u in seen: continue
+        seen.add(u); stack += list(adj[u]-seen)
+    return len(seen)==len(buses)
+
+def solve(state):
+    active=[]
+    for br in branches:
+        id=br[0]; closed=br[5]
+        if state and state[1]==id:
+            closed = state[2]=='close'
+        if closed: active.append(br)
+    if not connected(active): return None, False
+    n=len(buses); B=np.zeros((n,n))
+    for id,f,t,x,r,c in active:
+        i,j=idx[f],idx[t]; b=1/x
+        B[i,i]+=b; B[j,j]+=b; B[i,j]-=b; B[j,i]-=b
+    # slack b1 theta 0, solve reduced B theta = p
+    red=slice(1,n)
+    theta=np.zeros(n)
+    theta[1:]=np.linalg.solve(B[1:,1:], p[1:])
+    flows={}
+    loads={}
+    for id,f,t,x,r,c in active:
+        fl=(theta[idx[f]]-theta[idx[t]])/x
+        flows[id]=fl; loads[id]=abs(fl)/r*100
+    return (theta,flows,loads), True
+
+for name,bid,act in cands:
+    res, ok=solve((name,bid,act) if bid else None)
+    print('\\n', name,bid,act,'connected',ok)
+    if res:
+        th,fl,ld=res
+        print('theta',dict(zip([b for b,p in buses], th)))
+        print('flows', {k: round(v,6) for k,v in fl.items()})
+        print('loads', {k: round(v,3) for k,v in ld.items()}, 'max', max(ld.values()))
+PY" in <sandbox_a1>
+ succeeded in 176ms:
+
+ none None None connected True
+theta {'b1': 0.0, 'b2': -9.999999999999996, 'b3': -14.333333333333325, 'b4': -13.666666666666659}
+flows {'l12': 100.0, 'l23': 43.333333, 'l24': 36.666667, 'l34': -6.666667}
+loads {'l12': 133.333, 'l23': 86.667, 'l24': 73.333, 'l34': 13.333} max 133.3333333333333
+
+ close l14 close connected True
+theta {'b1': 0.0, 'b2': -7.071428571428569, 'b3': -10.428571428571425, 'b4': -8.785714285714283}
+flows {'l12': 70.714286, 'l23': 33.571429, 'l24': 17.142857, 'l34': -16.428571, 'l14': 29.285714}
+loads {'l12': 94.286, 'l23': 67.143, 'l24': 34.286, 'l34': 32.857, 'l14': 58.571} max 94.28571428571426
+
+ open l23 open connected True
+theta {'b1': 0.0, 'b2': -10.0, 'b3': -23.0, 'b4': -18.0}
+flows {'l12': 100.0, 'l24': 80.0, 'l34': -50.0}
+loads {'l12': 133.333, 'l24': 160.0, 'l34': 100.0} max 160.0
+
+ open l24 open connected True
+theta {'b1': 0.0, 'b2': -10.0, 'b3': -18.0, 'b4': -20.999999999999996}
+flows {'l12': 100.0, 'l23': 80.0, 'l34': 30.0}
+loads {'l12': 133.333, 'l23': 160.0, 'l34': 60.0} max 160.0
+
+ open l34 open connected True
+theta {'b1': 0.0, 'b2': -9.999999999999998, 'b3': -14.999999999999996, 'b4': -12.999999999999998}
+flows {'l12': 100.0, 'l23': 50.0, 'l24': 30.0}
+loads {'l12': 133.333, 'l23': 100.0, 'l24': 60.0} max 133.33333333333331
+
+codex
+Closing `l14` is the only candidate that clears the overloaded `l12` while keeping the network connected; opening any listed active branch leaves overloads. I’m writing the final JSON now.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json b/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b01f21befababb9d72d9c4fdc71d01619ad6015
+--- /dev/null
++++ b/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json
+@@ -0,0 +1,14 @@
++{
++  "close_branches": [
++    "l14"
++  ],
++  "open_branches": [],
++  "reported_flows_mw": {
++    "l12": 70.7142857142857,
++    "l23": 33.57142857142856,
++    "l24": 17.142857142857142,
++    "l34": -16.428571428571416,
++    "l14": 29.285714285714278
++  },
++  "rationale": "Closing candidate tie l14 keeps the network connected and reduces all active branch loadings below their emergency ratings under the DC power-flow model."
++}
+
+diff --git a/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json b/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b01f21befababb9d72d9c4fdc71d01619ad6015
+--- /dev/null
++++ b/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json
+@@ -0,0 +1,14 @@
++{
++  "close_branches": [
++    "l14"
++  ],
++  "open_branches": [],
++  "reported_flows_mw": {
++    "l12": 70.7142857142857,
++    "l23": 33.57142857142856,
++    "l24": 17.142857142857142,
++    "l34": -16.428571428571416,
++    "l14": 29.285714285714278
++  },
++  "rationale": "Closing candidate tie l14 keeps the network connected and reduces all active branch loadings below their emergency ratings under the DC power-flow model."
++}
+
+codex
+`submission.json` is in place; I’m doing a quick JSON parse and content check without touching any other files.
+exec
+/bin/bash -lc 'python3 -m json.tool submission.json' in <sandbox_a1>
+ succeeded in 0ms:
+{
+    "close_branches": [
+        "l14"
+    ],
+    "open_branches": [],
+    "reported_flows_mw": {
+        "l12": 70.7142857142857,
+        "l23": 33.57142857142856,
+        "l24": 17.142857142857142,
+        "l34": -16.428571428571416,
+        "l14": 29.285714285714278
+    },
+    "rationale": "Closing candidate tie l14 keeps the network connected and reduces all active branch loadings below their emergency ratings under the DC power-flow model."
+}
+
+diff --git a/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json b/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b01f21befababb9d72d9c4fdc71d01619ad6015
+--- /dev/null
++++ b/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json
+@@ -0,0 +1,14 @@
++{
++  "close_branches": [
++    "l14"
++  ],
++  "open_branches": [],
++  "reported_flows_mw": {
++    "l12": 70.7142857142857,
++    "l23": 33.57142857142856,
++    "l24": 17.142857142857142,
++    "l34": -16.428571428571416,
++    "l14": 29.285714285714278
++  },
++  "rationale": "Closing candidate tie l14 keeps the network connected and reduces all active branch loadings below their emergency ratings under the DC power-flow model."
++}
+
+codex
+{"close_branches":["l14"],"open_branches":[],"reported_flows_mw":{"l12":70.7142857142857,"l23":33.57142857142856,"l24":17.142857142857142,"l34":-16.428571428571416,"l14":29.285714285714278},"rationale":"Closing candidate tie l14 keeps the network connected and reduces all active branch loadings below their emergency ratings under the DC power-flow model."}
+diff --git a/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json b/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b01f21befababb9d72d9c4fdc71d01619ad6015
+--- /dev/null
++++ b/bench_corrective_transmission_switching__public__case_001_a1_mstcfkw2/submission.json
+@@ -0,0 +1,14 @@
++{
++  "close_branches": [
++    "l14"
++  ],
++  "open_branches": [],
++  "reported_flows_mw": {
++    "l12": 70.7142857142857,
++    "l23": 33.57142857142856,
++    "l24": 17.142857142857142,
++    "l34": -16.428571428571416,
++    "l14": 29.285714285714278
++  },
++  "rationale": "Closing candidate tie l14 keeps the network connected and reduces all active branch loadings below their emergency ratings under the DC power-flow model."
++}
+
+tokens used
+46,890

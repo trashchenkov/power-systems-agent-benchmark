@@ -1,0 +1,33 @@
+I'll solve this power system dispatch problem with uncertainty.
+
+**Key understanding:**
+- For each time period, find the maximum net load (load - renewable) across all scenarios
+- Add reserve requirement (8 MW) to get the minimum total generation needed
+- Schedule generators (g1: $18/MWh, g2: $36/MWh) to minimize cost while meeting the worst-case demand + reserve
+- g1 is cheaper, so prioritize g1 within its limits
+
+Let me calculate the worst-case net load for each time period:
+
+- t1: max(78-18, 84-12, 80-8) = max(60, 72, 72) = 72 MW
+- t2: max(85-24, 92-16, 87-10) = max(61, 76, 77) = 77 MW  
+- t3: max(75-20, 82-13, 77-9) = max(55, 69, 68) = 69 MW
+
+With reserve = 8 MW, need generation >= worst_net_load + 8:
+- t1: need >= 80 MW
+- t2: need >= 85 MW
+- t3: need >= 77 MW
+
+Generator limits: g1 ∈ [10,70], g2 ∈ [5,45], g1 cheaper ($18 vs $36)
+
+Optimal dispatch (use g1 max first, then g2):
+- t1: g1=70, g2=10 → 80 MW, cost = 70*18 + 10*36 = 1260 + 360 = 1620
+- t2: g1=70, g2=15 → 85 MW, cost = 70*18 + 15*36 = 1260 + 540 = 1800
+- t3: g1=70, g2=7 → 77 MW, cost = 70*18 + 7*36 = 1260 + 252 = 1512
+
+Total cost = 1620 + 1800 + 1512 = 4932
+
+Worst-case margin = generation - worst_net_load (should equal reserve = 8):
+- t1: 80 - 72 = 8
+- t2: 85 - 77 = 8
+- t3: 77 - 69 = 8
+Done.

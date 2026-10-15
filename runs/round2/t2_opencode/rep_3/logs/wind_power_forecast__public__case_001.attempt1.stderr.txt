@@ -1,0 +1,61 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+case_turbine={'count':8,'rated_mw_each':2.5}
+cap=case_turbine['count']*case_turbine['rated_mw_each']
+ref=1.225
+pc={'cut_in_m_s':3.0,'rated_m_s':12.0,'cut_out_m_s':25.0}
+def est(v,rho):
+    vc=v*(rho/ref)**(1/3)
+    if vc<pc['cut_in_m_s'] or vc>=pc['cut_out_m_s']:
+        return 0.0
+    if vc>=pc['rated_m_s']:
+        return cap
+    return cap*((vc-pc['cut_in_m_s'])/(pc['rated_m_s']-pc['cut_in_m_s']))**3
+hist=[(6.2,1.21,0.98),(7.4,1.2,2.35),(8.6,1.19,4.55),(9.1,1.18,5.85)]
+errs=[a-est(v,r) for v,r,a in hist]
+bias=sum(errs)/len(errs)
+print('cap',cap,'bias',bias,errs)
+wf=[('t01',8.0,1.19),('t02',9.5,1.18),('t03',11.0,1.17),('t04',13.2,1.16)]
+out={}
+for t,v,r in wf:
+    p=max(0,min(cap,est(v,r)+bias))
+    out[t]=round(p,6)
+print(out)
+print('total',sum(out.values())*1.0)
+print('peak',max(out,key=out.get))
+"
+cap 20.0 bias 0.024846536731473745 [0.10226109346128442, 0.09282828534856824, -0.05768595818782529, -0.03801727369613239]
+{'t01': 3.298337, 't02': 7.15695, 't03': 13.209278, 't04': 20.0}
+total 43.664564999999996
+peak t04
+[0m
+[0m$ [0mpython3 -c "
+cap=20.0;ref=1.225
+def est(v,rho):
+    vc=v*(rho/ref)**(1/3)
+    if vc<3.0 or vc>=25.0: return 0.0
+    if vc>=12.0: return cap
+    return cap*((vc-3.0)/9.0)**3
+hist=[(6.2,1.21,0.98),(7.4,1.2,2.35),(8.6,1.19,4.55),(9.1,1.18,5.85)]
+bias=sum(a-est(v,r) for v,r,a in hist)/4
+for t,v,r in [('t01',8.0,1.19),('t02',9.5,1.18),('t03',11.0,1.17),('t04',13.2,1.16)]:
+    print(t, max(0.0,min(cap,est(v,r)+bias)))
+print('bias',bias)
+"
+t01 3.298336934933479
+t02 7.156949895528355
+t03 13.209277743846675
+t04 20.0
+bias 0.024846536731473745
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

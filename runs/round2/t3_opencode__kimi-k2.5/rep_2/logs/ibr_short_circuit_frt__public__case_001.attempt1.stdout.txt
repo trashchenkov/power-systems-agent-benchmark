@@ -1,0 +1,28 @@
+Now I understand the task. I need to compute the current-limited IBR (Inverter-Based Resource) short-circuit response under FRT (Fault Ride-Through) control based on the given parameters.
+
+Let me analyze the constraints:
+1. **Current limit**: 1.2 pu (apparent current limit)
+2. **Prefault active current**: 0.92 pu
+3. **Reactive deadband**: 0.9 pu (voltage threshold below which reactive current is required)
+4. **k_reactive_current**: 2.0 pu/pu (reactive current gain)
+5. **FRT voltage floor**: 0.45 pu
+6. **Max low voltage duration**: 0.2 s
+
+For each sample, I need to calculate:
+- `iq_pu` (reactive current): When voltage < deadband (0.9), iq = k * (deadband - voltage), clipped to current_limit
+- `id_pu` (active current): Limited by remaining capability after reactive current
+- `total_current_pu`: sqrt(id² + iq²)
+
+Let me compute this:
+The submission.json file has been created successfully with valid JSON containing:
+
+- **current_profile_pu**: Computed id_pu (active current), iq_pu (reactive current), and total_current_pu for each sample
+- **min_reactive_current_pu**: 0.04 (minimum iq_pu across all samples)
+- **max_total_current_pu**: 1.2 (maximum current magnitude, at t160 where the limit is reached)
+- **frt_compliant**: true (all voltages are above the 0.45 pu floor)
+- **rationale**: Brief explanation of the computation
+
+The computation follows the hard constraints:
+1. Reactive current is calculated as k*(deadband-voltage) when voltage < 0.9, clipped to the 1.2 pu current limit
+2. Active current is limited by remaining apparent-current capability after reactive priority
+3. FRT compliance is verified as all voltage samples are above the 0.45 pu floor

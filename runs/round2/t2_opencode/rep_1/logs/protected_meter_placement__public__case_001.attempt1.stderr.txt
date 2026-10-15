@@ -1,0 +1,33 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "
+import json,itertools
+t=json.load(open('task.json'))
+mp=t['public_inputs']['meter_placement_case']
+c=mp['candidate_meters']; av=mp['attack_vectors']; b=mp['budget']
+best=None
+for combo in itertools.combinations(c,b):
+    s=set(combo); cov=[a['attack_id'] for a in av if s&set(a['detectable_by'])]
+    w=sum(a['risk_weight'] for a in av if s&set(a['detectable_by']))
+    print(combo,w,cov)
+"
+('m12', 'm23') 20 ['a_theta2', 'a_load_shift', 'a_stealth_pair']
+('m12', 'm31') 22 ['a_theta2', 'a_theta3', 'a_stealth_pair']
+('m12', 'pinj2') 20 ['a_theta2', 'a_load_shift', 'a_stealth_pair']
+('m23', 'm31') 19 ['a_theta3', 'a_load_shift', 'a_stealth_pair']
+('m23', 'pinj2') 11 ['a_theta2', 'a_load_shift']
+('m31', 'pinj2') 26 ['a_theta2', 'a_theta3', 'a_load_shift', 'a_stealth_pair']
+[0m

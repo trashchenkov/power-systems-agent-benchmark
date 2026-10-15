@@ -1,0 +1,65 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+from itertools import combinations
+
+budget = 2
+fault_sections = {
+    "s12": {"annual_fault_rate": 0.18, "customers_interrupted": 120},
+    "s23": {"annual_fault_rate": 0.14, "customers_interrupted": 70},
+    "s24": {"annual_fault_rate": 0.12, "customers_interrupted": 90},
+    "s45": {"annual_fault_rate": 0.09, "customers_interrupted": 40}
+}
+
+candidate_locations = {
+    "n1": {"section_gain_minutes": {"s12": 18, "s23": 16, "s24": 15, "s45": 14}},
+    "n2": {"section_gain_minutes": {"s12": 6, "s23": 28, "s24": 26, "s45": 23}},
+    "n4": {"section_gain_minutes": {"s12": 0, "s23": 4, "s24": 18, "s45": 34}},
+    "n3": {"section_gain_minutes": {"s12": 0, "s23": 24, "s24": 2, "s45": 2}}
+}
+
+def calc_score(locations):
+    total = 0
+    section_reductions = {}
+    for section_id, section_data in fault_sections.items():
+        gains = [candidate_locations[loc]["section_gain_minutes"][section_id] for loc in locations]
+        max_gain = max(gains)
+        section_reductions[section_id] = max_gain
+        total += section_data["annual_fault_rate"] * section_data["customers_interrupted"] * max_gain
+    return total, section_reductions
+
+best_score = -1
+best_combo = None
+best_reductions = None
+
+for combo in combinations(candidate_locations.keys(), budget):
+    score, reductions = calc_score(combo)
+    print(f"{combo}: score={score:.2f}, reductions={reductions}")
+    if score > best_score:
+        best_score = score
+        best_combo = combo
+        best_reductions = reductions
+
+print(f"\nBest: {best_combo} with score={best_score:.2f}")
+print(f"Reductions: {best_reductions}")
+EOF
+('n1', 'n2'): score=1026.80, reductions={'s12': 18, 's23': 28, 's24': 26, 's45': 23}
+('n1', 'n4'): score=862.40, reductions={'s12': 18, 's23': 16, 's24': 18, 's45': 34}
+('n1', 'n3'): score=836.40, reductions={'s12': 18, 's23': 24, 's24': 15, 's45': 14}
+('n2', 'n4'): score=807.20, reductions={'s12': 6, 's23': 28, 's24': 26, 's45': 34}
+('n2', 'n3'): score=767.60, reductions={'s12': 6, 's23': 28, 's24': 26, 's45': 23}
+('n4', 'n3'): score=552.00, reductions={'s12': 0, 's23': 24, 's24': 18, 's45': 34}
+
+Best: ('n1', 'n2') with score=1026.80
+Reductions: {'s12': 18, 's23': 28, 's24': 26, 's45': 23}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

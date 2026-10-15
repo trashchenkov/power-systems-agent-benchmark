@@ -1,0 +1,42 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import json
+case=json.load(open('task.json'))['fci_reliability_case']
+tc=case['total_customers']; floor=case['minimum_restoration_minutes']
+dep=case['deployed_fci_locations']; fci=case['fci_locations']
+cm=0; ci=0
+for s,d in case['fault_sections'].items():
+    cm+=d['annual_fault_rate']*d['customers_interrupted']*d['base_restoration_minutes']
+    ci+=d['annual_fault_rate']*d['customers_interrupted']
+cm2=0
+for s,d in case['fault_sections'].items():
+    r=max(fci[n]['restoration_time_reduction_min'][s] for n in dep)
+    dur=max(d['base_restoration_minutes']-r, floor)
+    cm2+=d['annual_fault_rate']*d['customers_interrupted']*dur
+saidi=cm/tc; caidi=cm/ci; saifi=ci/tc
+saidi2=cm2/tc; caidi2=cm2/ci
+print(cm,ci,cm2)
+print(saidi, caidi, saifi)
+print(saidi2, caidi2, saifi2)
+print(saidi-saidi2, caidi-caidi2)
+EOF
+4024.0 45.8 3216.7999999999997
+12.575 87.86026200873363 0.143125
+Traceback (most recent call last):
+  File "<stdin>", line 18, in <module>
+NameError: name 'saifi2' is not defined. Did you mean: 'saifi'?
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "import json;json.load(open('<sandbox_a1>/submission.json'));print('valid')"
+valid
+[0m

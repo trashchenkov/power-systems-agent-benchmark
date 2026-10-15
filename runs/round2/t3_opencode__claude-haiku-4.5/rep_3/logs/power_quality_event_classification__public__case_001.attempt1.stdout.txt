@@ -1,0 +1,44 @@
+I'll start by reading the instructions and task files to understand what needs to be done.
+Now I understand the task. I need to:
+
+1. Analyze the RMS trace data
+2. Classify voltage quality events based on the classification rules
+3. Identify the contiguous non-normal interval
+4. Report the event class, timestamps, duration, min voltage, and max current
+
+Let me analyze the data:
+
+**Classification rules:**
+- **Interruption**: voltage_pu ≤ 0.1
+- **Sag**: 0.1 < voltage_pu < 0.9
+- **Swell**: voltage_pu ≥ 1.1
+- **Normal**: 0.9 ≤ voltage_pu < 1.1
+
+**RMS trace analysis:**
+- t=0ms: 1.01 pu (normal)
+- t=20ms: 1.0 pu (normal)
+- t=40ms: 0.86 pu (sag - between 0.1 and 0.9)
+- t=60ms: 0.62 pu (sag)
+- t=80ms: 0.58 pu (sag)
+- t=100ms: 0.74 pu (sag)
+- t=120ms: 0.91 pu (normal - between 0.9 and 1.1)
+- t=140ms: 0.99 pu (normal)
+
+The non-normal interval starts at t=40ms and ends at t=100ms (contiguous sag event).
+
+**Calculations:**
+- Event class: `voltage_sag`
+- Start timestamp: 40 ms
+- End timestamp: 100 ms
+- Duration: (100 - 40) / 1000 + 0.020 = 0.06 + 0.020 = 0.080 seconds (inclusive of one sample interval)
+- Min voltage: 0.58 pu (at t=80ms)
+- Max current: 1.44 pu (at t=80ms)
+
+Now I'll create the submission.json file:
+Done. The `submission.json` file has been created with the power quality event classification results:
+
+- **Event class**: voltage_sag (voltage remained between 0.1 and 0.9 pu)
+- **Interval**: 40–100 ms (contiguous sag period)
+- **Duration**: 0.08 seconds (inclusive of sample interval)
+- **Min voltage**: 0.58 pu (at 80ms)
+- **Max current**: 1.44 pu (during event)

@@ -1,0 +1,224 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13af2-29f1-7ed1-9944-66c5ac1f290c
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task files first, then compute the required answer and write only `submission.json`.
+exec
+/bin/bash -lc "pwd && rg --files -g 'instructions.md' -g 'task.json' -g 'submission.json'" in <sandbox_a1>
+ succeeded in 0ms:
+<sandbox_a1>
+task.json
+instructions.md
+
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/overcurrent_protection__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,240p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "overcurrent_protection_public_001",
+  "family": "overcurrent_protection",
+  "substrate": "deterministic_relay_coordination_rule_engine",
+  "objective": "Choose line overcurrent relay pickup current and time delay that avoid load operation, operate for minimum internal faults, and coordinate with downstream protection.",
+  "public_inputs": {
+    "max_load_current_a": 420.0,
+    "min_fault_current_a": 1800.0,
+    "ct_ratio_primary_per_secondary": 100.0,
+    "load_margin_multiplier": 1.2,
+    "min_sensitivity_factor": 1.5,
+    "downstream_time_delay_s": 0.35,
+    "selectivity_margin_s": 0.3,
+    "relay_secondary_pickup_range_a": {
+      "min": 1.0,
+      "max": 10.0
+    },
+    "time_delay_range_s": {
+      "min": 0.0,
+      "max": 2.0
+    }
+  },
+  "max_load_current_a": 420.0,
+  "min_fault_current_a": 1800.0,
+  "ct_ratio_primary_per_secondary": 100.0,
+  "load_margin_multiplier": 1.2,
+  "min_sensitivity_factor": 1.5,
+  "downstream_time_delay_s": 0.35,
+  "selectivity_margin_s": 0.3,
+  "relay_secondary_pickup_range_a": {
+    "min": 1.0,
+    "max": 10.0
+  },
+  "time_delay_range_s": {
+    "min": 0.0,
+    "max": 2.0
+  },
+  "submission_schema": {
+    "pickup_current_a": "primary pickup current in amperes",
+    "time_delay_s": "intentional time delay in seconds",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Pickup current must be at least max_load_current_a multiplied by load_margin_multiplier.",
+    "Minimum-fault sensitivity factor min_fault_current_a / pickup_current_a must be at least min_sensitivity_factor.",
+    "Time delay must be at least downstream_time_delay_s plus selectivity_margin_s.",
+    "Secondary relay pickup and time delay must stay within published device ranges."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether pickup, sensitivity, selectivity, and relay range constraints are all satisfied."
+    },
+    {
+      "name": "sensitivity_factor",
+      "direction": "maximize",
+      "description": "Minimum internal fault current divided by pickup current."
+    },
+    {
+      "name": "secondary_pickup_a",
+      "direction": "target",
+      "description": "Relay secondary pickup after CT conversion."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 minus scaled slack penalties if feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:Horowitz & Phadke, Power System Relaying (4th ed., Wiley, 2014): overcurrent coordination",
+    "source_card:docs/source_cards/overcurrent_protection.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "Horowitz, S. H.; Phadke, A. G. Power System Relaying. 4th ed., Wiley, 2014",
+      "locator": "Overcurrent protection: pickup current and time-grading/selectivity",
+      "confidence": "medium",
+      "notes": "Standard overcurrent pickup and time-coordination procedure; the executable case is a compact instance. Equivalent worked examples appear in standard relay-protection texts."
+    }
+  ],
+  "candidate_id": "REL-TASK-036",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-036 — Line overcurrent protection settings",
+      "ru": "REL-TASK-036 — Уставки максимальной токовой защиты линии"
+    },
+    "objective": {
+      "en": "Choose line overcurrent relay pickup current and time delay that avoid load operation, operate for minimum internal faults, and coordinate with downstream protection.",
+      "ru": "Уставки максимальной токовой защиты линии"
+    },
+    "instructions": {
+      "en": "Solve the executable power-systems task and submit JSON matching the published schema.",
+      "ru": "Решите исполняемую задачу по электроэнергетике и отправьте JSON согласно опубликованной схеме."
+    }
+  }
+}
+
+codex
+The constraints reduce to pickup between 504 A and 1000 A, with the best sensitivity at the lowest feasible pickup. The minimum coordinated delay is 0.65 s.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json b/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f43965f10301c43892d3383235e7b62b1ca2845
+--- /dev/null
++++ b/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json
+@@ -0,0 +1,5 @@
++{
++  "pickup_current_a": 504.0,
++  "time_delay_s": 0.65,
++  "rationale": "Pickup is set to 420 A * 1.2 = 504 A to avoid maximum load while maximizing sensitivity. Sensitivity is 1800 / 504 = 3.571, meeting the 1.5 minimum, and secondary pickup is 5.04 A within the 1-10 A relay range. Time delay is set to 0.35 s + 0.30 s = 0.65 s, within the 0-2 s device range."
++}
+
+diff --git a/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json b/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f43965f10301c43892d3383235e7b62b1ca2845
+--- /dev/null
++++ b/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json
+@@ -0,0 +1,5 @@
++{
++  "pickup_current_a": 504.0,
++  "time_delay_s": 0.65,
++  "rationale": "Pickup is set to 420 A * 1.2 = 504 A to avoid maximum load while maximizing sensitivity. Sensitivity is 1800 / 504 = 3.571, meeting the 1.5 minimum, and secondary pickup is 5.04 A within the 1-10 A relay range. Time delay is set to 0.35 s + 0.30 s = 0.65 s, within the 0-2 s device range."
++}
+
+codex
+I wrote `submission.json`; now I’m validating that it is well-formed JSON and contains only schema fields.
+exec
+/bin/bash -lc 'jq . submission.json' in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "pickup_current_a": 504.0,
+  "time_delay_s": 0.65,
+  "rationale": "Pickup is set to 420 A * 1.2 = 504 A to avoid maximum load while maximizing sensitivity. Sensitivity is 1800 / 504 = 3.571, meeting the 1.5 minimum, and secondary pickup is 5.04 A within the 1-10 A relay range. Time delay is set to 0.35 s + 0.30 s = 0.65 s, within the 0-2 s device range."
+}
+
+exec
+/bin/bash -lc 'git status --short' in <sandbox_a1>
+ exited 128 in 0ms:
+fatal: not a git repository (or any of the parent directories): .git
+
+diff --git a/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json b/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f43965f10301c43892d3383235e7b62b1ca2845
+--- /dev/null
++++ b/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json
+@@ -0,0 +1,5 @@
++{
++  "pickup_current_a": 504.0,
++  "time_delay_s": 0.65,
++  "rationale": "Pickup is set to 420 A * 1.2 = 504 A to avoid maximum load while maximizing sensitivity. Sensitivity is 1800 / 504 = 3.571, meeting the 1.5 minimum, and secondary pickup is 5.04 A within the 1-10 A relay range. Time delay is set to 0.35 s + 0.30 s = 0.65 s, within the 0-2 s device range."
++}
+
+codex
+Done
+diff --git a/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json b/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f43965f10301c43892d3383235e7b62b1ca2845
+--- /dev/null
++++ b/bench_overcurrent_protection__public__case_001_a1_fbkixffk/submission.json
+@@ -0,0 +1,5 @@
++{
++  "pickup_current_a": 504.0,
++  "time_delay_s": 0.65,
++  "rationale": "Pickup is set to 420 A * 1.2 = 504 A to avoid maximum load while maximizing sensitivity. Sensitivity is 1800 / 504 = 3.571, meeting the 1.5 minimum, and secondary pickup is 5.04 A within the 1-10 A relay range. Time delay is set to 0.35 s + 0.30 s = 0.65 s, within the 0-2 s device range."
++}
+
+tokens used
+6,132

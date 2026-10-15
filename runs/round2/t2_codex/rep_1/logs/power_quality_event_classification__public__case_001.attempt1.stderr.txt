@@ -1,0 +1,269 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13af1-723c-7201-9517-be03f8dee5d6
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task files first to pin down the required schema and evaluation target, then I’ll write only `submission.json`.
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/power_quality_event_classification__public__case_001/submission.json`
+
+exec
+/bin/bash -lc 'rg --files' in <sandbox_a1>
+ succeeded in 0ms:
+task.json
+instructions.md
+
+exec
+/bin/bash -lc "sed -n '1,240p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "power_quality_event_classification_public_001",
+  "family": "power_quality_event_classification",
+  "candidate_id": "GAP-TASK-008",
+  "substrate": "executable_rms_trace_power_quality_case",
+  "objective": "Classify a voltage-quality event from a short RMS voltage/current trace and identify its time interval.",
+  "bilingual": {
+    "title": {
+      "en": "GAP-TASK-008 — Power-quality event classification from RMS traces",
+      "ru": "GAP-TASK-008 — Классификация события качества электроэнергии по ряду среднеквадратичных значений"
+    },
+    "objective": {
+      "en": "Classify a voltage sag, swell, interruption, or normal condition from an RMS trace.",
+      "ru": "Классифицировать провал напряжения, перенапряжение, прерывание или нормальный режим по ряду среднеквадратичных значений."
+    },
+    "instructions": {
+      "en": "Use the RMS trace and classification thresholds in power_quality_case. Find the contiguous non-normal interval, classify it by voltage threshold, and report event class, start/end timestamps, duration, minimum voltage, and maximum current.",
+      "ru": "Используйте ряд среднеквадратичных значений и пороги классификации в power_quality_case. Найдите непрерывный ненормальный интервал, классифицируйте его по уровню напряжения и укажите класс события, начало/конец, длительность, минимальное напряжение и максимальный ток."
+    }
+  },
+  "subdomain": "power quality & standards",
+  "public_inputs": {
+    "candidate_id": "GAP-TASK-008",
+    "subdomain": "power quality & standards",
+    "input_fields": [
+      "power_quality_case.rms_trace",
+      "power_quality_case.classification_rules"
+    ]
+  },
+  "power_quality_case": {
+    "nominal_voltage_pu": 1.0,
+    "sample_interval_ms": 20,
+    "classification_rules": {
+      "interruption_upper_pu": 0.1,
+      "sag_lower_pu": 0.1,
+      "sag_upper_pu": 0.9,
+      "swell_lower_pu": 1.1
+    },
+    "rms_trace": [
+      {
+        "timestamp_ms": 0,
+        "voltage_pu": 1.01,
+        "current_pu": 0.72
+      },
+      {
+        "timestamp_ms": 20,
+        "voltage_pu": 1.0,
+        "current_pu": 0.73
+      },
+      {
+        "timestamp_ms": 40,
+        "voltage_pu": 0.86,
+        "current_pu": 0.96
+      },
+      {
+        "timestamp_ms": 60,
+        "voltage_pu": 0.62,
+        "current_pu": 1.38
+      },
+      {
+        "timestamp_ms": 80,
+        "voltage_pu": 0.58,
+        "current_pu": 1.44
+      },
+      {
+        "timestamp_ms": 100,
+        "voltage_pu": 0.74,
+        "current_pu": 1.18
+      },
+      {
+        "timestamp_ms": 120,
+        "voltage_pu": 0.91,
+        "current_pu": 0.88
+      },
+      {
+        "timestamp_ms": 140,
+        "voltage_pu": 0.99,
+        "current_pu": 0.74
+      }
+    ]
+  },
+  "submission_schema": {
+    "event_class": "one of normal, voltage_sag, voltage_swell, interruption",
+    "start_timestamp_ms": "first timestamp of the non-normal interval",
+    "end_timestamp_ms": "last timestamp of the non-normal interval",
+    "duration_s": "event duration in seconds, inclusive of one sample interval",
+    "min_voltage_pu": "minimum voltage in the trace",
+    "max_current_pu": "maximum current in the trace",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "The event class and start/end timestamps must match the threshold-based classification.",
+    "Numeric summary fields must match within 0.001.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted classification satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:IEC 61000-4-30 measurement classes; sag/swell/interruption RMS thresholds",
+    "source_status:standard_not_redistributed",
+    "source_card:docs/source_cards/power_quality_event_classification.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "IEC 61000-4-30 / power-quality RMS event classification practice",
+      "locator": "IEC 61000-4-30 measurement classes; sag/swell/interruption RMS thresholds",
+      "confidence": "high",
+      "notes": "The executable case directly applies standard power-quality event threshold categories to RMS windows."
+    }
+  ]
+}
+
+codex
+The abnormal contiguous interval is the four samples at 40, 60, 80, and 100 ms: voltages are between 0.1 and 0.9 pu, so the class is `voltage_sag`. Duration is inclusive of one 20 ms sample interval, so `(100 - 40 + 20) / 1000 = 0.08` seconds.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..303dffd749d12b12fbbbe6736bd7367413129771
+--- /dev/null
++++ b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+@@ -0,0 +1,8 @@
++{
++  "event_class": "voltage_sag",
++  "start_timestamp_ms": 40,
++  "end_timestamp_ms": 100,
++  "duration_s": 0.08,
++  "min_voltage_pu": 0.58,
++  "max_current_pu": 1.44
++}
+
+diff --git a/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..303dffd749d12b12fbbbe6736bd7367413129771
+--- /dev/null
++++ b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+@@ -0,0 +1,8 @@
++{
++  "event_class": "voltage_sag",
++  "start_timestamp_ms": 40,
++  "end_timestamp_ms": 100,
++  "duration_s": 0.08,
++  "min_voltage_pu": 0.58,
++  "max_current_pu": 1.44
++}
+
+codex
+I’ll do a quick JSON parse check on `submission.json` and then stop as requested.
+exec
+/bin/bash -lc 'python -m json.tool submission.json >/dev/null' in <sandbox_a1>
+ exited 127 in 0ms:
+/bin/bash: line 1: python: command not found
+
+diff --git a/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..303dffd749d12b12fbbbe6736bd7367413129771
+--- /dev/null
++++ b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+@@ -0,0 +1,8 @@
++{
++  "event_class": "voltage_sag",
++  "start_timestamp_ms": 40,
++  "end_timestamp_ms": 100,
++  "duration_s": 0.08,
++  "min_voltage_pu": 0.58,
++  "max_current_pu": 1.44
++}
+
+codex
+`python` is not installed under that name in this environment, so I’m checking with `python3` instead.
+exec
+/bin/bash -lc 'python3 -m json.tool submission.json >/dev/null' in <sandbox_a1>
+diff --git a/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..303dffd749d12b12fbbbe6736bd7367413129771
+--- /dev/null
++++ b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+@@ -0,0 +1,8 @@
++{
++  "event_class": "voltage_sag",
++  "start_timestamp_ms": 40,
++  "end_timestamp_ms": 100,
++  "duration_s": 0.08,
++  "min_voltage_pu": 0.58,
++  "max_current_pu": 1.44
++}
+
+ succeeded in 105ms:
+codex
+Done.
+diff --git a/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..303dffd749d12b12fbbbe6736bd7367413129771
+--- /dev/null
++++ b/bench_power_quality_event_classification__public__case_001_a1_zwq23q3v/submission.json
+@@ -0,0 +1,8 @@
++{
++  "event_class": "voltage_sag",
++  "start_timestamp_ms": 40,
++  "end_timestamp_ms": 100,
++  "duration_s": 0.08,
++  "min_voltage_pu": 0.58,
++  "max_current_pu": 1.44
++}
+
+tokens used
+18,135

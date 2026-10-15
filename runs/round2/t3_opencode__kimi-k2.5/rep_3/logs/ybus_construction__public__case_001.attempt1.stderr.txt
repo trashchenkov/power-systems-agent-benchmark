@@ -1,0 +1,133 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · moonshotai/kimi-k2.5
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import numpy as np
+
+# Network data
+buses = ["bus_1", "bus_2", "bus_3"]
+branches = [
+    {"id": "l12", "from_bus": "bus_1", "to_bus": "bus_2", "r_pu": 0.02, "x_pu": 0.06, "b_pu": 0.03},
+    {"id": "l23", "from_bus": "bus_2", "to_bus": "bus_3", "r_pu": 0.025, "x_pu": 0.075, "b_pu": 0.02},
+    {"id": "l13", "from_bus": "bus_1", "to_bus": "bus_3", "r_pu": 0.01, "x_pu": 0.04, "b_pu": 0.01}
+]
+shunts = [
+    {"id": "sh3", "bus": "bus_3", "g_pu": 0.0, "b_pu": 0.04}
+]
+
+n = len(buses)
+bus_idx = {bus: i for i, bus in enumerate(buses)}
+
+# Initialize Ybus matrix (complex)
+Ybus = np.zeros((n, n), dtype=complex)
+
+# Process each branch
+for branch in branches:
+    i = bus_idx[branch["from_bus"]]
+    j = bus_idx[branch["to_bus"]]
+    r = branch["r_pu"]
+    x = branch["x_pu"]
+    b = branch["b_pu"]
+    
+    # Series admittance y = 1 / (r + jx)
+    z = complex(r, x)
+    y = 1 / z
+    
+    # Line charging: j*b/2 added to both diagonal entries
+    y_charging = complex(0, b / 2)
+    
+    # Add to diagonal entries (self admittance)
+    Ybus[i, i] += y + y_charging
+    Ybus[j, j] += y + y_charging
+    
+    # Add to off-diagonal entries (mutual admittance)
+    Ybus[i, j] -= y
+    Ybus[j, i] -= y
+
+# Process shunts (add to diagonal)
+for shunt in shunts:
+    i = bus_idx[shunt["bus"]]
+    g = shunt["g_pu"]
+    b = shunt["b_pu"]
+    Ybus[i, i] += complex(g, b)
+
+# Format output
+ybus_matrix = []
+for i in range(n):
+    row = []
+    for j in range(n):
+        row.append({"re": round(Ybus[i, j].real, 10), "im": round(Ybus[i, j].imag, 10)})
+    ybus_matrix.append(row)
+
+submission = {
+    "buses": buses,
+    "ybus": ybus_matrix
+}
+
+print(json.dumps(submission, indent=2))
+EOF
+{
+  "buses": [
+    "bus_1",
+    "bus_2",
+    "bus_3"
+  ],
+  "ybus": [
+    [
+      {
+        "re": 10.8823529412,
+        "im": -38.5094117647
+      },
+      {
+        "re": -5.0,
+        "im": 15.0
+      },
+      {
+        "re": -5.8823529412,
+        "im": 23.5294117647
+      }
+    ],
+    [
+      {
+        "re": -5.0,
+        "im": 15.0
+      },
+      {
+        "re": 9.0,
+        "im": -26.975
+      },
+      {
+        "re": -4.0,
+        "im": 12.0
+      }
+    ],
+    [
+      {
+        "re": -5.8823529412,
+        "im": 23.5294117647
+      },
+      {
+        "re": -4.0,
+        "im": 12.0
+      },
+      {
+        "re": 9.8823529412,
+        "im": -35.4744117647
+      }
+    ]
+  ]
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "import json; json.load(open('submission.json'))" && echo "Valid JSON"
+Valid JSON
+[0m

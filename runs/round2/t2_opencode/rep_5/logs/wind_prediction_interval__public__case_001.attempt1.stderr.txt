@@ -1,0 +1,168 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat << 'EOF' > /tmp/opencode/solve.py
+import json, math
+
+rho_ref=1.225
+count=8; rated_each=2.5
+cut_in=3.0; rated=12.0; cut_out=25.0
+
+def power(v,rho):
+    vc=v*(rho/rho_ref)**(1/3)
+    if vc<cut_in or vc>=cut_out: return 0.0
+    if vc>=rated: return count*rated_each
+    return count*rated_each*((vc-cut_in)/(rated-cut_in))**3
+
+def quant(x,q):
+    x=sorted(x); n=len(x); pos=q*(n-1)
+    lo=math.floor(pos); hi=math.ceil(pos)
+    if lo==hi: return x[lo]
+    return x[lo]+(x[hi]-x[lo])*(pos-lo)
+
+data=json.load(open('<sandbox_a1>/task.json'))
+case=data['wind_interval_case']
+res={}
+widths=[]
+for h in case['horizons']:
+    ps=[power(s['wind_speed_m_s'],s['air_density_kg_m3']) for s in h['scenarios']]
+    p10=quant(ps,0.10); p50=quant(ps,0.50); p90=quant(ps,0.90)
+    res[h['timestamp']]={'p10':round(p10,6),'p50':round(p50,6),'p90':round(p90,6)}
+    widths.append(p90-p10)
+    print(h['timestamp'],ps,p10,p50,p90)
+avg=sum(widths)/len(widths)
+print('avg',avg)
+out={'prediction_interval_mw_by_timestamp':res,'average_interval_width_mw':round(avg,6),'rationale':'Computed per instructions power curve and linear-interpolation quantiles.'}
+print(json.dumps(out,indent=2))
+json.dump(out,open('<sandbox_a1>/submission.json','w'),indent=2)
+EOF
+python3 /tmp/opencode/solve.py
+b values: [-8.0, -6.0, -4.0, -2.0, 0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0]
+total_diesel=114.5000 cost=11953.8000 bs=(-2.0, 8.0, 12.0) diesel=[40.5, 49.3, 24.7] soc_end=[29.4, 20.5111, 7.1778]
+total_diesel=114.5000 cost=11953.8000 bs=(-2.0, 10.0, 10.0) diesel=[40.5, 47.3, 26.7] soc_end=[29.4, 18.2889, 7.1778]
+total_diesel=114.5000 cost=11953.8000 bs=(-2.0, 12.0, 8.0) diesel=[40.5, 45.3, 28.7] soc_end=[29.4, 16.0667, 7.1778]
+total_diesel=114.5000 cost=11953.8000 bs=(0.0, 6.0, 12.0) diesel=[38.5, 51.3, 24.7] soc_end=[27.5, 20.8333, 7.5]
+total_diesel=114.5000 cost=11953.8000 bs=(0.0, 8.0, 10.0) diesel=[38.5, 49.3, 26.7] soc_end=[27.5, 18.6111, 7.5]
+total_diesel=114.5000 cost=11953.8000 bs=(0.0, 10.0, 8.0) diesel=[38.5, 47.3, 28.7] soc_end=[27.5, 16.3889, 7.5]
+total_diesel=114.5000 cost=11953.8000 bs=(0.0, 12.0, 6.0) diesel=[38.5, 45.3, 30.7] soc_end=[27.5, 14.1667, 7.5]
+total_diesel=114.5000 cost=11953.8000 bs=(2.0, 4.0, 12.0) diesel=[36.5, 53.3, 24.7] soc_end=[25.2778, 20.8333, 7.5]
+total_diesel=114.5000 cost=11953.8000 bs=(2.0, 6.0, 10.0) diesel=[36.5, 51.3, 26.7] soc_end=[25.2778, 18.6111, 7.5]
+total_diesel=114.5000 cost=11953.8000 bs=(2.0, 8.0, 8.0) diesel=[36.5, 49.3, 28.7] soc_end=[25.2778, 16.3889, 7.5]
+num feasible: 617
+Traceback (most recent call last):
+  File "/tmp/opencode/solve.py", line 1, in <module>
+    import json, math
+  File "/usr/lib/python3.12/json/__init__.py", line 106, in <module>
+    from .decoder import JSONDecoder, JSONDecodeError
+  File "/usr/lib/python3.12/json/decoder.py", line 3, in <module>
+    import re
+  File "/usr/lib/python3.12/re/__init__.py", line 141, in <module>
+    @enum.global_enum
+     ^^^^^^^^^^^^^^^^
+AttributeError: module 'enum' has no attribute 'global_enum'
+Error in sys.excepthook:
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 228, in partial_apport_excepthook
+    return apport_excepthook(binary, exc_type, exc_obj, exc_tb)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 56, in apport_excepthook
+    if not enabled():
+           ^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 24, in enabled
+    import re
+  File "/usr/lib/python3.12/re/__init__.py", line 141, in <module>
+    @enum.global_enum
+     ^^^^^^^^^^^^^^^^
+AttributeError: module 'enum' has no attribute 'global_enum'
+
+Original exception was:
+Traceback (most recent call last):
+  File "/tmp/opencode/solve.py", line 1, in <module>
+    import json, math
+  File "/usr/lib/python3.12/json/__init__.py", line 106, in <module>
+    from .decoder import JSONDecoder, JSONDecodeError
+  File "/usr/lib/python3.12/json/decoder.py", line 3, in <module>
+    import re
+  File "/usr/lib/python3.12/re/__init__.py", line 141, in <module>
+    @enum.global_enum
+     ^^^^^^^^^^^^^^^^
+AttributeError: module 'enum' has no attribute 'global_enum'
+[0m
+[0m$ [0mls -la /tmp/opencode/ <sandbox_a1>/
+<sandbox_a1>/:
+total 420
+drwx------    2 root root   4096 Oct 14 18:30 .
+drwxrwxrwt 2052 root root 409600 Oct 14 18:30 ..
+-rw-r--r--    1 root root   1179 Oct 14 18:30 instructions.md
+-rw-r--r--    1 root root   6523 Oct 14 18:30 task.json
+
+/tmp/opencode/:
+total 496
+drwxr-xr-x   10 root root   4096 Oct 14 18:30 .
+drwxrwxrwt 2052 root root 409600 Oct 14 18:30 ..
+-rw-r--r--    1 root root   1494 Oct 14 18:04 brute.py
+-rw-r--r--    1 root root   1499 Oct 14 17:50 calc.py
+-rw-r--r--    1 root root   1341 Oct 14 17:22 check.py
+-rw-r--r--    1 root root    485 Oct 14 15:47 chk.py
+drwxr-xr-x    2 root root   4096 Oct 14 18:30 clean
+-rw-r--r--    1 root root   1797 Oct 14 17:56 dc2.py
+-rw-r--r--    1 root root   1539 Oct 14 17:56 dc.py
+-rw-r--r--    1 root root    942 Oct 14 15:47 ed.py
+-rw-r--r--    1 root root   1198 Oct 14 18:14 enum.py
+drwxr-xr-x    2 root root   4096 Oct 14 17:36 mydisp
+-rw-r--r--    1 root root   1189 Oct 14 15:31 order.py
+drwxr-xr-x    2 root root   4096 Oct 14 18:14 __pycache__
+-rw-r--r--    1 root root   2013 Oct 14 17:55 solve2.py
+-rw-r--r--    1 root root   1301 Oct 14 18:30 solve.py
+-rw-r--r--    1 root root   1989 Oct 14 16:35 solve_vv.py
+-rw-r--r--    1 root root   1209 Oct 14 16:00 thermal_calc.py
+drwxr-xr-x    2 root root   4096 Oct 14 18:28 thermal_run
+-rw-r--r--    1 root root   1980 Oct 14 17:22 v2g.py
+drwxr-xr-x    2 root root   4096 Oct 14 16:03 w501
+drwxr-xr-x    2 root root   4096 Oct 14 16:03 w501fresh
+drwxr-xr-x    2 root root   4096 Oct 14 16:40 w501run
+drwxr-xr-x    2 root root   4096 Oct 14 16:44 work_rmd
+[0m
+[0m← [0mWrite _solve.py
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 _solve.py
+t01 [1.1319490644662875, 2.894053963619057, 4.074846224333149, 6.184223522850476, 9.196126380581811] 1.8367910241273955 4.074846224333149 7.991365237489277
+t02 [3.684721710490133, 6.806108003210549, 10.000752944051314, 13.028754830308976, 20.0] 4.9332762275782995 10.000752944051314 17.21150193212359
+t03 [0.41717835848117624, 0.8636666029418205, 1.6686720523096965, 3.8511008559572266, 5.601423602305175] 0.595773656265434 1.6686720523096965 4.901294503765996
+{
+  "prediction_interval_mw_by_timestamp": {
+    "t01": {
+      "p10": 1.836791,
+      "p50": 4.074846,
+      "p90": 7.991365
+    },
+    "t02": {
+      "p10": 4.933276,
+      "p50": 10.000753,
+      "p90": 17.211502
+    },
+    "t03": {
+      "p10": 0.595774,
+      "p50": 1.668672,
+      "p90": 4.901295
+    }
+  },
+  "average_interval_width_mw": 7.57944,
+  "rationale": "Power curve and linear-interpolation scenario quantiles per instructions."
+}
+[0m
+[0m$ [0mrm -f _solve.py && ls -a && python3 -c "import json;print(json.load(open('submission.json')))"
+.
+..
+instructions.md
+submission.json
+task.json
+{'prediction_interval_mw_by_timestamp': {'t01': {'p10': 1.836791, 'p50': 4.074846, 'p90': 7.991365}, 't02': {'p10': 4.933276, 'p50': 10.000753, 'p90': 17.211502}, 't03': {'p10': 0.595774, 'p50': 1.668672, 'p90': 4.901295}}, 'average_interval_width_mw': 7.57944, 'rationale': 'Power curve and linear-interpolation scenario quantiles per instructions.'}
+[0m

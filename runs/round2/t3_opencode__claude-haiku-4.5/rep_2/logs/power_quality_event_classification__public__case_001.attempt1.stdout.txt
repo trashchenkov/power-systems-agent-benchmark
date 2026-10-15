@@ -1,0 +1,32 @@
+I'll start by reading the instructions and task files to understand what needs to be done.
+Now I understand the task. I need to classify a power quality event based on the RMS trace provided. Let me analyze the data:
+
+**Given:**
+- Nominal voltage: 1.0 PU
+- Classification rules:
+  - Interruption: voltage ≤ 0.1 PU
+  - Sag: 0.1 < voltage < 0.9 PU
+  - Swell: voltage ≥ 1.1 PU
+  - Normal: 0.9 ≤ voltage < 1.1 PU
+
+**RMS trace analysis:**
+- t=0ms: 1.01V (normal)
+- t=20ms: 1.0V (normal)
+- t=40ms: 0.86V (sag - between 0.1 and 0.9)
+- t=60ms: 0.62V (sag)
+- t=80ms: 0.58V (sag) - minimum voltage = 0.58
+- t=100ms: 0.74V (sag)
+- t=120ms: 0.91V (sag - boundary, still < 0.9? No, 0.91 ≥ 0.9, so normal)
+- t=140ms: 0.99V (normal)
+
+So the non-normal interval starts at t=40ms and ends at t=100ms (the last sag reading).
+
+**Duration calculation:**
+- From 40ms to 100ms = 60ms = 0.06s
+- But the schema says "inclusive of one sample interval", so: (100-40)/1000 + 20/1000 = 0.06 + 0.02 = 0.08s
+
+**Other values:**
+- Min voltage: 0.58 (at t=80ms)
+- Max current: 1.44 (at t=80ms)
+
+Let me write the submission:

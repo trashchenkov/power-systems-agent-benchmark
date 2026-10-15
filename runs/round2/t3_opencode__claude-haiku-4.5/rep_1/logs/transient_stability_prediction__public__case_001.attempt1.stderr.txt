@@ -1,0 +1,152 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+inputs = task['public_inputs']['transient_stability_cases']
+cases = inputs['cases']
+
+# Constants
+angle_limit_deg = inputs['angle_limit_deg']
+voltage_floor_pu = inputs['voltage_floor_pu']
+min_damping_pct = inputs['min_damping_pct']
+
+case_results = {}
+stable_count = 0
+highest_risk_score = -1
+highest_risk_case_id = None
+
+# Process each case
+for case in cases:
+    case_id = case['case_id']
+    fault_clearing_time_s = case['fault_clearing_time_s']
+    estimated_cct_s = case['estimated_cct_s']
+    max_rotor_angle_deg = case['max_rotor_angle_deg']
+    min_voltage_pu = case['min_voltage_pu']
+    damping_ratio_pct = case['damping_ratio_pct']
+    
+    # Compute margins
+    angle_margin = angle_limit_deg - max_rotor_angle_deg
+    voltage_margin = min_voltage_pu - voltage_floor_pu
+    clearing_margin_s = estimated_cct_s - fault_clearing_time_s
+    damping_margin = damping_ratio_pct - min_damping_pct
+    
+    # Determine stability
+    is_stable = (angle_margin >= 0 and voltage_margin >= 0 and 
+                 clearing_margin_s >= 0 and damping_margin >= 0)
+    label = 'stable' if is_stable else 'unstable'
+    
+    if is_stable:
+        stable_count += 1
+    
+    # Compute risk score
+    risk_score = (max(0, -angle_margin/60) + 
+                  max(0, -voltage_margin/0.1) + 
+                  max(0, -clearing_margin_s/0.1) + 
+                  max(0, -damping_margin/5) + 
+                  max(0, 1 - clearing_margin_s/0.2)*0.1)
+    
+    # Round to 3 decimals
+    risk_score = round(risk_score, 3)
+    
+    # Store result
+    case_results[case_id] = {
+        'label': label,
+        'risk_score': risk_score,
+        'clearing_margin_s': clearing_margin_s
+    }
+    
+    # Track highest risk case
+    if risk_score > highest_risk_score or (risk_score == highest_risk_score and (highest_risk_case_id is None or case_id > highest_risk_case_id)):
+        highest_risk_score = risk_score
+        highest_risk_case_id = case_id
+    
+    print(f"{case_id}:")
+    print(f"  angle_margin: {angle_margin}")
+    print(f"  voltage_margin: {voltage_margin}")
+    print(f"  clearing_margin_s: {clearing_margin_s}")
+    print(f"  damping_margin: {damping_margin}")
+    print(f"  stable: {is_stable}")
+    print(f"  risk_score: {risk_score}")
+    print()
+
+# Prepare submission
+submission = {
+    'case_results': case_results,
+    'stable_case_count': stable_count,
+    'highest_risk_case': highest_risk_case_id
+}
+
+print("Submission:")
+print(json.dumps(submission, indent=2))
+
+# Write submission
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+EOF
+
+fault_a:
+  angle_margin: 38.0
+  voltage_margin: 0.06000000000000005
+  clearing_margin_s: 0.07
+  damping_margin: 2.0
+  stable: True
+  risk_score: 0.065
+
+fault_b:
+  angle_margin: -8.0
+  voltage_margin: -0.019999999999999907
+  clearing_margin_s: -0.01999999999999999
+  damping_margin: -0.7999999999999998
+  stable: False
+  risk_score: 0.803
+
+fault_c:
+  angle_margin: 9.0
+  voltage_margin: 0.020000000000000018
+  clearing_margin_s: 0.03
+  damping_margin: 0.3999999999999999
+  stable: True
+  risk_score: 0.085
+
+Submission:
+{
+  "case_results": {
+    "fault_a": {
+      "label": "stable",
+      "risk_score": 0.065,
+      "clearing_margin_s": 0.07
+    },
+    "fault_b": {
+      "label": "unstable",
+      "risk_score": 0.803,
+      "clearing_margin_s": -0.01999999999999999
+    },
+    "fault_c": {
+      "label": "stable",
+      "risk_score": 0.085,
+      "clearing_margin_s": 0.03
+    }
+  },
+  "stable_case_count": 2,
+  "highest_risk_case": "fault_b"
+}
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

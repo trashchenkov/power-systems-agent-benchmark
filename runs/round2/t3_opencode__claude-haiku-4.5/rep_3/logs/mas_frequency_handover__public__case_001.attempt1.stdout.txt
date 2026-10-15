@@ -1,0 +1,46 @@
+I'll start by reading the instructions and task files to understand what needs to be done.
+Now I understand the task. Let me break down what needs to be done:
+
+1. **Classify the MAS frequency state** based on deviation from nominal frequency
+2. **Choose a lead agent** for handover based on headroom and latency criteria
+3. **Determine if handover is required**
+
+Let me analyze the inputs:
+
+- **Nominal frequency**: 50 Hz
+- **Current frequency**: 49.82 Hz
+- **Alert threshold**: ±0.1 Hz
+- **Emergency threshold**: ±0.3 Hz
+- **Current lead agent**: plant_a
+
+**Frequency deviation**: 50 - 49.82 = 0.18 Hz (absolute value)
+
+**Classification**:
+- Since 0.18 > 0.1 (alert threshold) but 0.18 < 0.3 (emergency threshold) → **ALERT state**
+- Frequency is LOW, so we need an agent with upward headroom capability
+
+**Available agents and headroom** (for raising frequency):
+- plant_a: current=88, pmax=100 → upward headroom = 100-88 = **12 MW**, latency=45ms ✓
+- plant_b: current=70, pmax=120 → upward headroom = 120-70 = **50 MW**, latency=55ms ✓
+- battery_c: current=5, pmax=40 → upward headroom = 40-5 = **35 MW**, latency=20ms ✓
+- plant_d: NOT available ✗
+
+**Selection criteria** (from hard constraints):
+1. Must have latency ≤ 80ms (all available agents qualify)
+2. Must have sufficient upward headroom > min_headroom_mw (20 MW)
+   - plant_a: 12 MW < 20 MW → **doesn't qualify**
+   - plant_b: 50 MW > 20 MW ✓
+   - battery_c: 35 MW > 20 MW ✓
+3. Maximize headroom, then minimize latency:
+   - battery_c: 35 MW headroom, 20ms latency
+   - plant_b: 50 MW headroom, 55ms latency
+   - **Winner: plant_b** (50 MW > 35 MW)
+
+**Handover required**: Yes, because plant_a (current lead) doesn't have sufficient headroom (12 < 20)
+
+Let me write the submission:
+Done. The submission has been written to `submission.json` with:
+- **frequency_state**: alert (0.18 Hz deviation exceeds 0.1 Hz threshold)
+- **lead_agent**: plant_b (50 MW upward headroom maximized)
+- **handover_required**: true (plant_a lacks sufficient headroom)
+- **lead_headroom_mw**: 50 (plant_b's available upward capacity)

@@ -1,0 +1,33 @@
+I'll analyze the power quality event classification task.
+
+From the task, I need to:
+1. Classify the voltage event from RMS trace data
+2. Use classification rules to identify event type
+3. Report event details
+
+**Classification rules:**
+- interruption: voltage < 0.1 pu
+- sag: 0.1 ≤ voltage < 0.9 pu
+- swell: voltage ≥ 1.1 pu
+- normal: 0.9 ≤ voltage < 1.1 pu
+
+**RMS trace analysis:**
+Looking at the voltage values:
+- 0ms: 1.01 pu (normal)
+- 20ms: 1.0 pu (normal)
+- 40ms: 0.86 pu (sag - between 0.1 and 0.9)
+- 60ms: 0.62 pu (sag)
+- 80ms: 0.58 pu (sag)
+- 100ms: 0.74 pu (sag)
+- 120ms: 0.91 pu (normal)
+- 140ms: 0.99 pu (normal)
+
+The non-normal interval is from 40ms to 100ms (contiguous sag events).
+
+**Event details:**
+- event_class: "voltage_sag" (all non-normal samples are sags)
+- start_timestamp_ms: 40
+- end_timestamp_ms: 100
+- duration_s: (100 - 40 + 20) / 1000 = 0.08 seconds (inclusive of one sample interval)
+- min_voltage_pu: 0.58
+- max_current_pu: 1.44

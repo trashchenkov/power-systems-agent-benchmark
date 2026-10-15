@@ -1,0 +1,203 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+
+# Load the task
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+branches = task['branches']
+contingencies = task['contingencies']
+threshold = task['critical_loading_threshold_pct']
+
+# Create a mapping of branch IDs to their rating
+branch_ratings = {b['id']: b['rating_mw'] for b in branches}
+
+print("Branch ratings:", branch_ratings)
+print("\nAnalyzing contingencies:\n")
+
+contingency_analysis = []
+
+for cont in contingencies:
+    cont_id = cont['id']
+    outaged_branch = cont['outaged_branch']
+    post_flows = cont['post_flows_mw']
+    
+    # Calculate severity metrics
+    overloads = []
+    max_loading_pct = 0
+    
+    for branch_id, flow_mw in post_flows.items():
+        rating = branch_ratings[branch_id]
+        loading_pct = (flow_mw / rating) * 100
+        
+        if loading_pct > threshold:
+            overloads.append({
+                'branch': branch_id,
+                'flow': flow_mw,
+                'rating': rating,
+                'loading': loading_pct
+            })
+        
+        max_loading_pct = max(max_loading_pct, loading_pct)
+    
+    # Determine severity score (higher = more severe)
+    # Use max loading percentage as primary metric, plus number of overloads
+    severity_score = max_loading_pct + len(overloads) * 10
+    
+    contingency_analysis.append({
+        'id': cont_id,
+        'outaged_branch': outaged_branch,
+        'max_loading_pct': max_loading_pct,
+        'num_overloads': len(overloads),
+        'overloads': overloads,
+        'severity_score': severity_score,
+        'is_critical': len(overloads) > 0
+    })
+    
+    print(f"{cont_id}: max_loading={max_loading_pct:.1f}%, overloads={len(overloads)}, score={severity_score:.1f}")
+    if overloads:
+        for ol in overloads:
+            print(f"  {ol['branch']}: {ol['flow']:.1f}/{ol['rating']:.1f} MW = {ol['loading']:.1f}%")
+
+# Sort by severity (descending)
+contingency_analysis.sort(key=lambda x: x['severity_score'], reverse=True)
+
+print("\n\nRanked by severity:")
+for i, cont in enumerate(contingency_analysis, 1):
+    print(f"{i}. {cont['id']}: score={cont['severity_score']:.1f}")
+
+# Check for islanding - for this simple 4-node network:
+# We have 4 branches: l12, l23, l13, l34
+# Topology: b1-b2-b3-b4 with b1-b3 as alternate path
+# 
+# Islanding would occur if removing a branch disconnects the network
+# Let's check connectivity after each outage
+
+def check_islanding(outaged_branch, branches):
+    """Check if network is islanded after removing a branch"""
+    from collections import defaultdict, deque
+    
+    # Build adjacency list without the outaged branch
+    graph = defaultdict(set)
+    for b in branches:
+        if b['id'] != outaged_branch:
+            graph[b['from_bus']].add(b['to_bus'])
+            graph[b['to_bus']].add(b['from_bus'])
+    
+    # BFS to find connected components
+    visited = set()
+    components = 0
+    
+    for node in ['b1', 'b2', 'b3', 'b4']:
+        if node not in visited:
+            components += 1
+            queue = deque([node])
+            visited.add(node)
+            while queue:
+                current = queue.popleft()
+                for neighbor in graph[current]:
+                    if neighbor not in visited:
+                        visited.add(neighbor)
+                        queue.append(neighbor)
+    
+    return components > 1
+
+print("\n\nIsland detection:")
+for cont in contingency_analysis:
+    is_island = check_islanding(cont['outaged_branch'], branches)
+    cont['is_islanding'] = is_island
+    print(f"{cont['id']} (outage {cont['outaged_branch']}): islanding={is_island}")
+
+# Create submission
+ranking = [cont['id'] for cont in contingency_analysis if cont['is_critical'] or cont['is_islanding']]
+if not ranking:
+    # Include top contingency even if not critical
+    ranking = [contingency_analysis[0]['id']]
+
+islanding_flags = {cont['id']: cont['is_islanding'] for cont in contingency_analysis}
+
+submission = {
+    'ranking': ranking,
+    'islanding_flags': islanding_flags,
+    'rationale': 'Ranked by maximum loading percentage after contingency. Islanding detected via connectivity analysis.'
+}
+
+print("\n\nSubmission:")
+print(json.dumps(submission, indent=2))
+
+# Write submission
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\n\nsubmission.json written.")
+EOF
+
+Branch ratings: {'l12': 100.0, 'l23': 100.0, 'l13': 70.0, 'l34': 60.0}
+
+Analyzing contingencies:
+
+out_l12: max_loading=125.7%, overloads=1, score=135.7
+  l13: 88.0/70.0 MW = 125.7%
+out_l23: max_loading=91.0%, overloads=0, score=91.0
+out_l13: max_loading=99.0%, overloads=0, score=99.0
+out_l34: max_loading=80.0%, overloads=0, score=80.0
+
+
+Ranked by severity:
+1. out_l12: score=135.7
+2. out_l13: score=99.0
+3. out_l23: score=91.0
+4. out_l34: score=80.0
+
+
+Island detection:
+out_l12 (outage l12): islanding=False
+out_l13 (outage l13): islanding=False
+out_l23 (outage l23): islanding=False
+out_l34 (outage l34): islanding=True
+
+
+Submission:
+{
+  "ranking": [
+    "out_l12",
+    "out_l34"
+  ],
+  "islanding_flags": {
+    "out_l12": false,
+    "out_l13": false,
+    "out_l23": false,
+    "out_l34": true
+  },
+  "rationale": "Ranked by maximum loading percentage after contingency. Islanding detected via connectivity analysis."
+}
+
+
+submission.json written.
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 -m json.tool submission.json && echo "✓ submission.json is valid JSON"
+{
+    "ranking": [
+        "out_l12",
+        "out_l34"
+    ],
+    "islanding_flags": {
+        "out_l12": false,
+        "out_l13": false,
+        "out_l23": false,
+        "out_l34": true
+    },
+    "rationale": "Ranked by maximum loading percentage after contingency. Islanding detected via connectivity analysis."
+}
+✓ submission.json is valid JSON
+[0m

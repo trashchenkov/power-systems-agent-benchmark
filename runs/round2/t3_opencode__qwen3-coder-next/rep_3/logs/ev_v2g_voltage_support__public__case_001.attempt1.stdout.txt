@@ -1,0 +1,35 @@
+I'll solve this benchmark task step by step.
+
+**Understanding the problem:**
+- Compute reactive power commands for EV chargers to support voltage on buses
+- Need to raise low feeder voltages to target (0.98 pu)
+- Use linear voltage sensitivity: ΔV = sensitivity × Q
+- Clip by aggregate EV inverter capability (Q_max = √(S_rating² - P_active²))
+
+**Calculations:**
+
+**Bus 2:**
+- Base voltage: 0.944 pu, Target: 0.98 pu, ΔV_needed = 0.98 - 0.944 = 0.036 pu
+- Sensitivity: 0.0016 pu/kvar
+- Required Q = ΔV / sensitivity = 0.036 / 0.0016 = 22.5 kvar
+
+EV capability at bus 2:
+- evse_1: S_rating=18 kVA, P=10 kW → Q_max = √(18² - 10²) = √224 = 14.97 kvar
+- evse_2: S_rating=12 kVA, P=6 kW → Q_max = √(12² - 6²) = √108 = 10.39 kvar
+- Total capability = 25.36 kvar
+
+Required 22.5 kvar < 25.36 kvar, so q_dispatch_bus2 = 22.5 kvar
+Corrected voltage = 0.944 + 0.0016 × 22.5 = 0.98 pu
+
+**Bus 3:**
+- Base voltage: 0.952 pu, Target: 0.98 pu, ΔV_needed = 0.028 pu
+- Sensitivity: 0.0012 pu/kvar
+- Required Q = 0.028 / 0.0012 = 23.33 kvar
+
+EV capability at bus 3:
+- evse_3: S_rating=16 kVA, P=8 kW → Q_max = √(16² - 8²) = √192 = 13.86 kvar
+
+Required 23.33 kvar > 13.86 kvar, so clipped to 13.86 kvar
+Corrected voltage = 0.952 + 0.0012 × 13.86 = 0.9696 pu
+Total_abs_q = 22.5 + 13.86 = 36.36 kvar
+Done.

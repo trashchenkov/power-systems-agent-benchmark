@@ -1,0 +1,45 @@
+Now I understand the task. I need to compute EV charger reactive-power commands for voltage support. Let me analyze the data:
+
+**Given:**
+- Target voltage: 0.98 pu
+- Base voltages: bus_2 = 0.944 pu, bus_3 = 0.952 pu
+- Q sensitivity: bus_2 = 0.0016 pu/kvar, bus_3 = 0.0012 pu/kvar
+- EVs:
+  - evse_1 at bus_2: S_rating = 18 kVA, P = 10 kW
+  - evse_2 at bus_2: S_rating = 12 kVA, P = 6 kW
+  - evse_3 at bus_3: S_rating = 16 kVA, P = 8 kW
+
+**Calculations:**
+
+For each bus, I need to:
+1. Calculate voltage deviation from target
+2. Calculate required reactive power using sensitivity
+3. Clip by aggregate EV inverter capability (max Q = √(S² - P²))
+
+**Bus 2:**
+- Voltage deviation: 0.98 - 0.944 = 0.036 pu
+- Required Q: 0.036 / 0.0016 = 22.5 kvar
+- EV capabilities:
+  - evse_1: Q_max = √(18² - 10²) = √(324 - 100) = √224 = 14.966 kvar
+  - evse_2: Q_max = √(12² - 6²) = √(144 - 36) = √108 = 10.392 kvar
+  - Total Q_max at bus_2: 14.966 + 10.392 = 25.358 kvar
+- Q_dispatch at bus_2: min(22.5, 25.358) = 22.5 kvar
+- Corrected voltage: 0.944 + 22.5 × 0.0016 = 0.944 + 0.036 = 0.98 pu
+
+**Bus 3:**
+- Voltage deviation: 0.98 - 0.952 = 0.028 pu
+- Required Q: 0.028 / 0.0012 = 23.333 kvar
+- EV capabilities:
+  - evse_3: Q_max = √(16² - 8²) = √(256 - 64) = √192 = 13.856 kvar
+- Q_dispatch at bus_3: min(23.333, 13.856) = 13.856 kvar
+- Corrected voltage: 0.952 + 13.856 × 0.0012 = 0.952 + 0.0166 = 0.9686 pu
+
+**Total absolute Q:** |22.5| + |13.856| = 36.356 kvar
+
+Let me write a Python script to compute this precisely:
+Now let me write the submission.json file:
+The task is complete. I've computed the EV charger reactive-power commands for voltage support:
+
+- **bus_2**: Required 22.5 kvar to reach target (available: 25.36 kvar), so dispatched full 22.5 kvar, reaching exactly 0.98 pu
+- **bus_3**: Required 23.33 kvar to reach target (available: 13.86 kvar), so dispatched 13.86 kvar (clipped by capability), reaching 0.9686 pu
+- **Total absolute reactive power**: 36.36 kvar

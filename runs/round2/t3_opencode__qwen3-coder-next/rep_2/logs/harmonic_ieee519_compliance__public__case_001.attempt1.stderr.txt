@@ -1,0 +1,154 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+
+# Given data
+pcc = {
+    "max_demand_current_a": 480.0,
+    "short_circuit_current_ka": 12.0
+}
+
+measured = {
+    "fundamental_current_a": 460.0,
+    "harmonic_currents_a": {
+        "5": 28.0,
+        "7": 19.0,
+        "11": 9.0,
+        "13": 7.0,
+        "17": 4.0,
+        "19": 3.0,
+        "23": 1.5
+    },
+    "harmonic_voltages_pct": {
+        "5": 2.1,
+        "7": 1.6,
+        "11": 0.9
+    }
+}
+
+current_limit_table = [
+    {"isc_il_below": 20, "tdd_pct": 5.0, "h_below_11_pct": 4.0, "h_11_to_17_pct": 2.0, "h_17_to_23_pct": 1.5, "h_23_to_35_pct": 0.6, "h_35_up_pct": 0.3},
+    {"isc_il_below": 50, "tdd_pct": 8.0, "h_below_11_pct": 7.0, "h_11_to_17_pct": 3.5, "h_17_to_23_pct": 2.5, "h_23_to_35_pct": 1.0, "h_35_up_pct": 0.5},
+    {"isc_il_below": 100, "tdd_pct": 12.0, "h_below_11_pct": 10.0, "h_11_to_17_pct": 4.5, "h_17_to_23_pct": 4.0, "h_23_to_35_pct": 1.5, "h_35_up_pct": 0.7},
+    {"isc_il_below": 1000, "tdd_pct": 15.0, "h_below_11_pct": 12.0, "h_11_to_17_pct": 5.5, "h_17_to_23_pct": 5.0, "h_23_to_35_pct": 2.0, "h_35_up_pct": 1.0},
+    {"isc_il_below": 1000000000.0, "tdd_pct": 20.0, "h_below_11_pct": 15.0, "h_11_to_17_pct": 7.0, "h_17_to_23_pct": 6.0, "h_23_to_35_pct": 2.5, "h_35_up_pct": 1.4}
+]
+
+voltage_limits = {"individual_pct": 3.0, "thd_pct": 5.0}
+
+# Compute Isc/IL ratio
+Isc = pcc["short_circuit_current_ka"] * 1000  # convert to amperes
+IL = pcc["max_demand_current_a"]
+isc_over_il = Isc / IL
+print(f"Isc/IL ratio: {isc_over_il}")
+
+# Select limit row
+selected_row = None
+for row in current_limit_table:
+    if row["isc_il_below"] > isc_over_il:
+        selected_row = row
+        break
+
+print(f"Selected row: {selected_row}")
+
+# Compute TDD
+# TDD = sqrt(sum of squared harmonic currents) / IL * 100
+import math
+harm_currents_sq_sum = sum(v**2 for v in measured["harmonic_currents_a"].values())
+tdd = math.sqrt(harm_currents_sq_sum) / IL * 100
+print(f"TDD: {tdd}")
+
+# Compute voltage THD
+harm_voltages_sq_sum = sum(v**2 for v in measured["harmonic_voltages_pct"].values())
+voltage_thd = math.sqrt(harm_voltages_sq_sum)
+print(f"Voltage THD: {voltage_thd}")
+
+# Check current violations
+violations = []
+if tdd > selected_row["tdd_pct"]:
+    violations.append("tdd")
+
+harm_orders = [int(k) for k in measured["harmonic_currents_a"].keys()]
+for order in harm_orders:
+    val = measured["harmonic_currents_a"][str(order)]
+    if order < 11:
+        limit = selected_row["h_below_11_pct"]
+        if val > limit:
+            violations.append(str(order))
+    elif order <= 17:
+        limit = selected_row["h_11_to_17_pct"]
+        if val > limit:
+            violations.append(str(order))
+    elif order <= 23:
+        limit = selected_row["h_17_to_23_pct"]
+        if val > limit:
+            violations.append(str(order))
+    else:
+        limit = selected_row["h_23_to_35_pct"]
+        if val > limit:
+            violations.append(str(order))
+
+print(f"Current violations: {violations}")
+
+# Check voltage violations
+voltage_violations = []
+if voltage_thd > voltage_limits["thd_pct"]:
+    voltage_violations.append("thd")
+
+for order_str, val in measured["harmonic_voltages_pct"].items():
+    if float(val) > voltage_limits["individual_pct"]:
+        voltage_violations.append(order_str)
+
+print(f"Voltage violations: {voltage_violations}")
+
+# Overall verdict
+compliant = len(violations) == 0 and len(voltage_violations) == 0
+print(f"Compliant: {compliant}")
+
+result = {
+    "isc_over_il": round(isc_over_il, 6),
+    "tdd_pct": round(tdd, 6),
+    "current_violations": violations,
+    "voltage_thd_pct": round(voltage_thd, 6),
+    "voltage_violations": voltage_violations,
+    "compliant": compliant,
+    "rationale": f"Isc/IL={isc_over_il}, selected row with isc_il_below>{isc_over_il}, TDD={tdd}%, THD={voltage_thd}%"
+}
+
+print(json.dumps(result, indent=2))
+EOF
+Isc/IL ratio: 25.0
+Selected row: {'isc_il_below': 50, 'tdd_pct': 8.0, 'h_below_11_pct': 7.0, 'h_11_to_17_pct': 3.5, 'h_17_to_23_pct': 2.5, 'h_23_to_35_pct': 1.0, 'h_35_up_pct': 0.5}
+TDD: 7.518062739902555
+Voltage THD: 2.7892651361962706
+Current violations: ['5', '7', '11', '13', '17', '19']
+Voltage violations: []
+Compliant: False
+{
+  "isc_over_il": 25.0,
+  "tdd_pct": 7.518063,
+  "current_violations": [
+    "5",
+    "7",
+    "11",
+    "13",
+    "17",
+    "19"
+  ],
+  "voltage_thd_pct": 2.789265,
+  "voltage_violations": [],
+  "compliant": false,
+  "rationale": "Isc/IL=25.0, selected row with isc_il_below>25.0, TDD=7.518062739902555%, THD=2.7892651361962706%"
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

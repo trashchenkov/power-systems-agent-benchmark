@@ -1,0 +1,55 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import json
+c=json.load(open('<sandbox_a1>/task.json'))['wind_forecast_case']
+count=c['turbine']['count']; rated=c['turbine']['rated_mw_each']; cap=count*rated
+ci=c['power_curve']['cut_in_m_s']; r=c['power_curve']['rated_m_s']; co=c['power_curve']['cut_out_m_s']
+ref=c['reference_air_density_kg_m3']
+def est(v,rho):
+    vc=v*(rho/ref)**(1/3)
+    if vc<ci or vc>=co: return 0.0
+    if vc>=r: return cap
+    return cap*((vc-ci)/(r-ci))**3
+bias=sum(h['actual_power_mw']-est(h['wind_speed_m_s'],h['air_density_kg_m3']) for h in c['history'])/len(c['history'])
+print('bias',bias)
+out={}
+for w in c['weather_forecast']:
+    p=max(0,min(cap,est(w['wind_speed_m_s'],w['air_density_kg_m3'])+bias))
+    out[w['timestamp']]=round(p,6)
+    print(w['timestamp'],est(w['wind_speed_m_s'],w['air_density_kg_m3']),p)
+tot=sum(out.values())*c['forecast_step_hours']
+peak=max(out,key=out.get)
+print('total',tot,'peak',peak)
+"
+
+bias 0.024846536731473745
+t01 3.2734903982020054 3.298336934933479
+t02 7.132103358796881 7.156949895528355
+t03 13.184431207115201 13.209277743846675
+t04 20.0 20.0
+total 43.664564999999996 peak t04
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -m json.tool <sandbox_a1>/submission.json
+{
+    "forecast_mw_by_timestamp": {
+        "t01": 3.298337,
+        "t02": 7.15695,
+        "t03": 13.209278,
+        "t04": 20.0
+    },
+    "total_forecast_mwh": 43.664565,
+    "peak_timestamp": "t04",
+    "rationale": "Air-density-corrected power curve (v_c = v*(rho/1.225)^(1/3)), with a residual bias of +0.024847 MW (mean of actual minus power-curve estimate over the four history records), clipped to the 20 MW farm capacity."
+}
+[0m

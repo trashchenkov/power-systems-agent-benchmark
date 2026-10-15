@@ -1,0 +1,57 @@
+I'll read the instructions and task file to understand what needs to be done.
+Now I understand the task. I need to:
+1. Analyze N-1 branch outage contingencies
+2. Rank them by operational severity (based on loading relative to ratings)
+3. Flag any that cause islanding
+4. Submit as JSON
+
+Let me analyze the data:
+
+**Branches with ratings:**
+- l12: 100 MW rating
+- l23: 100 MW rating
+- l13: 70 MW rating
+- l34: 60 MW rating
+
+**Contingency Analysis:**
+
+1. **out_l12** (l12 outaged):
+   - l23: 95/100 = 95% loading
+   - l13: 88/70 = 125.7% **OVERLOAD**
+   - l34: 30/60 = 50% loading
+   - Severity: HIGH (l13 overloaded)
+
+2. **out_l23** (l23 outaged):
+   - l12: 91/100 = 91% loading
+   - l13: 55/70 = 78.6% loading
+   - l34: 30/60 = 50% loading
+   - Severity: MEDIUM (no overloads)
+
+3. **out_l13** (l13 outaged):
+   - l12: 99/100 = 99% loading
+   - l23: 80/100 = 80% loading
+   - l34: 30/60 = 50% loading
+   - Severity: LOW (no overloads)
+
+4. **out_l34** (l34 outaged):
+   - l12: 80/100 = 80% loading
+   - l23: 60/100 = 60% loading
+   - l13: 40/70 = 57.1% loading
+   - Severity: LOW (no overloads)
+
+**Islanding Detection:**
+The network is: b1-b2-b3-b4 (linear at first then branched), with b1 also connected to b3. Removing any single branch doesn't partition the network into disconnected components, so no islanding occurs.
+
+**Ranking by severity** (most to least severe):
+1. out_l12 (OVERLOAD on l13)
+2. out_l23 (high loading, but no overload)
+3. out_l13 (no critical overload)
+4. out_l34 (no critical overload)
+Done. I've analyzed the contingencies and ranked them by operational severity:
+
+1. **out_l12** - Most severe: causes l13 to overload at 125.7% of its rating
+2. **out_l23** - High loading (91% on l12) but no overload
+3. **out_l13** - Moderate loading, no critical violations
+4. **out_l34** - Minimal impact, no violations
+
+No islanding detected since the network remains connected after any single branch removal. The submission has been written to `submission.json`.

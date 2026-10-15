@@ -1,0 +1,73 @@
+I'll start by reading the instructions and task to understand what needs to be done.
+Now I understand the task. This is a power systems FLISR (Fault Location, Isolation, and Service Restoration) problem. I need to:
+
+1. Isolate the faulted branch `l23`
+2. Keep the network radial (no loops)
+3. Restore load with priority at least 10.0
+4. Minimize switch operations
+
+Let me analyze the network:
+
+**Current state (all normally-closed branches open):**
+- Source: `s`
+- Line `l_s1`: s → b1 (capacity 250 kW) [closed]
+- Line `l12`: b1 → b2 (capacity 160 kW) [closed]
+- Line `l23`: b2 → b3 (capacity 120 kW) [closed] ← **FAULTED**
+- Line `l34`: b3 → b4 (capacity 130 kW) [closed]
+- Tie `tie_24`: b2 → b4 (capacity 120 kW) [normally open]
+
+**Buses and loads:**
+- b1: 0 kW, priority 0
+- b2: 50 kW, priority 3
+- b3: 80 kW, priority 5
+- b4: 40 kW, priority 2
+
+**Strategy:**
+1. Open `l23` to isolate the fault
+2. Close `tie_24` to restore b3 and b4 through an alternative path
+3. This creates: s → b1 → b2 → (b4 through tie_24) and s → b1 → b2 → b3 would be blocked
+
+Wait, let me reconsider. If I open `l23` and close `tie_24`:
+- Path from s: s → b1 → b2 → (b4 through tie_24 OR b3 through original l23)
+- But l23 is faulted, so it must be open
+
+Actually, with `l23` open and `tie_24` closed:
+- s → b1 → b2 is clear
+- b2 → b4 through tie_24 is clear
+- b3 is isolated (no path)
+
+To restore b3, I need a different approach. Let me check if opening `l34` and closing `tie_24` works:
+- Open: `l23`, `l34`
+- Close: `tie_24`
+- Path: s → b1 → b2 → b4 (via tie_24)
+- b3 is still isolated
+
+This doesn't work. Let me think differently. With l23 faulted, b3 cannot be reached from the source through l23. But there's no other path to b3 in the original network structure.
+
+So the best I can do is:
+- Open `l23` (to isolate fault)
+- Keep everything else as is to restore b2, b4
+
+Actually, I need to reconsider the radiality constraint. Let me check:
+- If I just open `l23`: s → b1 → b2, and separately b3 → b4 → ... but b3 and b4 are not reachable from source. This violates radiality? No, radiality means no loops in the energized part.
+
+Let me create a Python script to solve this properly:
+Perfect! The solution is valid. Let me verify the logic once more and then write the submission:
+
+The solution:
+- **Open switches**: `l23` (the faulted branch)
+- **Close switches**: `tie_24` (normally-open tie switch)
+
+This results in:
+- All loads are reachable from source s: b2 (priority 3, 50 kW), b3 (priority 5, 80 kW), b4 (priority 2, 40 kW)
+- Total priority restored: 3 + 5 + 2 = 10 (meets minimum of 10.0)
+- Total load restored: 50 + 80 + 40 = 170 kW
+- Network remains radial (5 nodes, 4 edges = tree structure)
+- Faulted branch l23 is open
+
+Now I'll write the submission:
+Done. I've solved the FLISR restoration task and written `submission.json`. The solution:
+
+- **Opens** the faulted branch `l23` to isolate the fault
+- **Closes** the tie switch `tie_24` to restore all loads through an alternative radial path
+- Restores priority 10 and 170 kW of load while maintaining network radiality
