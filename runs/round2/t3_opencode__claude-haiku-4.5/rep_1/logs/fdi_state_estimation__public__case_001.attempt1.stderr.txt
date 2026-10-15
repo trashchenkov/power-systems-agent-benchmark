@@ -1,0 +1,236 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import numpy as np
+from scipy.linalg import inv
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+measurements = task['measurements']
+branches = task['network']['branches']
+residual_threshold = task['residual_threshold']
+
+# Build the measurement matrix H and measurement vector z
+# State variables: theta_2, theta_3 (theta_1 = 0 as slack bus)
+# For DC model: flow on line = (theta_from - theta_to) / x
+
+# Flow measurements: flow_l12, flow_l13, flow_l23
+# Injection measurements: inj_b2, inj_b3
+
+# For flows: h_i corresponds to [d(flow_ij)/d(theta_2), d(flow_ij)/d(theta_3)]
+# For injections: h_i corresponds to [d(inj_b)/d(theta_2), d(inj_b)/d(theta_3)]
+
+# Branch data
+branches_dict = {b['id']: b for b in branches}
+
+# Nodal admittance matrix in DC approximation
+# Y_bus[i,j] = -1/x for branches connecting i and j, Y_bus[i,i] = sum(1/x)
+# For DC: P_i = sum_j(Y_ij * theta_j) where Y = 1/x
+
+def build_measurement_matrix(measurements, branches_dict):
+    """Build H matrix and z vector"""
+    H = []
+    z = []
+    meas_ids = []
+    
+    for meas in measurements:
+        meas_ids.append(meas['id'])
+        z.append(meas['value_pu'])
+        
+        if meas['type'] == 'flow':
+            # Flow on branch: f_ij = (theta_i - theta_j) / x_ij
+            branch_id = meas['branch_id']
+            branch = branches_dict[branch_id]
+            from_bus = branch['from_bus']
+            to_bus = branch['to_bus']
+            x = branch['x_pu']
+            
+            # h = [d(f_ij)/d(theta_2), d(f_ij)/d(theta_3)]
+            h = [0, 0]
+            if from_bus == 'b2':
+                h[0] += 1/x
+            if from_bus == 'b3':
+                h[1] += 1/x
+            if to_bus == 'b2':
+                h[0] -= 1/x
+            if to_bus == 'b3':
+                h[1] -= 1/x
+            
+            H.append(h)
+        
+        elif meas['type'] == 'injection':
+            # Injection at bus: P_i = sum_j(f_ij)
+            bus_id = meas['bus_id']
+            h = [0, 0]
+            
+            for branch in branches_dict.values():
+                if branch['from_bus'] == bus_id:
+                    if branch['to_bus'] == 'b2':
+                        h[0] += 1/branch['x_pu']
+                    if branch['to_bus'] == 'b3':
+                        h[1] += 1/branch['x_pu']
+                elif branch['to_bus'] == bus_id:
+                    if branch['from_bus'] == 'b2':
+                        h[0] -= 1/branch['x_pu']
+                    if branch['from_bus'] == 'b3':
+                        h[1] -= 1/branch['x_pu']
+            
+            H.append(h)
+    
+    return np.array(H), np.array(z), meas_ids
+
+# Iterative bad-data detection
+flagged = []
+active_meas_indices = list(range(len(measurements)))
+
+while True:
+    # Build H and z for active measurements
+    active_H = []
+    active_z = []
+    active_sigma = []
+    active_meas_ids = []
+    
+    for idx in active_meas_indices:
+        meas = measurements[idx]
+        active_meas_ids.append(meas['id'])
+        active_z.append(meas['value_pu'])
+        active_sigma.append(meas['sigma_pu'])
+        
+        if meas['type'] == 'flow':
+            branch_id = meas['branch_id']
+            branch = branches_dict[branch_id]
+            from_bus = branch['from_bus']
+            to_bus = branch['to_bus']
+            x = branch['x_pu']
+            
+            h = [0, 0]
+            if from_bus == 'b2':
+                h[0] += 1/x
+            if from_bus == 'b3':
+                h[1] += 1/x
+            if to_bus == 'b2':
+                h[0] -= 1/x
+            if to_bus == 'b3':
+                h[1] -= 1/x
+            
+            active_H.append(h)
+        
+        elif meas['type'] == 'injection':
+            bus_id = meas['bus_id']
+            h = [0, 0]
+            
+            for branch in branches_dict.values():
+                if branch['from_bus'] == bus_id:
+                    if branch['to_bus'] == 'b2':
+                        h[0] += 1/branch['x_pu']
+                    if branch['to_bus'] == 'b3':
+                        h[1] += 1/branch['x_pu']
+                elif branch['to_bus'] == bus_id:
+                    if branch['from_bus'] == 'b2':
+                        h[0] -= 1/branch['x_pu']
+                    if branch['from_bus'] == 'b3':
+                        h[1] -= 1/branch['x_pu']
+            
+            active_H.append(h)
+    
+    H = np.array(active_H, dtype=float)
+    z = np.array(active_z, dtype=float)
+    sigma = np.array(active_sigma, dtype=float)
+    
+    # Weight matrix W = diag(1/sigma^2)
+    W = np.diag(1.0 / (sigma**2))
+    
+    # Gain matrix G = H^T W H
+    G = H.T @ W @ H
+    G_inv = inv(G)
+    
+    # WLS estimate: x = (H^T W H)^-1 H^T W z
+    x_hat = G_inv @ H.T @ W @ z
+    
+    # Residuals: r = z - H*x
+    residuals = z - H @ x_hat
+    
+    # Normalized residuals: |r_i| / sqrt(sigma_i^2 - h_i * G^-1 * h_i^T)
+    normalized_residuals = []
+    for i in range(len(residuals)):
+        h_i = H[i]
+        variance_i = sigma[i]**2 - (h_i @ G_inv @ h_i.T)
+        if variance_i <= 0:
+            variance_i = 1e-10  # Numerical safety
+        norm_res = abs(residuals[i]) / np.sqrt(variance_i)
+        normalized_residuals.append(norm_res)
+    
+    # Find max normalized residual
+    max_norm_res_idx = np.argmax(normalized_residuals)
+    max_norm_res = normalized_residuals[max_norm_res_idx]
+    
+    print(f"Iteration - Active measurements: {len(active_meas_indices)}")
+    print(f"Max normalized residual: {max_norm_res:.6f}")
+    print(f"State estimate: theta_2={x_hat[0]:.6f}, theta_3={x_hat[1]:.6f}")
+    print(f"Normalized residuals: {[f'{r:.4f}' for r in normalized_residuals]}")
+    
+    if max_norm_res > residual_threshold:
+        # Flag this measurement for removal
+        flagged_idx = active_meas_indices[max_norm_res_idx]
+        flagged.append(measurements[flagged_idx]['id'])
+        print(f"Flagging measurement: {measurements[flagged_idx]['id']}")
+        active_meas_indices.pop(max_norm_res_idx)
+    else:
+        # Converged
+        print("Convergence achieved!")
+        break
+
+# Final state
+final_state = {
+    'theta_2': float(x_hat[0]),
+    'theta_3': float(x_hat[1])
+}
+
+print(f"\nFlagged measurements: {flagged}")
+print(f"Final corrected state: {final_state}")
+
+# Write submission
+submission = {
+    'attacked_measurements': flagged,
+    'corrected_state': final_state
+}
+
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+EOF
+
+Iteration - Active measurements: 5
+Max normalized residual: 82.026657
+State estimate: theta_2=-0.006590, theta_3=-0.051542
+Normalized residuals: ['60.5563', '22.3946', '8.9757', '17.9448', '82.0267']
+Flagging measurement: inj_b3
+Iteration - Active measurements: 4
+Max normalized residual: 21.862951
+State estimate: theta_2=-0.037797, theta_3=-0.058385
+Normalized residuals: ['5.9463', '13.9943', '5.9463', '21.8630']
+Flagging measurement: inj_b2
+Iteration - Active measurements: 3
+Max normalized residual: 0.302529
+State estimate: theta_2=-0.040082, theta_3=-0.069810
+Normalized residuals: ['0.3025', '0.3025', '0.3025']
+Convergence achieved!
+
+Flagged measurements: ['inj_b3', 'inj_b2']
+Final corrected state: {'theta_2': -0.04008190476190476, 'theta_3': -0.06980952380952382}
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

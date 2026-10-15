@@ -1,0 +1,40 @@
+Let me compute the BESS response step by step.
+
+**Given parameters:**
+- nominal_frequency_hz = 50.0
+- target_voltage_pu = 1.0
+- interval_seconds = 10.0
+- initial_soc_mwh = 4.8
+- p_discharge_limit_mw = 4.0
+- p_charge_limit_mw = 3.0
+- s_rating_mva = 5.0
+- frequency_droop_mw_per_hz = 18.0
+- voltage_droop_mvar_per_pu = 30.0
+- charge_efficiency = 0.96
+- discharge_efficiency = 0.94
+
+**Measurements:**
+- t0: frequency_hz=49.86, voltage_pu=0.965
+- t1: frequency_hz=49.92, voltage_pu=0.982
+- t2: frequency_hz=50.04, voltage_pu=1.018
+
+**Calculations for each timestamp:**
+
+t0:
+- p = clip((50.0 - 49.86) * 18.0, -3.0, 4.0) = clip(2.52, -3.0, 4.0) = 2.52
+- q = clip((1.0 - 0.965) * 30.0, +/-sqrt(25 - 2.52²)) = clip(1.05, +/-4.029) = 1.05
+- Discharging, SOC change = -2.52 * 10 / 0.94 = -26.81 MJ = -0.00745 MWh
+
+t1:
+- p = clip((50.0 - 49.92) * 18.0, -3.0, 4.0) = clip(1.44, -3.0, 4.0) = 1.44
+- q = clip((1.0 - 0.982) * 30.0, +/-sqrt(25 - 1.44²)) = clip(0.54, +/-4.917) = 0.54
+- Discharging, SOC change = -1.44 * 10 / 0.94 = -15.32 MJ = -0.00426 MWh
+
+t2:
+- p = clip((50.0 - 50.04) * 18.0, -3.0, 4.0) = clip(-0.72, -3.0, 4.0) = -0.72
+- q = clip((1.0 - 1.018) * 30.0, +/-sqrt(25 - 0.72²)) = clip(-0.54, +/-4.978) = -0.54
+- Charging, SOC change = 0.72 * 10 * 0.96 = 6.91 MJ = 0.00192 MWh
+
+**Final SOC:**
+4.8 - 0.00745 - 0.00426 + 0.00192 = 4.79021 ≈ 4.79 MWh
+Done.

@@ -1,0 +1,76 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat << 'EOF' | python3
+import json
+from itertools import combinations
+
+# Public inputs
+budget = 2
+candidate_meters = ["m12", "m23", "m31", "pinj2"]
+
+attack_vectors = [
+    {"attack_id": "a_theta2", "risk_weight": 7, "detectable_by": ["m12", "pinj2"]},
+    {"attack_id": "a_theta3", "risk_weight": 6, "detectable_by": ["m31"]},
+    {"attack_id": "a_load_shift", "risk_weight": 4, "detectable_by": ["m23", "pinj2"]},
+    {"attack_id": "a_stealth_pair", "risk_weight": 9, "detectable_by": ["m12", "m31"]}
+]
+
+def get_covered_risk(meters):
+    covered = set()
+    for av in attack_vectors:
+        if any(m in meters for m in av["detectable_by"]):
+            covered.add(av["attack_id"])
+    risk = sum(av["risk_weight"] for av in attack_vectors if av["attack_id"] in covered)
+    return covered, risk
+
+# Try all combinations of budget meters
+best_risk = -1
+best_selection = None
+best_covered = None
+
+for meters in combinations(candidate_meters, budget):
+    covered, risk = get_covered_risk(meters)
+    print(f"{meters}: covered={covered}, risk={risk}")
+    if risk > best_risk:
+        best_risk = risk
+        best_selection = meters
+        best_covered = covered
+    elif risk == best_risk:
+        # tie-breaker: lexicographic meter IDs
+        if meters < best_selection:
+            best_selection = meters
+            best_covered = covered
+
+print(f"\nBest: {best_selection}, covered={best_covered}, risk={best_risk}")
+
+submission = {
+    "protected_meters": list(best_selection),
+    "covered_attack_vectors": sorted(list(best_covered)),
+    "covered_risk_weight": best_risk
+}
+
+with open("submission.json", "w") as f:
+    json.dump(submission, f, indent=2)
+
+print("\nWritten to submission.json")
+EOF
+('m12', 'm23'): covered={'a_stealth_pair', 'a_load_shift', 'a_theta2'}, risk=20
+('m12', 'm31'): covered={'a_stealth_pair', 'a_theta3', 'a_theta2'}, risk=22
+('m12', 'pinj2'): covered={'a_stealth_pair', 'a_load_shift', 'a_theta2'}, risk=20
+('m23', 'm31'): covered={'a_stealth_pair', 'a_theta3', 'a_load_shift'}, risk=19
+('m23', 'pinj2'): covered={'a_load_shift', 'a_theta2'}, risk=11
+('m31', 'pinj2'): covered={'a_stealth_pair', 'a_theta3', 'a_load_shift', 'a_theta2'}, risk=26
+
+Best: ('m31', 'pinj2'), covered={'a_stealth_pair', 'a_theta3', 'a_load_shift', 'a_theta2'}, risk=26
+
+Written to submission.json
+[0m
+[0m→ [0mRead submission.json
+[93m[1m! [0mpermission requested: external_directory (<packets>/protected_meter_placement__public__case_001/*); auto-rejecting

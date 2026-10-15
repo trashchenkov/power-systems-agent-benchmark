@@ -1,0 +1,236 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13af2-c973-74d3-8d42-553d260e246b
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task files first, then write only `submission.json` with the required answer.
+exec
+/bin/bash -lc "pwd && rg --files -g 'instructions.md' -g 'task.json' -g 'submission.json'" in <sandbox_a1>
+ succeeded in 0ms:
+<sandbox_a1>
+task.json
+instructions.md
+
+exec
+/bin/bash -lc "sed -n '1,220p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/operator_breaker_load_actions__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,260p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "operator_breaker_load_actions_public_001",
+  "family": "operator_breaker_load_actions",
+  "candidate_id": "REL-TASK-050",
+  "substrate": "executable_operator_breaker_load_actions_case",
+  "objective": "Select operator breaker/load actions that remove overloads with minimal shedding",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-050 — Select operator breaker/load actions that remove overloads with minimal shedding",
+      "ru": "REL-TASK-050 — Выбрать действия оператора с выключателями/нагрузкой для снятия перегрузок"
+    },
+    "objective": {
+      "en": "Select operator breaker/load actions that remove overloads with minimal shedding",
+      "ru": "Выбрать действия оператора с выключателями/нагрузкой для снятия перегрузок"
+    },
+    "instructions": {
+      "en": "Use the public executable inputs to compute the requested JSON submission. Do not copy an expected answer; derive all reported values from the calculation specification.",
+      "ru": "Используйте опубликованные исполняемые входные данные и вычислите требуемый JSON-ответ. Не копируйте ожидаемый ответ; выведите все значения из спецификации расчёта."
+    }
+  },
+  "subdomain": "grid operations & control / restoration",
+  "public_inputs": {
+    "operator_action_case": {
+      "max_actions": 2,
+      "max_shed_mw": 25,
+      "branches": [
+        {
+          "branch_id": "l12",
+          "base_flow_mw": 118,
+          "limit_mw": 100
+        },
+        {
+          "branch_id": "l23",
+          "base_flow_mw": 72,
+          "limit_mw": 90
+        },
+        {
+          "branch_id": "l13",
+          "base_flow_mw": 65,
+          "limit_mw": 80
+        }
+      ],
+      "candidate_actions": [
+        {
+          "action_id": "open_tie_13",
+          "type": "open_breaker",
+          "branch_id": "l13",
+          "flow_delta_mw": {
+            "l12": -8,
+            "l23": 12
+          }
+        },
+        {
+          "action_id": "shed_bus3_15",
+          "type": "shed_load",
+          "mw": 15,
+          "flow_delta_mw": {
+            "l12": -14,
+            "l23": -6
+          }
+        },
+        {
+          "action_id": "shed_bus2_10",
+          "type": "shed_load",
+          "mw": 10,
+          "flow_delta_mw": {
+            "l12": -9,
+            "l23": -2
+          }
+        }
+      ]
+    }
+  },
+  "submission_schema": {
+    "selected_actions": "action ids",
+    "load_shed_mw": "shed load",
+    "post_action_flows_mw": "branch flows after actions",
+    "all_limits_satisfied": "boolean",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Select up to max_actions and ensure every branch flow is within its limit.",
+    "Minimize load shedding, then action count.",
+    "Unknown extra answer keys are infeasible.",
+    "Optional rationale text is ignored by the deterministic evaluator."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether all hard constraints and computed values are satisfied."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "1.0 if feasible, else 0.0."
+    }
+  ],
+  "source_evidence": [
+    "primary:Cengage Learning, 2017; interactive one-line/breaker/load-action discussion",
+    "source_card:docs/source_cards/operator_breaker_load_actions.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "Glover, Overbye and Sarma, Power System Analysis and Design",
+      "locator": "Cengage Learning, 2017; interactive one-line/breaker/load-action discussion",
+      "confidence": "medium",
+      "notes": "Grounds breaker/load operator actions in a one-line model; task uses graph connectivity and voltage checks."
+    }
+  ]
+}
+
+codex
+The feasible minimum-shed choice is `open_tie_13` plus `shed_bus3_15`: it brings `l12` from 118 to 96 MW while shedding only 15 MW. I’m writing the submission now.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_operator_breaker_load_actions__public__case_001_a1_me88g3i0/submission.json b/bench_operator_breaker_load_actions__public__case_001_a1_me88g3i0/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..949dd281418eed3645e1f5c9de51d135e3a2897c
+--- /dev/null
++++ b/bench_operator_breaker_load_actions__public__case_001_a1_me88g3i0/submission.json
+@@ -0,0 +1,14 @@
++{
++  "selected_actions": [
++    "open_tie_13",
++    "shed_bus3_15"
++  ],
++  "load_shed_mw": 15,
++  "post_action_flows_mw": {
++    "l12": 96,
++    "l23": 78,
++    "l13": 0
++  },
++  "all_limits_satisfied": true,
++  "rationale": "Opening l13 and shedding 15 MW at bus 3 is the minimum-load-shed feasible action set: l12 is reduced by 22 MW to 96 MW, l23 becomes 78 MW, and the opened l13 branch carries 0 MW."
++}
+
+diff --git a/bench_operator_breaker_load_actions__public__case_001_a1_me88g3i0/submission.json b/bench_operator_breaker_load_actions__public__case_001_a1_me88g3i0/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..949dd281418eed3645e1f5c9de51d135e3a2897c
+--- /dev/null
++++ b/bench_operator_breaker_load_actions__public__case_001_a1_me88g3i0/submission.json
+@@ -0,0 +1,14 @@
++{
++  "selected_actions": [
++    "open_tie_13",
++    "shed_bus3_15"
++  ],
++  "load_shed_mw": 15,
++  "post_action_flows_mw": {
++    "l12": 96,
++    "l23": 78,
++    "l13": 0
++  },
++  "all_limits_satisfied": true,
++  "rationale": "Opening l13 and shedding 15 MW at bus 3 is the minimum-load-shed feasible action set: l12 is reduced by 22 MW to 96 MW, l23 becomes 78 MW, and the opened l13 branch carries 0 MW."
++}
+
+codex
+submission.json written
+diff --git a/bench_operator_breaker_load_actions__public__case_001_a1_me88g3i0/submission.json b/bench_operator_breaker_load_actions__public__case_001_a1_me88g3i0/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..949dd281418eed3645e1f5c9de51d135e3a2897c
+--- /dev/null
++++ b/bench_operator_breaker_load_actions__public__case_001_a1_me88g3i0/submission.json
+@@ -0,0 +1,14 @@
++{
++  "selected_actions": [
++    "open_tie_13",
++    "shed_bus3_15"
++  ],
++  "load_shed_mw": 15,
++  "post_action_flows_mw": {
++    "l12": 96,
++    "l23": 78,
++    "l13": 0
++  },
++  "all_limits_satisfied": true,
++  "rationale": "Opening l13 and shedding 15 MW at bus 3 is the minimum-load-shed feasible action set: l12 is reduced by 22 MW to 96 MW, l23 becomes 78 MW, and the opened l13 branch carries 0 MW."
++}
+
+tokens used
+7,116

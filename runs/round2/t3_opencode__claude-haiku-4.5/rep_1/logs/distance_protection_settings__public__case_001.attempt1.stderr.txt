@@ -1,0 +1,352 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+protection = task['protection_case']
+settings = protection['setting_rules']
+
+# Calculate protected line impedance magnitude
+protected_line = protection['protected_line']
+R_line = protected_line['r1_ohm_per_km'] * protected_line['length_km']
+X_line = protected_line['x1_ohm_per_km'] * protected_line['length_km']
+Z_line = math.sqrt(R_line**2 + X_line**2)
+
+print(f"Protected line (L_AB):")
+print(f"  Length: {protected_line['length_km']} km")
+print(f"  R: {R_line} Ω")
+print(f"  X: {X_line} Ω")
+print(f"  Z magnitude: {Z_line} Ω")
+print()
+
+# Find shortest and longest backup lines
+backup_lines = protection['remote_backup_lines']
+print(f"Backup lines:")
+for line in backup_lines:
+    R = line['r1_ohm_per_km'] * line['length_km']
+    X = line['x1_ohm_per_km'] * line['length_km']
+    Z = math.sqrt(R**2 + X**2)
+    print(f"  {line['id']}: {line['length_km']} km, Z={Z:.2f} Ω")
+print()
+
+# Calculate backup line impedances
+backup_impedances = []
+for line in backup_lines:
+    R = line['r1_ohm_per_km'] * line['length_km']
+    X = line['x1_ohm_per_km'] * line['length_km']
+    Z = math.sqrt(R**2 + X**2)
+    backup_impedances.append((line['id'], line['length_km'], Z))
+
+# Sort by length to find shortest and longest
+backup_impedances_sorted = sorted(backup_impedances, key=lambda x: x[1])
+shortest_backup = backup_impedances_sorted[0]
+longest_backup = backup_impedances_sorted[-1]
+
+print(f"Shortest backup: {shortest_backup[0]} ({shortest_backup[1]} km), Z={shortest_backup[2]:.2f} Ω")
+print(f"Longest backup: {longest_backup[0]} ({longest_backup[1]} km), Z={longest_backup[2]:.2f} Ω")
+print()
+
+# Zone 1: underreach within 78-85% of protected line
+zone1_min_fraction = settings['zone1_fraction'][0]
+zone1_max_fraction = settings['zone1_fraction'][1]
+zone1_reach = Z_line * (zone1_min_fraction + zone1_max_fraction) / 2  # Middle of range
+print(f"Zone 1 reach (target {zone1_min_fraction*100}-{zone1_max_fraction*100}%): {zone1_reach:.2f} Ω")
+
+# Zone 2: line + fraction of shortest backup
+zone2_min_fraction = settings['zone2_backup_fraction'][0]
+zone2_max_fraction = settings['zone2_backup_fraction'][1]
+zone2_reach = Z_line + shortest_backup[2] * (zone2_min_fraction + zone2_max_fraction) / 2
+print(f"Zone 2 reach: {Z_line:.2f} + {shortest_backup[2]:.2f}*{(zone2_min_fraction+zone2_max_fraction)/2:.2f} = {zone2_reach:.2f} Ω")
+
+# Zone 3: line + fraction of longest backup, below load encroachment
+zone3_min_fraction = settings['zone3_backup_fraction'][0]
+zone3_max_fraction = settings['zone3_backup_fraction'][1]
+
+# Calculate load-encroachment limit
+# S = 80 MVA, pf = 0.9 lagging -> P = 80*0.9 = 72 MW, Q = 80*sin(arccos(0.9)) ≈ 38.9 MVAr
+apparent_power = protection['maximum_load']['apparent_power_mva']
+pf = protection['maximum_load']['power_factor_lagging']
+P_load = apparent_power * pf
+Q_load = apparent_power * math.sqrt(1 - pf**2)
+V_kv = protection['voltage_kv']
+V_V = V_kv * 1000
+
+# Load impedance: Z_load = V^2 / (P + jQ)
+# |Z_load| = V^2 / sqrt(P^2 + Q^2)
+S_load = math.sqrt(P_load**2 + Q_load**2)
+Z_load_magnitude = (V_V**2) / S_load
+
+print(f"\nLoad encroachment limit:")
+print(f"  Apparent power: {apparent_power} MVA, pf: {pf}")
+print(f"  P = {P_load} MW, Q = {Q_load:.2f} MVAr")
+print(f"  |Z_load| = {Z_load_magnitude:.2f} Ω")
+
+# Maximum zone 3 due to load encroachment
+load_encroach_fraction = settings['load_encroachment_fraction']
+max_zone3_load = Z_load_magnitude * load_encroach_fraction
+print(f"  Max Z3 (80% of load impedance): {max_zone3_load:.2f} Ω")
+
+# Zone 3 reach: middle of range but capped by load encroachment
+zone3_nominal = Z_line + longest_backup[2] * (zone3_min_fraction + zone3_max_fraction) / 2
+zone3_reach = min(zone3_nominal, max_zone3_load)
+print(f"  Zone 3 nominal: {zone3_nominal:.2f} Ω")
+print(f"  Zone 3 actual (capped by load): {zone3_reach:.2f} Ω")
+print()
+
+# Check constraints
+print("Checking constraints:")
+print(f"  Zone 1 reach < line: {zone1_reach:.2f} < {Z_line:.2f}? {zone1_reach < Z_line}")
+print(f"  Zone 1 within fraction: {zone1_min_fraction:.2f} < {zone1_reach/Z_line:.4f} < {zone1_max_fraction:.2f}? {zone1_min_fraction*Z_line < zone1_reach < zone1_max_fraction*Z_line}")
+print(f"  Zone 2 covers line + backup: {zone2_reach:.2f} > {Z_line + shortest_backup[2]*zone2_min_fraction:.2f}? {zone2_reach > Z_line + shortest_backup[2]*zone2_min_fraction}")
+print(f"  Zone 3 covers longest backup and below load: {zone3_reach:.2f} < {max_zone3_load:.2f}? {zone3_reach < max_zone3_load}")
+print(f"  Strictly increasing: {zone1_reach:.2f} < {zone2_reach:.2f} < {zone3_reach:.2f}? {zone1_reach < zone2_reach < zone3_reach}")
+print()
+
+# Set delays
+zone1_delay = settings['zone1_max_delay_s']  # 0.05 s
+zone2_delay = settings['zone2_delay_s'][0]  # 0.3 s (use minimum from range)
+zone3_delay = settings['zone3_delay_s'][0]  # 0.85 s (use minimum from range)
+
+print(f"Delays: Z1={zone1_delay}s, Z2={zone2_delay}s, Z3={zone3_delay}s")
+print(f"Delays non-decreasing: {zone1_delay} <= {zone2_delay} <= {zone3_delay}? {zone1_delay <= zone2_delay <= zone3_delay}")
+print()
+
+# Prepare submission
+submission = {
+    "zone1_ohm": round(zone1_reach, 6),
+    "zone2_ohm": round(zone2_reach, 6),
+    "zone3_ohm": round(zone3_reach, 6),
+    "zone1_delay_s": zone1_delay,
+    "zone2_delay_s": zone2_delay,
+    "zone3_delay_s": zone3_delay,
+    "rationale": f"Zone 1 set at {zone1_min_fraction*100}% of protected line impedance. Zone 2 covers line plus {zone2_min_fraction*100}% of shortest backup (L_BC). Zone 3 covers line plus {zone3_min_fraction*100}% of longest backup (L_BD), limited by load encroachment at {max_zone3_load:.2f} Ω. Delays coordinate with backup protection requirements."
+}
+
+print("Submission:")
+print(json.dumps(submission, indent=2))
+
+EOF
+
+Protected line (L_AB):
+  Length: 80.0 km
+  R: 6.4 Ω
+  X: 25.6 Ω
+  Z magnitude: 26.387876003953032 Ω
+
+Backup lines:
+  L_BC: 45.0 km, Z=15.77 Ω
+  L_BD: 60.0 km, Z=18.55 Ω
+
+Shortest backup: L_BC (45.0 km), Z=15.77 Ω
+Longest backup: L_BD (60.0 km), Z=18.55 Ω
+
+Zone 1 reach (target 78.0-85.0%): 21.51 Ω
+Zone 2 reach: 26.39 + 15.77*0.55 = 35.06 Ω
+
+Load encroachment limit:
+  Apparent power: 80.0 MVA, pf: 0.9
+  P = 72.0 MW, Q = 34.87 MVAr
+  |Z_load| = 151250000.00 Ω
+  Max Z3 (80% of load impedance): 121000000.00 Ω
+  Zone 3 nominal: 49.12 Ω
+  Zone 3 actual (capped by load): 49.12 Ω
+
+Checking constraints:
+  Zone 1 reach < line: 21.51 < 26.39? True
+  Zone 1 within fraction: 0.78 < 0.8150 < 0.85? True
+  Zone 2 covers line + backup: 35.06 > 33.48? True
+  Zone 3 covers longest backup and below load: 49.12 < 121000000.00? True
+  Strictly increasing: 21.51 < 35.06 < 49.12? True
+
+Delays: Z1=0.05s, Z2=0.3s, Z3=0.85s
+Delays non-decreasing: 0.05 <= 0.3 <= 0.85? True
+
+Submission:
+{
+  "zone1_ohm": 21.506119,
+  "zone2_ohm": 35.061859,
+  "zone3_ohm": 49.116496,
+  "zone1_delay_s": 0.05,
+  "zone2_delay_s": 0.3,
+  "zone3_delay_s": 0.85,
+  "rationale": "Zone 1 set at 78.0% of protected line impedance. Zone 2 covers line plus 45.0% of shortest backup (L_BC). Zone 3 covers line plus 110.00000000000001% of longest backup (L_BD), limited by load encroachment at 121000000.00 \u03a9. Delays coordinate with backup protection requirements."
+}
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+protection = task['protection_case']
+settings = protection['setting_rules']
+
+# Calculate protected line impedance magnitude
+protected_line = protection['protected_line']
+R_line = protected_line['r1_ohm_per_km'] * protected_line['length_km']
+X_line = protected_line['x1_ohm_per_km'] * protected_line['length_km']
+Z_line = math.sqrt(R_line**2 + X_line**2)
+
+print(f"Protected line (L_AB):")
+print(f"  Length: {protected_line['length_km']} km")
+print(f"  R: {R_line} Ω")
+print(f"  X: {X_line} Ω")
+print(f"  Z magnitude: {Z_line:.6f} Ω")
+print()
+
+# Calculate backup line impedances
+backup_lines = protection['remote_backup_lines']
+backup_impedances = []
+for line in backup_lines:
+    R = line['r1_ohm_per_km'] * line['length_km']
+    X = line['x1_ohm_per_km'] * line['length_km']
+    Z = math.sqrt(R**2 + X**2)
+    backup_impedances.append((line['id'], line['length_km'], Z))
+    print(f"{line['id']}: {line['length_km']} km, Z={Z:.6f} Ω")
+
+# Find shortest and longest backup lines
+backup_impedances_sorted = sorted(backup_impedances, key=lambda x: x[1])
+shortest_backup = backup_impedances_sorted[0]
+longest_backup = backup_impedances_sorted[-1]
+
+print(f"\nShortest backup: {shortest_backup[0]} ({shortest_backup[1]} km), Z={shortest_backup[2]:.6f} Ω")
+print(f"Longest backup: {longest_backup[0]} ({longest_backup[1]} km), Z={longest_backup[2]:.6f} Ω")
+print()
+
+# Zone 1: underreach - use 80% of protected line (midpoint of 78-85%)
+zone1_fraction = (settings['zone1_fraction'][0] + settings['zone1_fraction'][1]) / 2
+zone1_reach = Z_line * zone1_fraction
+print(f"Zone 1 reach ({zone1_fraction*100:.1f}% of line): {zone1_reach:.6f} Ω")
+
+# Zone 2: line + fraction of shortest backup - use 55% (midpoint of 45-65%)
+zone2_fraction = (settings['zone2_backup_fraction'][0] + settings['zone2_backup_fraction'][1]) / 2
+zone2_reach = Z_line + shortest_backup[2] * zone2_fraction
+print(f"Zone 2 reach: {Z_line:.6f} + {shortest_backup[2]:.6f}*{zone2_fraction:.2f} = {zone2_reach:.6f} Ω")
+
+# Zone 3: line + fraction of longest backup
+zone3_fraction = (settings['zone3_backup_fraction'][0] + settings['zone3_backup_fraction'][1]) / 2
+zone3_nominal = Z_line + longest_backup[2] * zone3_fraction
+print(f"Zone 3 nominal: {Z_line:.6f} + {longest_backup[2]:.6f}*{zone3_fraction:.4f} = {zone3_nominal:.6f} Ω")
+
+# Calculate load-encroachment limit (primary ohms)
+# For a balanced 3-phase system at voltage V and power S:
+# Z = V² / S in primary ohms
+apparent_power_mva = protection['maximum_load']['apparent_power_mva']
+pf = protection['maximum_load']['power_factor_lagging']
+voltage_kv = protection['voltage_kv']
+
+# Complex power magnitude
+S_apparent = apparent_power_mva  # in MVA
+V_ll_kv = voltage_kv  # line-to-line voltage in kV
+
+# Z = V² / S where V is in kV and S is in MVA gives Z in Ω
+Z_load_magnitude = (V_ll_kv**2) / S_apparent
+print(f"\nLoad encroachment limit:")
+print(f"  Voltage: {voltage_kv} kV, Apparent power: {apparent_power_mva} MVA")
+print(f"  |Z_load| = {voltage_kv}² / {apparent_power_mva} = {Z_load_magnitude:.6f} Ω")
+
+# Maximum zone 3 due to load encroachment
+load_encroach_fraction = settings['load_encroachment_fraction']
+max_zone3_load = Z_load_magnitude * load_encroach_fraction
+print(f"  Max Z3 ({load_encroach_fraction*100:.0f}% of load impedance): {max_zone3_load:.6f} Ω")
+
+# Zone 3 reach: nominal or capped by load encroachment (whichever is smaller)
+zone3_reach = min(zone3_nominal, max_zone3_load)
+print(f"  Zone 3 actual: {zone3_reach:.6f} Ω")
+print()
+
+# Verify constraints
+print("Constraint verification:")
+print(f"  Zone 1 < protected line: {zone1_reach:.6f} < {Z_line:.6f}? {zone1_reach < Z_line}")
+print(f"  Zone 1 within 78-85%: {settings['zone1_fraction'][0]} < {zone1_reach/Z_line:.4f} < {settings['zone1_fraction'][1]}? {settings['zone1_fraction'][0] <= zone1_reach/Z_line <= settings['zone1_fraction'][1]}")
+print(f"  Zone 2 > zone1: {zone2_reach:.6f} > {zone1_reach:.6f}? {zone2_reach > zone1_reach}")
+print(f"  Zone 3 > zone2: {zone3_reach:.6f} > {zone2_reach:.6f}? {zone3_reach > zone2_reach}")
+print(f"  Zone 3 < load limit: {zone3_reach:.6f} < {max_zone3_load:.6f}? {zone3_reach < max_zone3_load}")
+print()
+
+# Set delays
+zone1_delay = settings['zone1_max_delay_s']  # 0.05 s
+zone2_delay = settings['zone2_delay_s'][0]  # 0.3 s (minimum of range)
+zone3_delay = settings['zone3_delay_s'][0]  # 0.85 s (minimum of range)
+
+print(f"Delays: Z1={zone1_delay}s, Z2={zone2_delay}s, Z3={zone3_delay}s")
+print(f"Non-decreasing: {zone1_delay} <= {zone2_delay} <= {zone3_delay}? {zone1_delay <= zone2_delay <= zone3_delay}")
+print()
+
+# Prepare submission
+submission = {
+    "zone1_ohm": zone1_reach,
+    "zone2_ohm": zone2_reach,
+    "zone3_ohm": zone3_reach,
+    "zone1_delay_s": zone1_delay,
+    "zone2_delay_s": zone2_delay,
+    "zone3_delay_s": zone3_delay,
+    "rationale": f"Zone 1 set to {zone1_fraction*100:.1f}% of protected line (underreach). Zone 2 extends over line plus {zone2_fraction*100:.0f}% of shortest backup (L_BC). Zone 3 provides remote backup at {zone3_fraction*100:.1f}% of longest backup (L_BD), capped by load encroachment ({load_encroach_fraction*100:.0f}% of load impedance). Delays: {zone1_delay}s, {zone2_delay}s, {zone3_delay}s for coordination."
+}
+
+print("Final submission:")
+print(json.dumps(submission, indent=2))
+
+EOF
+
+Protected line (L_AB):
+  Length: 80.0 km
+  R: 6.4 Ω
+  X: 25.6 Ω
+  Z magnitude: 26.387876 Ω
+
+L_BC: 45.0 km, Z=15.770879 Ω
+L_BD: 60.0 km, Z=18.553975 Ω
+
+Shortest backup: L_BC (45.0 km), Z=15.770879 Ω
+Longest backup: L_BD (60.0 km), Z=18.553975 Ω
+
+Zone 1 reach (81.5% of line): 21.506119 Ω
+Zone 2 reach: 26.387876 + 15.770879*0.55 = 35.061859 Ω
+Zone 3 nominal: 26.387876 + 18.553975*1.2250 = 49.116496 Ω
+
+Load encroachment limit:
+  Voltage: 110.0 kV, Apparent power: 80.0 MVA
+  |Z_load| = 110.0² / 80.0 = 151.250000 Ω
+  Max Z3 (80% of load impedance): 121.000000 Ω
+  Zone 3 actual: 49.116496 Ω
+
+Constraint verification:
+  Zone 1 < protected line: 21.506119 < 26.387876? True
+  Zone 1 within 78-85%: 0.78 < 0.8150 < 0.85? True
+  Zone 2 > zone1: 35.061859 > 21.506119? True
+  Zone 3 > zone2: 49.116496 > 35.061859? True
+  Zone 3 < load limit: 49.116496 < 121.000000? True
+
+Delays: Z1=0.05s, Z2=0.3s, Z3=0.85s
+Non-decreasing: 0.05 <= 0.3 <= 0.85? True
+
+Final submission:
+{
+  "zone1_ohm": 21.50611894322172,
+  "zone2_ohm": 35.06185946384619,
+  "zone3_ohm": 49.116495765170384,
+  "zone1_delay_s": 0.05,
+  "zone2_delay_s": 0.3,
+  "zone3_delay_s": 0.85,
+  "rationale": "Zone 1 set to 81.5% of protected line (underreach). Zone 2 extends over line plus 55% of shortest backup (L_BC). Zone 3 provides remote backup at 122.5% of longest backup (L_BD), capped by load encroachment (80% of load impedance). Delays: 0.05s, 0.3s, 0.85s for coordination."
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

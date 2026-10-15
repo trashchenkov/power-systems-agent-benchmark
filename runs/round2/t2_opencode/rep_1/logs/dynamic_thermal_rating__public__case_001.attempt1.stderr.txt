@@ -1,0 +1,39 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+d=22.4; R=(0.118/1000)*(1+0.00403*(75-20)); em=0.7; ab=0.7; h=0.72
+sig=5.670374419e-8; area=math.pi*d/1000; D=d/1000
+series=[('t00',18.0,2.8,150.0),('t01',31.0,0.7,850.0),('t02',27.0,1.4,600.0),('t03',22.0,3.2,100.0)]
+amp={};
+for t,a,ws,s in series:
+    conv=h*max(ws,0.05)**0.6*(75-a)
+    rad=em*sig*area*((75+273.15)**4-(a+273.15)**4)
+    sol=ab*s*D
+    val=math.sqrt(max(conv+rad-sol,0)/R)
+    amp[t]=val
+    print(t, round(conv,4), round(rad,4), round(sol,4), round(val,3))
+print('R_hot',R)
+mn=min(amp.values()); lt=min(amp,key=amp.get)
+print('min',mn,'limiting',lt)
+print('overload',[t for t in amp if 520.0>amp[t]])
+"
+
+t00 76.1206 20.9655 2.352 810.66
+t01 25.5767 17.1334 13.328 451.468
+t02 42.2913 18.3663 9.408 596.253
+t03 76.6829 19.8396 1.568 811.602
+R_hot 0.00014415469999999998
+min 451.4679563881969 limiting t01
+overload ['t01']
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

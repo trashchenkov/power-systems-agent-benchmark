@@ -1,0 +1,65 @@
+Now I understand the task. I need to calculate distance protection settings for a 110 kV line. Let me analyze the data and compute the zone reaches and delays.
+
+**Given Data:**
+- Protected line L_AB: 80 km, r1 = 0.08 Ω/km, x1 = 0.32 Ω/km
+- Remote backup line L_BC: 45 km, r1 = 0.085 Ω/km, x1 = 0.34 Ω/km
+- Remote backup line L_BD: 60 km, r1 = 0.075 Ω/km, x1 = 0.30 Ω/km
+- Maximum load: 80 MVA, power factor 0.9 lagging
+- Setting rules with fractions and delays
+
+**Calculations:**
+
+1. **Protected line impedance (Z_AB):**
+   - R_AB = 80 × 0.08 = 6.4 Ω
+   - X_AB = 80 × 0.32 = 25.6 Ω
+   - |Z_AB| = √(6.4² + 25.6²) = √(40.96 + 655.36) = √696.32 = 26.388 Ω
+
+2. **Remote backup line impedances:**
+   - L_BC: R_BC = 45 × 0.085 = 3.825 Ω, X_BC = 45 × 0.34 = 15.3 Ω
+   - |Z_BC| = √(3.825² + 15.3²) = √(14.63 + 234.09) = √248.72 = 15.77 Ω
+   
+   - L_BD: R_BD = 60 × 0.075 = 4.5 Ω, X_BD = 60 × 0.30 = 18.0 Ω
+   - |Z_BD| = √(4.5² + 18.0²) = √(20.25 + 324) = √344.25 = 18.555 Ω
+
+3. **Zone 1 reach:**
+   - Must underreach the protected line with fraction [0.78, 0.85]
+   - Using mid-value 0.815: Zone1 = 26.388 × 0.815 = 21.51 Ω
+   - Or use 0.8: Zone1 = 26.388 × 0.8 = 21.11 Ω
+   - Let's use 0.8: Zone1 = 21.11 Ω (within [0.78, 0.85] range)
+   - Zone 1 delay: ≤ 0.05 s, use 0.05 s
+
+4. **Zone 2 reach:**
+   - Must cover protected line + fraction [0.45, 0.65] of shortest remote backup
+   - Shortest backup is L_BC (45 km) with |Z_BC| = 15.77 Ω
+   - Using 0.5 fraction: Zone2 = 26.388 + 0.5 × 15.77 = 26.388 + 7.885 = 34.27 Ω
+   - Zone 2 delay: [0.3, 0.6] s, use 0.4 s
+
+5. **Zone 3 reach:**
+   - Must cover protected line + fraction [1.1, 1.35] of longest remote backup
+   - Longest backup is L_BD (60 km) with |Z_BD| = 18.555 Ω
+   - Using 1.2 fraction: Zone3 = 26.388 + 1.2 × 18.555 = 26.388 + 22.266 = 48.65 Ω
+   
+6. **Load encroachment check:**
+   - Load impedance at 110 kV, 80 MVA: Z_load = V²/S = (110×10³)²/(80×10⁶) = 12.1×10⁶/80×10⁶ = 151.25 Ω
+   - With power factor 0.9, the resistive component is relevant
+   - Load encroachment limit = 0.8 × Z_load × cos(φ) consideration
+   - Actually, the load encroachment fraction is 0.8 of load impedance magnitude
+   - Load impedance magnitude at rated voltage: |Z_load| = (110 kV)² / 80 MVA = 151.25 Ω
+   - Load encroachment limit = 0.8 × 151.25 = 121 Ω
+   - Zone 3 reach (48.65 Ω) is well below 121 Ω ✓
+
+Let me recalculate more carefully:
+The calculations are complete and all constraints are satisfied. Now let me write the submission.json file:
+The submission.json file has been created with the calculated distance protection settings. The solution:
+
+- **Zone 1**: 21.11 Ω (80% of protected line impedance, underreaching)
+- **Zone 2**: 34.27 Ω (protected line + 50% of shortest backup line L_BC)
+- **Zone 3**: 48.65 Ω (protected line + 120% of longest backup line L_BD, well below 121 Ω load encroachment limit)
+- **Delays**: 0.05s / 0.4s / 1.0s (coordinated and non-decreasing)
+
+All hard constraints are satisfied:
+- Reaches are strictly increasing (21.11 < 34.27 < 48.65)
+- Zone 1 is within the underreach fraction [0.78, 0.85]
+- Zone 2 covers the required fraction of shortest backup [0.45, 0.65]
+- Zone 3 covers the required fraction of longest backup [1.1, 1.35] and stays below load encroachment limit
+- Delays are within coordination windows and non-decreasing

@@ -1,0 +1,147 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+# Extract parameters
+case = task['thermal_rating_case']
+conductor = case['conductor']
+thermal_limits = case['thermal_limits']
+model_constants = case['model_constants']
+weather_series = case['weather_series']
+scheduled_current_a = case['scheduled_current_a']
+
+T_max = thermal_limits['max_conductor_temperature_c']
+diameter_mm = conductor['diameter_mm']
+resistance_ohm_per_km_at_20c = conductor['resistance_ohm_per_km_at_20c']
+resistance_temp_coeff_per_c = conductor['resistance_temp_coeff_per_c']
+emissivity = conductor['emissivity']
+solar_absorptivity = conductor['solar_absorptivity']
+convective_w_per_m_c_at_1ms = model_constants['convective_w_per_m_c_at_1ms']
+
+# Calculate R_hot (resistance at maximum temperature)
+R_hot = (resistance_ohm_per_km_at_20c / 1000) * (1 + resistance_temp_coeff_per_c * (T_max - 20))
+
+print(f"R_hot = {R_hot} ohm/m")
+
+# Calculate ampacity for each timestamp
+ampacity_by_timestamp = {}
+ampacities = []
+
+for weather in weather_series:
+    timestamp = weather['timestamp']
+    ambient_temperature_c = weather['ambient_temperature_c']
+    wind_speed_m_s = weather['wind_speed_m_s']
+    solar_w_per_m2 = weather['solar_w_per_m2']
+    
+    # Convection: convective_w_per_m_c_at_1ms * max(wind_speed_m_s, 0.05)^0.6 * (T_max - ambient_temperature_c)
+    convection = convective_w_per_m_c_at_1ms * (max(wind_speed_m_s, 0.05) ** 0.6) * (T_max - ambient_temperature_c)
+    
+    # Radiation: emissivity * 5.670374419e-8 * (pi * diameter_mm/1000) * ((T_max+273.15)^4 - (ambient+273.15)^4)
+    radiation = emissivity * 5.670374419e-8 * (math.pi * diameter_mm / 1000) * ((T_max + 273.15)**4 - (ambient_temperature_c + 273.15)**4)
+    
+    # Solar gain: solar_absorptivity * solar_w_per_m2 * (diameter_mm/1000)
+    solar_gain = solar_absorptivity * solar_w_per_m2 * (diameter_mm / 1000)
+    
+    # Heat balance: convection + radiation - solar gain
+    heat_balance = convection + radiation - solar_gain
+    
+    # Ampacity = sqrt(max(convection + radiation - solar gain, 0) / R_hot)
+    ampacity = math.sqrt(max(heat_balance, 0) / R_hot)
+    
+    ampacity_by_timestamp[timestamp] = ampacity
+    ampacities.append(ampacity)
+    
+    print(f"\n{timestamp}:")
+    print(f"  Ambient: {ambient_temperature_c}°C, Wind: {wind_speed_m_s} m/s, Solar: {solar_w_per_m2} W/m²")
+    print(f"  Convection: {convection:.4f} W/m")
+    print(f"  Radiation: {radiation:.4f} W/m")
+    print(f"  Solar gain: {solar_gain:.4f} W/m")
+    print(f"  Heat balance: {heat_balance:.4f} W/m")
+    print(f"  Ampacity: {ampacity:.2f} A")
+
+# Find minimum ampacity and limiting timestamp
+minimum_ampacity = min(ampacities)
+limiting_timestamp = min(weather_series, key=lambda w: ampacity_by_timestamp[w['timestamp']])['timestamp']
+
+# Find overload timestamps (where scheduled_current_a exceeds the rating)
+overload_timestamps = [ts for ts, amp in ampacity_by_timestamp.items() if scheduled_current_a > amp]
+
+print(f"\n\nScheduled current: {scheduled_current_a} A")
+print(f"Minimum ampacity: {minimum_ampacity:.2f} A")
+print(f"Limiting timestamp: {limiting_timestamp}")
+print(f"Overload timestamps: {overload_timestamps}")
+
+# Create submission
+submission = {
+    "ampacity_by_timestamp_a": ampacity_by_timestamp,
+    "minimum_ampacity_a": round(minimum_ampacity, 2),
+    "limiting_timestamp": limiting_timestamp,
+    "overload_timestamps": overload_timestamps,
+    "rationale": "Computed using steady-state heat balance model with Stefan-Boltzmann radiation, wind-dependent convection, and solar absorption."
+}
+
+# Write submission
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\n✓ submission.json written")
+
+EOF
+
+R_hot = 0.00014415469999999998 ohm/m
+
+t00:
+  Ambient: 18.0°C, Wind: 2.8 m/s, Solar: 150.0 W/m²
+  Convection: 76.1206 W/m
+  Radiation: 20.9655 W/m
+  Solar gain: 2.3520 W/m
+  Heat balance: 94.7341 W/m
+  Ampacity: 810.66 A
+
+t01:
+  Ambient: 31.0°C, Wind: 0.7 m/s, Solar: 850.0 W/m²
+  Convection: 25.5767 W/m
+  Radiation: 17.1334 W/m
+  Solar gain: 13.3280 W/m
+  Heat balance: 29.3821 W/m
+  Ampacity: 451.47 A
+
+t02:
+  Ambient: 27.0°C, Wind: 1.4 m/s, Solar: 600.0 W/m²
+  Convection: 42.2913 W/m
+  Radiation: 18.3663 W/m
+  Solar gain: 9.4080 W/m
+  Heat balance: 51.2495 W/m
+  Ampacity: 596.25 A
+
+t03:
+  Ambient: 22.0°C, Wind: 3.2 m/s, Solar: 100.0 W/m²
+  Convection: 76.6829 W/m
+  Radiation: 19.8396 W/m
+  Solar gain: 1.5680 W/m
+  Heat balance: 94.9544 W/m
+  Ampacity: 811.60 A
+
+
+Scheduled current: 520.0 A
+Minimum ampacity: 451.47 A
+Limiting timestamp: t01
+Overload timestamps: ['t01']
+
+✓ submission.json written
+[0m
+[0m→ [0mRead submission.json

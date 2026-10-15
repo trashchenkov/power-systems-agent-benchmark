@@ -1,0 +1,152 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat > /tmp/solve.py << 'EOF'
+import numpy as np
+
+# branch: (from,to,x)
+branches = {
+ 'l12': ('b1','b2',0.1),
+ 'l13': ('b1','b3',0.125),
+ 'l23': ('b2','b3',0.2),
+}
+# state vars theta_2,theta_3 ; theta_1=0
+def h_flow(bid):
+    f,t,x = branches[bid]
+    h = np.zeros(2)
+    # P_ft = (theta_f-theta_t)/x
+    for node,sign in [(f,-1),(t,+1)]:
+        if node=='b2': h[0]+= sign/x
+        if node=='b3': h[1]+= sign/x
+    return h
+
+def h_inj(bus):
+    # injection = sum of flows out of bus = sum over branches where bus is 'from' (theta_bus-theta_other)/x
+    h=np.zeros(2)
+    for bid,(f,t,x) in branches.items():
+        if f==bus:
+            for node,sign in [(f,1),(t,-1)]:
+                if node=='b2': h[0]+=sign/x
+                if node=='b3': h[1]+=sign/x
+        if t==bus:
+            for node,sign in [(t,1),(f,-1)]:
+                if node=='b2': h[0]+=sign/x
+                if node=='b3': h[1]+=sign/x
+    return h
+
+meas = [
+ ('flow_l12','flow','l12',0.402,0.01),
+ ('flow_l13','flow','l13',0.557,0.01),
+ ('flow_l23','flow','l23',0.151,0.01),
+ ('inj_b2','inj','b2',-0.1,0.01),
+ ('inj_b3','inj','b3',-0.713,0.01),
+]
+
+def run(meas, H_sign=1):
+    active=list(meas)
+    flagged=[]
+    while True:
+        n=len(active)
+        H=np.zeros((n,2)); z=np.zeros(n); R=np.zeros(n)
+        for i,(mid,typ,ref,val,sig) in enumerate(active):
+            if typ=='flow': h=h_flow(ref)
+            else: h=H_sign*h_inj(ref)
+            H[i]=h; z[i]=val; R[i]=sig**2
+        W=np.diag(1/R)
+        G=H.T@W@H
+        Ginv=np.linalg.inv(G)
+        x=Ginv@H.T@W@z
+        r=z-H@x
+        denom=np.sqrt(R - np.einsum('ij,jk,ik->i',H,Ginv,H))
+        rn=r/denom
+        idx=np.argmax(np.abs(rn))
+        print('H_sign',H_sign,'active',[m[0] for m in active],'x',x,'rn',dict(zip([m[0] for m in active],np.round(rn,3))))
+        if abs(rn[idx])>3.0:
+            flagged.append(active[idx][0])
+            active.pop(idx)
+        else:
+            break
+    return flagged,x
+
+for s in [1,-1]:
+    print('==== sign',s)
+    f,x=run(meas,s)
+    print('flagged',f,'state',x)
+EOF
+python3 /tmp/solve.py
+==== sign 1
+H_sign 1 active ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b2', 'inj_b3'] x [ 0.01167706 -0.00576426] rn {'flow_l12': 35.617, 'flow_l13': 72.302, 'flow_l23': 25.164, 'inj_b2': -48.811, 'inj_b3': -94.165}
+H_sign 1 active ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b2'] x [0.02582977 0.07275418] rn {'flow_l12': 18.269, 'flow_l13': -4.998, 'flow_l23': -9.473, 'inj_b2': -20.87}
+H_sign 1 active ['flow_l12', 'flow_l13', 'flow_l23'] x [0.0400819  0.06980952] rn {'flow_l12': 0.303, 'flow_l13': -0.303, 'flow_l23': 0.303}
+flagged ['inj_b3', 'inj_b2'] state [0.0400819  0.06980952]
+==== sign -1
+H_sign -1 active ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b2', 'inj_b3'] x [0.03353992 0.06895437] rn {'flow_l12': 8.317, 'flow_l13': 0.643, 'flow_l23': -2.754, 'inj_b2': 9.366, 'inj_b3': 2.552}
+H_sign -1 active ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b3'] x [0.04005882 0.07009804] rn {'flow_l12': 0.356, 'flow_l13': -0.457, 'flow_l23': 0.089, 'inj_b3': -0.345}
+flagged ['inj_b2'] state [0.04005882 0.07009804]
+[0m
+[0m$ [0mcat > /tmp/solve2.py << 'EOF'
+import numpy as np
+# STANDARD convention: flow_ij=(theta_i-theta_j)/x ; inj_i = sum_j flow_ij
+branches={'l12':('b1','b2',0.1),'l13':('b1','b3',0.125),'l23':('b2','b3',0.2)}
+def hv(node,sign,h):
+    if node=='b2': h[0]+=sign
+    if node=='b3': h[1]+=sign
+def h_flow(bid):
+    f,t,x=branches[bid]; h=np.zeros(2)
+    hv(f,1/x,h); hv(t,-1/x,h); return h
+def h_inj(bus):
+    h=np.zeros(2)
+    for f,t,x in branches.values():
+        if f==bus: hv(f,1/x,h); hv(t,-1/x,h)
+        if t==bus: hv(t,1/x,h); hv(f,-1/x,h)
+    return h
+meas=[('flow_l12','flow','l12',0.402,0.01),('flow_l13','flow','l13',0.557,0.01),
+ ('flow_l23','flow','l23',0.151,0.01),('inj_b2','inj','b2',-0.1,0.01),('inj_b3','inj','b3',-0.713,0.01)]
+active=list(meas); flagged=[]
+while True:
+    n=len(active); H=np.zeros((n,2)); z=np.zeros(n); R=np.zeros(n)
+    for i,(mid,typ,ref,val,sig) in enumerate(active):
+        h=h_flow(ref) if typ=='flow' else h_inj(ref)
+        H[i]=h; z[i]=val; R[i]=sig**2
+    W=np.diag(1/R); G=H.T@W@H; Gi=np.linalg.inv(G)
+    x=Gi@H.T@W@z; r=z-H@x
+    rn=r/np.sqrt(R-np.einsum('ij,jk,ik->i',H,Gi,H))
+    print([m[0] for m in active],'x=',np.round(x,6),'rn=',dict(zip([m[0] for m in active],np.round(rn,3))))
+    k=int(np.argmax(np.abs(rn)))
+    if abs(rn[k])>3.0:
+        flagged.append(active[k][0]); active.pop(k)
+    else: break
+print('FLAGGED',flagged)
+print('CORRECTED_STATE',{'theta_2':x[0],'theta_3':x[1]})
+EOF
+python3 /tmp/solve2.py
+['flow_l12', 'flow_l13', 'flow_l23', 'inj_b2', 'inj_b3'] x= [-0.03354  -0.068954] rn= {'flow_l12': 8.317, 'flow_l13': 0.643, 'flow_l23': -2.754, 'inj_b2': 9.366, 'inj_b3': 2.552}
+['flow_l12', 'flow_l13', 'flow_l23', 'inj_b3'] x= [-0.040059 -0.070098] rn= {'flow_l12': 0.356, 'flow_l13': -0.457, 'flow_l23': 0.089, 'inj_b3': -0.345}
+FLAGGED ['inj_b2']
+CORRECTED_STATE {'theta_2': -0.040058823529411765, 'theta_3': -0.07009803921568628}
+[0m
+[0m$ [0mls -la <packets>/fdi_state_estimation__public__case_001/ 2>&1; echo "---"; ls -la <sandbox_a1>/
+total 28
+drwxr-xr-x  2 root root  4096 Oct 14 17:07 .
+drwxr-xr-x 84 root root 12288 Oct 14 17:07 ..
+-rw-r--r--  1 root root  1175 Oct 14 17:07 instructions.md
+-rw-r--r--  1 root root  7105 Oct 14 17:07 task.json
+---
+total 392
+drwx------    2 root root   4096 Oct 14 17:25 .
+drwxrwxrwt 2058 root root 380928 Oct 14 17:26 ..
+-rw-r--r--    1 root root   1175 Oct 14 17:25 instructions.md
+-rw-r--r--    1 root root   7105 Oct 14 17:25 task.json
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/fdi_state_estimation__public__case_001/*); auto-rejecting
+[0m✗ [0mWrite <packets>/fdi_state_estimation__public__case_001/submission.json failed
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.

@@ -1,0 +1,72 @@
+Now I understand the task. I need to compute BESS active and reactive power responses for three timestamps (t0, t1, t2) based on frequency and voltage droop rules, then calculate the final SOC.
+
+Let me calculate:
+
+**Given values:**
+- Nominal frequency: 50.0 Hz
+- Target voltage: 1.0 pu
+- Frequency droop: 18.0 MW/Hz
+- Voltage droop: 30.0 Mvar/pu
+- S rating: 5.0 MVA
+- P discharge limit: 4.0 MW
+- P charge limit: 3.0 MW
+- Interval: 10 seconds
+- Initial SOC: 4.8 MWh
+- Charge efficiency: 0.96
+- Discharge efficiency: 0.94
+
+**Measurements:**
+- t0: f=49.86 Hz, V=0.965 pu
+- t1: f=49.92 Hz, V=0.982 pu
+- t2: f=50.04 Hz, V=1.018 pu
+
+**Calculations:**
+
+**t0:**
+- Δf = 50.0 - 49.86 = 0.14 Hz
+- p_response = 0.14 * 18 = 2.52 MW (positive = discharge)
+- Clipped: 2.52 MW (within -3 to 4)
+- ΔV = 1.0 - 0.965 = 0.035 pu
+- q_response_raw = 0.035 * 30 = 1.05 Mvar
+- Q max = sqrt(5² - 2.52²) = sqrt(25 - 6.3504) = sqrt(18.6496) = 4.318 Mvar
+- q_response = clip(1.05, -4.318, 4.318) = 1.05 Mvar
+- Energy change = 2.52 MW * 10s / 3600 h = 0.007 MWh discharged
+- SOC change = -0.007 / 0.94 = -0.007447 MWh
+- New SOC = 4.8 - 0.007447 = 4.792553 MWh
+
+**t1:**
+- Δf = 50.0 - 49.92 = 0.08 Hz
+- p_response = 0.08 * 18 = 1.44 MW (discharge)
+- Clipped: 1.44 MW
+- ΔV = 1.0 - 0.982 = 0.018 pu
+- q_response_raw = 0.018 * 30 = 0.54 Mvar
+- Q max = sqrt(5² - 1.44²) = sqrt(25 - 2.0736) = sqrt(22.9264) = 4.788 Mvar
+- q_response = 0.54 Mvar
+- Energy change = 1.44 * 10/3600 = 0.004 MWh discharged
+- SOC change = -0.004 / 0.94 = -0.004255 MWh
+- New SOC = 4.792553 - 0.004255 = 4.788298 MWh
+
+**t2:**
+- Δf = 50.0 - 50.04 = -0.04 Hz
+- p_response = -0.04 * 18 = -0.72 MW (negative = charge)
+- Clipped: -0.72 MW (within limits)
+- ΔV = 1.0 - 1.018 = -0.018 pu
+- q_response_raw = -0.018 * 30 = -0.54 Mvar
+- Q max = sqrt(5² - (-0.72)²) = sqrt(25 - 0.5184) = sqrt(24.4816) = 4.948 Mvar
+- q_response = -0.54 Mvar
+- Energy change = -0.72 * 10/3600 = -0.002 MWh (negative means charging)
+- SOC change = -(-0.002) * 0.96 = 0.00192 MWh (charging adds energy with efficiency)
+- New SOC = 4.788298 + 0.00192 = 4.790218 MWh
+
+Let me write a Python script to verify these calculations precisely:
+The calculations are complete. Now let me write the submission.json file:
+The submission.json file has been written with:
+- **p_response_mw**: Active power response calculated using frequency droop (positive = discharge to grid)
+  - t0: 2.52 MW (frequency 49.86 Hz, below nominal, so discharge)
+  - t1: 1.44 MW (frequency 49.92 Hz, below nominal, so discharge)
+  - t2: -0.72 MW (frequency 50.04 Hz, above nominal, so charge)
+- **q_response_mvar**: Reactive power response calculated using voltage droop
+  - t0: 1.05 Mvar (voltage 0.965 pu, below target, inject reactive power)
+  - t1: 0.54 Mvar (voltage 0.982 pu, below target, inject reactive power)
+  - t2: -0.54 Mvar (voltage 1.018 pu, above target, absorb reactive power)
+- **final_soc_mwh**: 4.790218 MWh (starting from 4.8 MWh, accounting for discharge/charge energy with efficiencies)

@@ -1,0 +1,120 @@
+Now I understand the task. Let me analyze the problem:
+
+**Problem Analysis:**
+- **Source bus:** `s`
+- **Faulted branch:** `l23` (between b2 and b3)
+- **Network topology:**
+  - s --l_s1--> b1 --l12--> b2 --l23--> b3 --l34--> b4
+  - There's also a tie switch: b2 --tie_24--> b4
+
+- **Bus loads and priorities:**
+  - s: 0 kW, priority 0
+  - b1: 0 kW, priority 0
+  - b2: 50 kW, priority 3
+  - b3: 80 kW, priority 5
+  - b4: 40 kW, priority 2
+
+- **Constraints:**
+  1. Faulted branch `l23` must be open
+  2. Network must remain radial (no loops)
+  3. Must restore at least `min_priority_restored = 10.0`
+
+**Solution Strategy:**
+
+Since `l23` is faulted, it must be opened. This isolates b3 and b4 from the source.
+
+Current state (normally closed):
+- l_s1: closed
+- l12: closed
+- l23: closed (but faulted, must open)
+- l34: closed
+- tie_24: open (normally open)
+
+After fault at l23:
+- b1 and b2 are still energized (reachable from s)
+- b3 and b4 are isolated
+
+To restore b4 (priority 2), we can use the tie switch tie_24:
+- Close tie_24 to connect b4 to b2
+
+But we need to check for radiality:
+- If we close tie_24 while l34 is closed, we create a loop: b2 --l23(open)--> b3 --l34--> b4 --tie_24--> b2
+- Wait, l23 is open, so b3 is isolated. Let me trace again.
+
+Actually:
+- With l23 open, b3 is isolated
+- b4 is connected to b3 via l34
+- If we close tie_24, b4 connects to b2
+- But b4 is also connected to b3 via l34
+- This doesn't create a loop because b3 is isolated (no connection back to source)
+
+Wait, let me re-check: b3 is isolated from source, but b4 would have two paths:
+1. b4 --l34--> b3 (dead end, isolated)
+2. b4 --tie_24--> b2 --l12--> b1 --l_s1--> s
+
+This is radial because b3 is not connected to the source. The network would be:
+- Energized: s - b1 - b2 - b4 (via tie_24)
+- Isolated: b3
+
+But we need to check if closing tie_24 creates any loop. Since b3 is isolated (l23 is open), there's no loop.
+
+However, we should verify: can we restore more priority?
+
+Current plan:
+- Open: l23 (faulted, mandatory)
+- Close: tie_24 (to restore b4)
+
+Restored buses: s, b1, b2, b4
+- b2: priority 3
+- b4: priority 2
+Total priority restored: 3 + 2 = 5
+
+This is less than min_priority_restored = 10. So this plan won't work.
+
+Alternative: Can we restore b3?
+To restore b3, we need to provide a path from s to b3. But l23 is faulted and must stay open. The only way to reach b3 is through l34 from b4. So if we restore b4 via tie_24, b3 would also be reachable if l34 is closed.
+
+Let me check:
+- Open: l23 (faulted)
+- Close: tie_24
+- Keep l34 closed
+
+Path to b3: s -> b1 -> b2 -> b4 -> b3 (via l34 in reverse)
+Wait, l34 goes from b3 to b4. Power can flow either direction.
+
+So if tie_24 is closed:
+- s -> b1 -> b2 -> b4 (via tie_24) -> b3 (via l34)
+
+This would restore:
+- b2: priority 3
+- b4: priority 2
+- b3: priority 5
+Total: 10
+
+This meets min_priority_restored = 10!
+
+Is it radial?
+- The energized network: s - b1 - b2 - b4 - b3
+- This is a tree structure, no loops. Yes, it's radial!
+
+So the solution is:
+- **Open switches:** ["l23"] (the faulted branch)
+- **Close switches:** ["tie_24"] (the tie switch to restore b4 and b3)
+
+Let me double-check:
+1. Faulted branch l23 is open ✓
+2. Network is radial (tree structure) ✓
+3. Restored load buses: b2, b3, b4 with priorities 3, 5, 2 = 10 ✓ (meets min 10)
+
+This is the optimal solution.
+I have solved the FLISR restoration task and written the submission.json file.
+
+**Solution Summary:**
+- **Open switches:** `["l23"]` - The faulted branch must be opened to isolate the fault between b2 and b3
+- **Close switches:** `["tie_24"]` - Closing this tie switch creates a restoration path from the source to b2, b4, and b3
+
+**Result:**
+- Restored buses: b2 (priority 3), b4 (priority 2), b3 (priority 5)
+- Total priority restored: 10 (meets the minimum requirement of 10)
+- The network remains radial with no loops
+- Only 2 switching actions (1 open, 1 close)

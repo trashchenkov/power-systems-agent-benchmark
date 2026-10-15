@@ -1,0 +1,1120 @@
+
+Creating empty file 
+<sandbox_a1>/submi
+ssion.json
+Aider v0.86.2
+Model: openai/z-ai/glm-4.6 with whole edit format
+Git repo: none
+Repo-map: disabled
+Added instructions.md to the chat.
+Added submission.json to the chat.
+Added task.json to the chat.
+
+
+https://aider.chat/HISTORY.html#release-notes
+
+
+--------------
+► **THINKING**
+
+The user wants me to solve an executable benchmark task related to corrective 
+transmission switching in a power system. I need to:
+
+1. Read and understand `task.json` and `instructions.md`
+2. Analyze the power system state and identify the problem
+3. Evaluate the candidate switching actions
+4. Determine the best action that meets all constraints
+5. Create a `submission.json` file with the solution
+
+Let me break down the problem:
+
+**Current State:**
+- Branch l13 is out of service (contingency)
+- The system has one overloaded branch that needs to be fixed
+- We can perform at most one corrective switching action
+
+**Network Components:**
+- 4 buses (b1, b2, b3, b4) with power injections
+- 6 branches (l12, l13, l14, l23, l24, l34) with reactances and ratings
+- l13 is already out (contingency)
+- l14 is normally open (can be closed as corrective action)
+- l23, l24, l34 are active (can be opened as corrective action)
+
+**Candidate Switches:**
+1. Close l14 (cost: 1.0)
+2. Open l23 (cost: 1.0)
+3. Open l24 (cost: 1.0)
+4. Open l34 (cost: 1.0)
+
+**Constraints:**
+- Use at most one corrective switching action
+- Only branches listed in candidate_switches may be opened or closed
+- The resulting topology must remain connected (no islanding)
+- Every active branch loading must be at or below 100% of its emergency rating
+
+**Objective:**
+Choose a corrective transmission switching action that removes post-contingency 
+overloads without islanding the network.
+
+Let me analyze the power flow to identify the overloaded branch and evaluate the
+corrective actions.
+
+First, I need to set up the DC power flow equations. The DC power flow model is:
+- Branch flow = (theta_from - theta_to) / x_pu
+- Bus injections sum to zero
+- Slack bus is the first bus listed (b1)
+
+Let me represent the network and calculate the power flows:
+
+**Buses:**
+- b1: p_mw = 100.0 (slack bus)
+- b2: p_mw = -20.0
+- b3: p_mw = -50.0
+- b4: p_mw = -30.0
+
+**Branches (post-contingency):**
+- l12: b1-b2, x_pu = 0.1, rating_mw = 75.0, closed = true
+- l13: b1-b3, x_pu = 0.1, rating_mw = 40.0, closed = false (out of service)
+- l23: b2-b3, x_pu = 0.1, rating_mw = 50.0, closed = true
+- l24: b2-b4, x_pu = 0.1, rating_mw = 50.0, closed = true
+- l34: b3-b4, x_pu = 0.1, rating_mw = 50.0, closed = true
+- l14: b1-b4, x_pu = 0.3, rating_mw = 50.0, closed = false (normally open)
+
+Let me set up the DC power flow equations. I'll use the nodal admittance matrix 
+approach:
+
+For the DC power flow, the nodal admittance matrix Y is constructed as:
+Y_ii = Σ(1/x_ij) for all branches connected to bus i
+Y_ij = -1/x_ij for branch between bus i and bus j
+
+Let's calculate Y for the current state (with l13 open):
+
+Y_11 = 1/x_12 = 1/0.1 = 10
+Y_22 = 1/x_12 + 1/x_23 + 1/x_24 = 1/0.1 + 1/0.1 + 1/0.1 = 10 + 10 + 10 = 30
+Y_33 = 1/x_23 + 1/x_34 = 1/0.1 + 1/0.1 = 10 + 10 = 20
+Y_44 = 1/x_24 + 1/x_34 = 1/0.1 + 1/0.1 = 10 + 10 = 20
+
+Y_12 = Y_21 = -1/x_12 = -1/0.1 = -10
+Y_23 = Y_32 = -1/x_23 = -1/0.1 = -10
+Y_24 = Y_42 = -1/x_24 = -1/0.1 = -10
+Y_34 = Y_43 = -1/x_34 = -1/0.1 = -10
+
+All other Y_ij = 0
+
+The nodal admittance matrix Y is:
+```
+[ 10  -10   0    0 ]
+[-10   30 -10  -10]
+[  0  -10  20  -10]
+[  0  -10 -10   20]
+```
+
+For DC power flow, we have: P = B * θ, where B is the imaginary part of Y (which
+is Y itself for DC power flow) and θ is the vector of voltage angles.
+
+Since b1 is the slack bus, we set θ_1 = 0 and solve for the other angles.
+
+Let's remove the first row and column (since θ_1 = 0):
+```
+[ 30 -10 -10 ] [θ_2]   [-20]
+[-10  20 -10 ] [θ_3] = [-50]
+[-10 -10  20 ] [θ_4]   [-30]
+```
+
+Solving this system:
+30θ_2 - 10θ_3 - 10θ_4 = -20  (1)
+-10θ_2 + 20θ_3 - 10θ_4 = -50 (2)
+-10θ_2 - 10θ_3 + 20θ_4 = -30 (3)
+
+From (1): 3θ_2 - θ_3 - θ_4 = -2
+From (2): -θ_2 + 2θ_3 - θ_4 = -5
+From (3): -θ_2 - θ_3 + 2θ_4 = -3
+
+Let's solve this system:
+
+From (1): θ_3 = 3θ_2 - θ_4 + 2
+Substitute into (2):
+-θ_2 + 2(3θ_2 - θ_4 + 2) - θ_4 = -5
+-θ_2 + 6θ_2 - 2θ_4 + 4 - θ_4 = -5
+5θ_2 - 3θ_4 = -9
+5θ_2 = 3θ_4 - 9
+θ_2 = (3θ_4 - 9)/5
+
+Substitute θ_2 and θ_3 into (3):
+-(3θ_4 - 9)/5 - (3(3θ_4 - 9)/5 - θ_4 + 2) + 2θ_4 = -3
+-(3θ_4 - 9)/5 - (9θ_4 - 27)/5 + θ_4 - 2 + 2θ_4 = -3
+-(3θ_4 - 9 + 9θ_4 - 27)/5 + 3θ_4 - 2 = -3
+-(12θ_4 - 36)/5 + 3θ_4 - 2 = -3
+-12θ_4/5 + 36/5 + 3θ_4 - 2 = -3
+(-12θ_4 + 15θ_4)/5 + 36/5 - 2 = -3
+3θ_4/5 + 36/5 - 2 = -3
+3θ_4/5 + 36/5 - 10/5 = -3
+3θ_4/5 + 26/5 = -3
+3θ_4/5 = -3 - 26/5 = -15/5 - 26/5 = -41/5
+θ_4 = -41/3
+
+Now, θ_2 = (3(-41/3) - 9)/5 = (-41 - 9)/5 = -50/5 = -10
+And θ_3 = 3(-10) - (-41/3) + 2 = -30 + 41/3 + 2 = -28 + 41/3 = (-84 + 41)/3 = 
+-43/3
+
+So, θ_1 = 0, θ_2 = -10, θ_3 = -43/3, θ_4 = -41/3
+
+Now, let's calculate the power flows in each branch:
+- l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-10)) / 0.1 = 10 / 0.1 = 100 MW
+- l23: flow = (θ_2 - θ_3) / x_23 = (-10 - (-43/3)) / 0.1 = (-10 + 43/3) / 0.1 = 
+(-30/3 + 43/3) / 0.1 = 13/3 / 0.1 = 13/3 * 10 = 130/3 ≈ 43.33 MW
+- l24: flow = (θ_2 - θ_4) / x_24 = (-10 - (-41/3)) / 0.1 = (-10 + 41/3) / 0.1 = 
+(-30/3 + 41/3) / 0.1 = 11/3 / 0.1 = 11/3 * 10 = 110/3 ≈ 36.67 MW
+- l34: flow = (θ_3 - θ_4) / x_34 = (-43/3 - (-41/3)) / 0.1 = (-43/3 + 41/3) / 
+0.1 = -2/3 / 0.1 = -2/3 * 10 = -20/3 ≈ -6.67 MW
+
+Let's check the loadings:
+- l12: 100 MW / 75 MW = 133.33% (OVERLOADED)
+- l23: 43.33 MW / 50 MW = 86.67%
+- l24: 36.67 MW / 50 MW = 73.33%
+- l34: 6.67 MW / 50 MW = 13.33%
+
+So, branch l12 is overloaded at 133.33% of its rating. This is the branch we 
+need to fix.
+
+Now, let's evaluate each candidate switching action:
+
+1. Close l14:
+   - This adds a new branch between b1 and b4 with x_pu = 0.3
+   - Let's recalculate the power flows with l14 closed
+
+   New Y matrix:
+   Y_11 = 1/x_12 + 1/x_14 = 1/0.1 + 1/0.3 = 10 + 3.33 = 13.33
+   Y_22 = 1/x_12 + 1/x_23 + 1/x_24 = 1/0.1 + 1/0.1 + 1/0.1 = 10 + 10 + 10 = 30
+   Y_33 = 1/x_23 + 1/x_34 = 1/0.1 + 1/0.1 = 10 + 10 = 20
+   Y_44 = 1/x_24 + 1/x_34 + 1/x_14 = 1/0.1 + 1/0.1 + 1/0.3 = 10 + 10 + 3.33 = 
+23.33
+
+   Y_12 = Y_21 = -1/x_12 = -1/0.1 = -10
+   Y_14 = Y_41 = -1/x_14 = -1/0.3 = -3.33
+   Y_23 = Y_32 = -1/x_23 = -1/0.1 = -10
+   Y_24 = Y_42 = -1/x_24 = -1/0.1 = -10
+   Y_34 = Y_43 = -1/x_34 = -1/0.1 = -10
+
+   The nodal admittance matrix Y is:
+   ```
+   [13.33 -10    0   -3.33]
+   [-10    30  -10   -10 ]
+   [ 0    -10   20   -10 ]
+   [-3.33 -10  -10   23.33]
+   ```
+
+   For DC power flow, we have: P = B * θ, where B is the imaginary part of Y 
+(which is Y itself for DC power flow) and θ is the vector of voltage angles.
+
+   Since b1 is the slack bus, we set θ_1 = 0 and solve for the other angles.
+
+   Let's remove the first row and column (since θ_1 = 0):
+   ```
+   [ 30 -10 -10 ] [θ_2]   [-20]
+   [-10  20 -10 ] [θ_3] = [-50]
+   [-10 -10  23.33] [θ_4]   [-30]
+   ```
+
+   Solving this system:
+   30θ_2 - 10θ_3 - 10θ_4 = -20  (1)
+   -10θ_2 + 20θ_3 - 10θ_4 = -50 (2)
+   -10θ_2 - 10θ_3 + 23.33θ_4 = -30 (3)
+
+   From (1): 3θ_2 - θ_3 - θ_4 = -2
+   From (2): -θ_2 + 2θ_3 - θ_4 = -5
+   From (3): -θ_2 - θ_3 + 2.333θ_4 = -3
+
+   Let's solve this system:
+
+   From (1): θ_3 = 3θ_2 - θ_4 + 2
+   Substitute into (2):
+   -θ_2 + 2(3θ_2 - θ_4 + 2) - θ_4 = -5
+   -θ_2 + 6θ_2 - 2θ_4 + 4 - θ_4 = -5
+   5θ_2 - 3θ_4 = -9
+   5θ_2 = 3θ_4 - 9
+   θ_2 = (3θ_4 - 9)/5
+
+   Substitute θ_2 and θ_3 into (3):
+   -(3θ_4 - 9)/5 - (3(3θ_4 - 9)/5 - θ_4 + 2) + 2.333θ_4 = -3
+   -(3θ_4 - 9)/5 - (9θ_4 - 27)/5 + θ_4 - 2 + 2.333θ_4 = -3
+   -(3θ_4 - 9 + 9θ_4 - 27)/5 + 3.333θ_4 - 2 = -3
+   -(12θ_4 - 36)/5 + 3.333θ_4 - 2 = -3
+   -12θ_4/5 + 36/5 + 3.333θ_4 - 2 = -3
+   (-12θ_4 + 16.665θ_4)/5 + 36/5 - 2 = -3
+   4.665θ_4/5 + 36/5 - 2 = -3
+   4.665θ_4/5 + 36/5 - 10/5 = -3
+   4.665θ_4/5 + 26/5 = -3
+   4.665θ_4/5 = -3 - 26/5 = -15/5 - 26/5 = -41/5
+   θ_4 = -41/4.665 ≈ -8.78
+
+   Now, θ_2 = (3(-8.78) - 9)/5 = (-26.34 - 9)/5 = -35.34/5 ≈ -7.07
+   And θ_3 = 3(-7.07) - (-8.78) + 2 = -21.21 + 8.78 + 2 = -10.43
+
+   So, θ_1 = 0, θ_2 ≈ -7.07, θ_3 ≈ -10.43, θ_4 ≈ -8.78
+
+   Now, let's calculate the power flows in each branch:
+   - l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-7.07)) / 0.1 = 7.07 / 0.1 = 70.7 MW
+   - l14: flow = (θ_1 - θ_4) / x_14 = (0 - (-8.78)) / 0.3 = 8.78 / 0.3 = 29.27 
+MW
+   - l23: flow = (θ_2 - θ_3) / x_23 = (-7.07 - (-10.43)) / 0.1 = 3.36 / 0.1 = 
+33.6 MW
+   - l24: flow = (θ_2 - θ_4) / x_24 = (-7.07 - (-8.78)) / 0.1 = 1.71 / 0.1 = 
+17.1 MW
+   - l34: flow = (θ_3 - θ_4) / x_34 = (-10.43 - (-8.78)) / 0.1 = -1.65 / 0.1 = 
+-16.5 MW
+
+   Let's check the loadings:
+   - l12: 70.7 MW / 75 MW = 94.27%
+   - l14: 29.27 MW / 50 MW = 58.54%
+   - l23: 33.6 MW / 50 MW = 67.2%
+   - l24: 17.1 MW / 50 MW = 34.2%
+   - l34: 16.5 MW / 50 MW = 33.0%
+
+   All branches are now within their ratings. Closing l14 successfully resolves 
+the overload on l12.
+
+2. Open l23:
+   - This removes the branch between b2 and b3
+   - Let's recalculate the power flows with l23 open
+
+   New Y matrix:
+   Y_11 = 1/x_12 = 1/0.1 = 10
+   Y_22 = 1/x_12 + 1/x_24 = 1/0.1 + 1/0.1 = 10 + 10 = 20
+   Y_33 = 1/x_34 = 1/0.1 = 10
+   Y_44 = 1/x_24 + 1/x_34 = 1/0.1 + 1/0.1 = 10 + 10 = 20
+
+   Y_12 = Y_21 = -1/x_12 = -1/0.1 = -10
+   Y_24 = Y_42 = -1/x_24 = -1/0.1 = -10
+   Y_34 = Y_43 = -1/x_34 = -1/0.1 = -10
+
+   The nodal admittance matrix Y is:
+   ```
+   [ 10 -10   0    0 ]
+   [-10   20   0  -10]
+   [  0    0   10  -10]
+   [  0  -10  -10   20]
+   ```
+
+   For DC power flow, we have: P = B * θ, where B is the imaginary part of Y 
+(which is Y itself for DC power flow) and θ is the vector of voltage angles.
+
+   Since b1 is the slack bus, we set θ_1 = 0 and solve for the other angles.
+
+   Let's remove the first row and column (since θ_1 = 0):
+   ```
+   [ 20   0  -10 ] [θ_2]   [-20]
+   [  0  10  -10 ] [θ_3] = [-50]
+   [-10 -10   20 ] [θ_4]   [-30]
+   ```
+
+   Solving this system:
+   20θ_2 - 10θ_4 = -20  (1)
+   10θ_3 - 10θ_4 = -50 (2)
+   -10θ_2 - 10θ_3 + 20θ_4 = -30 (3)
+
+   From (1): 2θ_2 - θ_4 = -2
+   From (2): θ_3 - θ_4 = -5
+   From (3): -θ_2 - θ_3 + 2θ_4 = -3
+
+   Let's solve this system:
+
+   From (1): θ_4 = 2θ_2 + 2
+   From (2): θ_3 = θ_4 - 5 = 2θ_2 + 2 - 5 = 2θ_2 - 3
+
+   Substitute θ_3 and θ_4 into (3):
+   -θ_2 - (2θ_2 - 3) + 2(2θ_2 + 2) = -3
+   -θ_2 - 2θ_2 + 3 + 4θ_2 + 4 = -3
+   θ_2 + 7 = -3
+   θ_2 = -10
+
+   Now, θ_4 = 2(-10) + 2 = -20 + 2 = -18
+   And θ_3 = 2(-10) - 3 = -20 - 3 = -23
+
+   So, θ_1 = 0, θ_2 = -10, θ_3 = -23, θ_4 = -18
+
+   Now, let's calculate the power flows in each branch:
+   - l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-10)) / 0.1 = 10 / 0.1 = 100 MW
+   - l24: flow = (θ_2 - θ_4) / x_24 = (-10 - (-18)) / 0.1 = 8 / 0.1 = 80 MW
+   - l34: flow = (θ_3 - θ_4) / x_34 = (-23 - (-18)) / 0.1 = -5 / 0.1 = -50 MW
+
+   Let's check the loadings:
+   - l12: 100 MW / 75 MW = 133.33% (STILL OVERLOADED)
+   - l24: 80 MW / 50 MW = 160% (NEW OVERLOAD)
+   - l34: 50 MW / 50 MW = 100%
+
+   Opening l23 doesn't resolve the overload on l12 and creates a new overload on
+l24. This is not a viable solution.
+
+3. Open l24:
+   - This removes the branch between b2 and b4
+   - Let's recalculate the power flows with l24 open
+
+   New Y matrix:
+   Y_11 = 1/x_12 = 1/0.1 = 10
+   Y_22 = 1/x_12 + 1/x_23 = 1/0.1 + 1/0.1 = 10 + 10 = 20
+   Y_33 = 1/x_23 + 1/x_34 = 1/0.1 + 1/0.1 = 10 + 10 = 20
+   Y_44 = 1/x_34 = 1/0.1 = 10
+
+   Y_12 = Y_21 = -1/x_12 = -1/0.1 = -10
+   Y_23 = Y_32 = -1/x_23 = -1/0.1 = -10
+   Y_34 = Y_43 = -1/x_34 = -1/0.1 = -10
+
+   The nodal admittance matrix Y is:
+   ```
+   [ 10 -10   0    0 ]
+   [-10   20 -10   0]
+   [  0  -10  20  -10]
+   [  0    0 -10   10]
+   ```
+
+   For DC power flow, we have: P = B * θ, where B is the imaginary part of Y 
+(which is Y itself for DC power flow) and θ is the vector of voltage angles.
+
+   Since b1 is the slack bus, we set θ_1 = 0 and solve for the other angles.
+
+   Let's remove the first row and column (since θ_1 = 0):
+   ```
+   [ 20 -10   0 ] [θ_2]   [-20]
+   [-10  20 -10] [θ_3] = [-50]
+   [  0 -10  10] [θ_4]   [-30]
+   ```
+
+   Solving this system:
+   20θ_2 - 10θ_3 = -20  (1)
+   -10θ_2 + 20θ_3 - 10θ_4 = -50 (2)
+   -10θ_3 + 10θ_4 = -30 (3)
+
+   From (1): 2θ_2 - θ_3 = -2
+   From (3): -θ_3 + θ_4 = -3
+   From (2): -θ_2 + 2θ_3 - θ_4 = -5
+
+   Let's solve this system:
+
+   From (1): θ_3 = 2θ_2 + 2
+   From (3): θ_4 = θ_3 - 3 = 2θ_2 + 2 - 3 = 2θ_2 - 1
+
+   Substitute θ_3 and θ_4 into (2):
+   -θ_2 + 2(2θ_2 + 2) - (2θ_2 - 1) = -5
+   -θ_2 + 4θ_2 + 4 - 2θ_2 + 1 = -5
+   θ_2 + 5 = -5
+   θ_2 = -10
+
+   Now, θ_3 = 2(-10) + 2 = -20 + 2 = -18
+   And θ_4 = 2(-10) - 1 = -20 - 1 = -21
+
+   So, θ_1 = 0, θ_2 = -10, θ_3 = -18, θ_4 = -21
+
+   Now, let's calculate the power flows in each branch:
+   - l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-10)) / 0.1 = 10 / 0.1 = 100 MW
+   - l23: flow = (θ_2 - θ_3) / x_23 = (-10 - (-18)) / 0.1 = 8 / 0.1 = 80 MW
+   - l34: flow = (θ_3 - θ_4) / x_34 = (-18 - (-21)) / 0.1 = 3 / 0.1 = 30 MW
+
+   Let's check the loadings:
+   - l12: 100 MW / 75 MW = 133.33% (STILL OVERLOADED)
+   - l23: 80 MW / 50 MW = 160% (NEW OVERLOAD)
+   - l34: 30 MW / 50 MW = 60%
+
+   Opening l24 doesn't resolve the overload on l12 and creates a new overload on
+l23. This is not a viable solution.
+
+4. Open l34:
+   - This removes the branch between b3 and b4
+   - Let's recalculate the power flows with l34 open
+
+   New Y matrix:
+   Y_11 = 1/x_12 = 1/0.1 = 10
+   Y_22 = 1/x_12 + 1/x_23 + 1/x_24 = 1/0.1 + 1/0.1 + 1/0.1 = 10 + 10 + 10 = 30
+   Y_33 = 1/x_23 = 1/0.1 = 10
+   Y_44 = 1/x_24 = 1/0.1 = 10
+
+   Y_12 = Y_21 = -1/x_12 = -1/0.1 = -10
+   Y_23 = Y_32 = -1/x_23 = -1/0.1 = -10
+   Y_24 = Y_42 = -1/x_24 = -1/0.1 = -10
+
+   The nodal admittance matrix Y is:
+   ```
+   [ 10 -10   0    0 ]
+   [-10   30 -10  -10]
+   [  0  -10  10    0]
+   [  0  -10   0   10]
+   ```
+
+   For DC power flow, we have: P = B * θ, where B is the imaginary part of Y 
+(which is Y itself for DC power flow) and θ is the vector of voltage angles.
+
+   Since b1 is the slack bus, we set θ_1 = 0 and solve for the other angles.
+
+   Let's remove the first row and column (since θ_1 = 0):
+   ```
+   [ 30 -10 -10 ] [θ_2]   [-20]
+   [-10  10   0 ] [θ_3] = [-50]
+   [-10   0  10 ] [θ_4]   [-30]
+   ```
+
+   Solving this system:
+   30θ_2 - 10θ_3 - 10θ_4 = -20  (1)
+   -10θ_2 + 10θ_3 = -50 (2)
+   -10θ_2 + 10θ_4 = -30 (3)
+
+   From (2): -θ_2 + θ_3 = -5
+   From (3): -θ_2 + θ_4 = -3
+   From (1): 3θ_2 - θ_3 - θ_4 = -2
+
+   Let's solve this system:
+
+   From (2): θ_3 = θ_2 - 5
+   From (3): θ_4 = θ_2 - 3
+
+   Substitute θ_3 and θ_4 into (1):
+   3θ_2 - (θ_2 - 5) - (θ_2 - 3) = -2
+   3θ_2 - θ_2 + 5 - θ_2 + 3 = -2
+   θ_2 + 8 = -2
+   θ_2 = -10
+
+   Now, θ_3 = -10 - 5 = -15
+   And θ_4 = -10 - 3 = -13
+
+   So, θ_1 = 0, θ_2 = -10, θ_3 = -15, θ_4 = -13
+
+   Now, let's calculate the power flows in each branch:
+   - l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-10)) / 0.1 = 10 / 0.1 = 100 MW
+   - l23: flow = (θ_2 - θ_3) / x_23 = (-10 - (-15)) / 0.1 = 5 / 0.1 = 50 MW
+   - l24: flow = (θ_2 - θ_4) / x_24 = (-10 - (-13)) / 0.1 = 3 / 0.1 = 30 MW
+
+   Let's check the loadings:
+   - l12: 100 MW / 75 MW = 133.33% (STILL OVERLOADED)
+   - l23: 50 MW / 50 MW = 100%
+   - l24: 30 MW / 50 MW = 60%
+
+   Opening l34 doesn't resolve the overload on l12. This is not a viable 
+solution.
+
+Based on my analysis, only closing l14 successfully resolves the overload on l12
+without creating any new overloads. The other three options (opening l23, l24, 
+or l34) either don't resolve the original overload or create new overloads.
+
+Therefore, the solution is to close l14. Let me create the submission.json file 
+with this solution:
+
+```json
+{
+  "close_branches": ["l14"],
+  "open_branches": [],
+  "reported_flows_mw": {
+    "l12": 70.7,
+    "l14": 29.27,
+    "l23": 33.6,
+    "l24": 17.1,
+    "l34": 16.5
+  },
+  "rationale": "Closing l14 provides an alternative path for power flow, 
+reducing the loading on l12 from 133.33% to 94.27%, which is within its rating. 
+All other branches remain within their ratings as well."
+}
+```
+
+Actually, let me double-check my calculations for the "close l14" case, as I 
+want to make sure the flows are accurate.
+
+Let me recalculate the power flows for the "close l14" case:
+
+We had:
+θ_1 = 0, θ_2 ≈ -7.07, θ_3 ≈ -10.43, θ_4 ≈ -8.78
+
+Let's recalculate the flows:
+- l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-7.07)) / 0.1 = 7.07 / 0.1 = 70.7 MW
+- l14: flow = (θ_1 - θ_4) / x_14 = (0 - (-8.78)) / 0.3 = 8.78 / 0.3 = 29.27 MW
+- l23: flow = (θ_2 - θ_3) / x_23 = (-7.07 - (-10.43)) / 0.1 = 3.36 / 0.1 = 33.6 
+MW
+- l24: flow = (θ_2 - θ_4) / x_24 = (-7.07 - (-8.78)) / 0.1 = 1.71 / 0.1 = 17.1 
+MW
+- l34: flow = (θ_3 - θ_4) / x_34 = (-10.43 - (-8.78)) / 0.1 = -1.65 / 0.1 = 
+-16.5 MW
+
+Let's check the loadings:
+- l12: 70.7 MW / 75 MW = 94.27%
+- l14: 29.27 MW / 50 MW = 58.54%
+- l23: 33.6 MW / 50 MW = 67.2%
+- l24: 17.1 MW / 50 MW = 34.2%
+- l34: 16.5 MW / 50 MW = 33.0%
+
+All branches are within their ratings. Closing l14 successfully resolves the 
+overload on l12.
+
+Let me update the submission.json file with these values:
+
+```json
+{
+  "close_branches": ["l14"],
+  "open_branches": [],
+  "reported_flows_mw": {
+    "l12": 70.7,
+    "l14": 29.27,
+    "l23": 33.6,
+    "l24": 17.1,
+    "l34": 16.5
+  },
+  "rationale": "Closing l14 provides an alternative path for power flow, 
+reducing the loading on l12 from 133.33% to 94.27%, which is within its rating. 
+All other branches remain within their ratings as well."
+}
+```
+
+Actually, let me be more precise with my calculations. Let me solve the system 
+of equations more accurately:
+
+For the "close l14" case, we had:
+```
+[ 30 -10 -10 ] [θ_2]   [-20]
+[-10  20 -10 ] [θ_3] = [-50]
+[-10 -10  23.33] [θ_4]   [-30]
+```
+
+Let me solve this more accurately:
+
+From (1): 3θ_2 - θ_3 - θ_4 = -2
+From (2): -θ_2 + 2θ_3 - θ_4 = -5
+From (3): -θ_2 - θ_3 + 2.333θ_4 = -3
+
+Let's solve this system using matrix inversion:
+
+The coefficient matrix is:
+```
+[ 3  -1   -1   ]
+[-1   2   -1   ]
+[-1  -1  2.333 ]
+```
+
+The inverse of this matrix is:
+```
+[ 0.538  0.308  0.154 ]
+[ 0.308  0.615  0.077 ]
+[ 0.154  0.077  0.462 ]
+```
+
+Multiplying by the right-hand side vector [-2, -5, -3]:
+θ_2 = 0.538*(-2) + 0.308*(-5) + 0.154*(-3) = -1.076 - 1.54 - 0.462 = -3.078
+θ_3 = 0.308*(-2) + 0.615*(-5) + 0.077*(-3) = -0.616 - 3.075 - 0.231 = -3.922
+θ_4 = 0.154*(-2) + 0.077*(-5) + 0.462*(-3) = -0.308 - 0.385 - 1.386 = -2.079
+
+So, θ_1 = 0, θ_2 ≈ -3.078, θ_3 ≈ -3.922, θ_4 ≈ -2.079
+
+Now, let's calculate the power flows in each branch:
+- l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-3.078)) / 0.1 = 3.078 / 0.1 = 30.78 MW
+- l14: flow = (θ_1 - θ_4) / x_14 = (0 - (-2.079)) / 0.3 = 2.079 / 0.3 = 6.93 MW
+- l23: flow = (θ_2 - θ_3) / x_23 = (-3.078 - (-3.922)) / 0.1 = 0.844 / 0.1 = 
+8.44 MW
+- l24: flow = (θ_2 - θ_4) / x_24 = (-3.078 - (-2.079)) / 0.1 = -0.999 / 0.1 = 
+-9.99 MW
+- l34: flow = (θ_3 - θ_4) / x_34 = (-3.922 - (-2.079)) / 0.1 = -1.843 / 0.1 = 
+-18.43 MW
+
+Let's check the loadings:
+- l12: 30.78 MW / 75 MW = 41.04%
+- l14: 6.93 MW / 50 MW = 13.86%
+- l23: 8.44 MW / 50 MW = 16.88%
+- l24: 9.99 MW / 50 MW = 19.98%
+- l34: 18.43 MW / 50 MW = 36.86%
+
+All branches are well within their ratings. Closing l14 successfully resolves 
+the overload on l12.
+
+Let me update the submission.json file with these more accurate values:
+
+```json
+{
+  "close_branches": ["l14"],
+  "open_branches": [],
+  "reported_flows_mw": {
+    "l12": 30.78,
+    "l14": 6.93,
+    "l23": 8.44,
+    "l24": 9.99,
+    "l34": 18.43
+  },
+  "rationale": "Closing l14 provides an alternative path for power flow, 
+reducing the loading on l12 from 133.33% to 41.04%, which is well within its 
+rating. All other branches remain within their ratings as well."
+}
+```
+
+Wait, I think I made a mistake in my matrix inversion. Let me recalculate the 
+inverse of the coefficient matrix:
+
+The coefficient matrix is:
+```
+[ 3  -1   -1   ]
+[-1   2   -1   ]
+[-1  -1  2.333 ]
+```
+
+The determinant of this matrix is:
+det = 3*(2*2.333 - (-1)*(-1)) - (-1)*(-1*2.333 - (-1)*(-1)) + (-1)*(-1*(-1) - 
+2*(-1))
+det = 3*(4.666 - 1) - (-1)*(-2.333 - 1) + (-1)*(1 + 2)
+det = 3*3.666 - (-1)*(-3.333) + (-1)*3
+det = 10.998 - 3.333 - 3 = 4.665
+
+The adjugate matrix is:
+```
+[ (2*2.333 - (-1)*(-1))  -((-1)*2.333 - (-1)*(-1))  ((-1)*(-1) - 2*(-1)) ]
+[ -((-1)*2.333 - (-1)*(-1))  (3*2.333 - (-1)*(-1))  -(3*(-1) - (-1)*(-1)) ]
+[ ((-1)*(-1) - 2*(-1))  -(3*(-1) - (-1)*(-1))  (3*2 - (-1)*(-1)) ]
+```
+
+Simplifying:
+```
+[ (4.666 - 1)  -(-2.333 - 1)  (1 + 2) ]
+[ -(-2.333 - 1)  (6.999 - 1)  -(-3 - 1) ]
+[ (1 + 2)  -(-3 - 1)  (6 - 1) ]
+```
+
+Further simplifying:
+```
+[ 3.666  3.333  3 ]
+[ 3.333  5.999  4 ]
+[ 3  4  5 ]
+```
+
+The inverse is the adjugate divided by the determinant:
+```
+[ 3.666/4.665  3.333/4.665  3/4.665 ]
+[ 3.333/4.665  5.999/4.665  4/4.665 ]
+[ 3/4.665  4/4.665  5/4.665 ]
+```
+
+Approximating:
+```
+[ 0.786  0.714  0.643 ]
+[ 0.714  1.286  0.857 ]
+[ 0.643  0.857  1.071 ]
+```
+
+Multiplying by the right-hand side vector [-2, -5, -3]:
+θ_2 = 0.786*(-2) + 0.714*(-5) + 0.643*(-3) = -1.572 - 3.57 - 1.929 = -7.071
+θ_3 = 0.714*(-2) + 1.286*(-5) + 0.857*(-3) = -1.428 - 6.43 - 2.571 = -10.429
+θ_4 = 0.643*(-2) + 0.857*(-5) + 1.071*(-3) = -1.286 - 4.285 - 3.213 = -8.784
+
+So, θ_1 = 0, θ_2 ≈ -7.071, θ_3 ≈ -10.429, θ_4 ≈ -8.784
+
+Now, let's calculate the power flows in each branch:
+- l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-7.071)) / 0.1 = 7.071 / 0.1 = 70.71 MW
+- l14: flow = (θ_1 - θ_4) / x_14 = (0 - (-8.784)) / 0.3 = 8.784 / 0.3 = 29.28 MW
+- l23: flow = (θ_2 - θ_3) / x_23 = (-7.071 - (-10.429)) / 0.1 = 3.358 / 0.1 = 
+33.58 MW
+- l24: flow = (θ_2 - θ_4) / x_24 = (-7.071 - (-8.784)) / 0.1 = 1.713 / 0.1 = 
+17.13 MW
+- l34: flow = (θ_3 - θ_4) / x_34 = (-10.429 - (-8.784)) / 0.1 = -1.645 / 0.1 = 
+-16.45 MW
+
+Let's check the loadings:
+- l12: 70.71 MW / 75 MW = 94.28%
+- l14: 29.28 MW / 50 MW = 58.56%
+- l23: 33.58 MW / 50 MW = 67.16%
+- l24: 17.13 MW / 50 MW = 34.26%
+- l34: 16.45 MW / 50 MW = 32.90%
+
+All branches are within their ratings. Closing l14 successfully resolves the 
+overload on l12.
+
+Let me update the submission.json file with these more accurate values:
+
+```json
+{
+  "close_branches": ["l14"],
+  "open_branches": [],
+  "reported_flows_mw": {
+    "l12": 70.71,
+    "l14": 29.28,
+    "l23": 33.58,
+    "l24": 17.13,
+    "l34": 16.45
+  },
+  "rationale": "Closing l14 provides an alternative path for power flow, 
+reducing the loading on l12 from 133.33% to 94.28%, which is within its rating. 
+All other branches remain within their ratings as well."
+}
+```
+
+Actually, let me double-check my initial calculation for the original state 
+(without any switching):
+
+For the original state (with l13 open), we had:
+```
+[ 30 -10 -10 ] [θ_2]   [-20]
+[-10  20 -10 ] [θ_3] = [-50]
+[-10 -10  20 ] [θ_4]   [-30]
+```
+
+Let me solve this system more accurately:
+
+From (1): 3θ_2 - θ_3 - θ_4 = -2
+From (2): -θ_2 + 2θ_3 - θ_4 = -5
+From (3): -θ_2 - θ_3 + 2θ_4 = -3
+
+Let's solve this system using matrix inversion:
+
+The coefficient matrix is:
+```
+[ 3  -1   -1   ]
+[-1   2   -1   ]
+[-1  -1    2   ]
+```
+
+The inverse of this matrix is:
+```
+[ 0.5  0.25  0.25 ]
+[ 0.25 0.75  0.25 ]
+[ 0.25 0.25  0.75 ]
+```
+
+Multiplying by the right-hand side vector [-2, -5, -3]:
+θ_2 = 0.5*(-2) + 0.25*(-5) + 0.25*(-3) = -1 - 1.25 - 0.75 = -3
+θ_3 = 0.25*(-2) + 0.75*(-5) + 0.25*(-3) = -0.5 - 3.75 - 0.75 = -5
+θ_4 = 0.25*(-2) + 0.25*(-5) + 0.75*(-3) = -0.5 - 1.25 - 2.25 = -4
+
+So, θ_1 = 0, θ_2 = -3, θ_3 = -5, θ_4 = -4
+
+Now, let's calculate the power flows in each branch:
+- l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-3)) / 0.1 = 3 / 0.1 = 30 MW
+- l23: flow = (θ_2 - θ_3) / x_23 = (-3 - (-5)) / 0.1 = 2 / 0.1 = 20 MW
+- l24: flow = (θ_2 - θ_4) / x_24 = (-3 - (-4)) / 0.1 = 1 / 0.1 = 10 MW
+- l34: flow = (θ_3 - θ_4) / x_34 = (-5 - (-4)) / 0.1 = -1 / 0.1 = -10 MW
+
+Let's check the loadings:
+- l12: 30 MW / 75 MW = 40%
+- l23: 20 MW / 50 MW = 40%
+- l24: 10 MW / 50 MW = 20%
+- l34: 10 MW / 50 MW = 20%
+
+Hmm, this doesn't match my earlier calculation where l12 was overloaded at 
+133.33%. Let me double-check my setup.
+
+I think I made a mistake in setting up the system of equations. Let me re-derive
+it:
+
+For the DC power flow, we have: P = B * θ, where B is the imaginary part of Y 
+(which is Y itself for DC power flow) and θ is the vector of voltage angles.
+
+The nodal admittance matrix Y for the original state (with l13 open) is:
+```
+[ 10  -10   0    0 ]
+[-10   30 -10  -10]
+[  0  -10  20  -10]
+[  0  -10 -10   20]
+```
+
+Since b1 is the slack bus, we set θ_1 = 0 and solve for the other angles.
+
+Let's remove the first row and column (since θ_1 = 0):
+```
+[ 30 -10 -10 ] [θ_2]   [-20]
+[-10  20 -10 ] [θ_3] = [-50]
+[-10 -10  20 ] [θ_4]   [-30]
+```
+
+Wait, I think I made a mistake in the right-hand side vector. The power 
+injections are:
+- b1: p_mw = 100.0 (slack bus)
+- b2: p_mw = -20.0
+- b3: p_mw = -50.0
+- b4: p_mw = -30.0
+
+Since b1 is the slack bus, we remove it from the system. The right-hand side 
+vector should be [-20, -50, -30], which is what I had.
+
+Let me double-check the power balance:
+Sum of injections = 100 - 20 - 50 - 30 = 0, which is correct.
+
+Let me re-solve the system:
+30θ_2 - 10θ_3 - 10θ_4 = -20  (1)
+-10θ_2 + 20θ_3 - 10θ_4 = -50 (2)
+-10θ_2 - 10θ_3 + 20θ_4 = -30 (3)
+
+From (1): 3θ_2 - θ_3 - θ_4 = -2
+From (2): -θ_2 + 2θ_3 - θ_4 = -5
+From (3): -θ_2 - θ_3 + 2θ_4 = -3
+
+Let's solve this system:
+
+From (1): θ_3 = 3θ_2 - θ_4 + 2
+Substitute into (2):
+-θ_2 + 2(3θ_2 - θ_4 + 2) - θ_4 = -5
+-θ_2 + 6θ_2 - 2θ_4 + 4 - θ_4 = -5
+5θ_2 - 3θ_4 = -9
+5θ_2 = 3θ_4 - 9
+θ_2 = (3θ_4 - 9)/5
+
+Substitute θ_2 and θ_3 into (3):
+-(3θ_4 - 9)/5 - (3(3θ_4 - 9)/5 - θ_4 + 2) + 2θ_4 = -3
+-(3θ_4 - 9)/5 - (9θ_4 - 27)/5 + θ_4 - 2 + 2θ_4 = -3
+-(3θ_4 - 9 + 9θ_4 - 27)/5 + 3θ_4 - 2 = -3
+-(12θ_4 - 36)/5 + 3θ_4 - 2 = -3
+-12θ_4/5 + 36/5 + 3θ_4 - 2 = -3
+(-12θ_4 + 15θ_4)/5 + 36/5 - 2 = -3
+3θ_4/5 + 36/5 - 2 = -3
+3θ_4/5 + 36/5 - 10/5 = -3
+3θ_4/5 + 26/5 = -3
+3θ_4/5 = -3 - 26/5 = -15/5 - 26/5 = -41/5
+θ_4 = -41/3
+
+Now, θ_2 = (3(-41/3) - 9)/5 = (-41 - 9)/5 = -50/5 = -10
+And θ_3 = 3(-10) - (-41/3) + 2 = -30 + 41/3 + 2 = -28 + 41/3 = (-84 + 41)/3 = 
+-43/3
+
+So, θ_1 = 0, θ_2 = -10, θ_3 = -43/3, θ_4 = -41/3
+
+Now, let's calculate the power flows in each branch:
+- l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-10)) / 0.1 = 10 / 0.1 = 100 MW
+- l23: flow = (θ_2 - θ_3) / x_23 = (-10 - (-43/3)) / 0.1 = (-10 + 43/3) / 0.1 = 
+(-30/3 + 43/3) / 0.1 = 13/3 / 0.1 = 13/3 * 10 = 130/3 ≈ 43.33 MW
+- l24: flow = (θ_2 - θ_4) / x_24 = (-10 - (-41/3)) / 0.1 = (-10 + 41/3) / 0.1 = 
+(-30/3 + 41/3) / 0.1 = 11/3 / 0.1 = 11/3 * 10 = 110/3 ≈ 36.67 MW
+- l34: flow = (θ_3 - θ_4) / x_34 = (-43/3 - (-41/3)) / 0.1 = (-43/3 + 41/3) / 
+0.1 = -2/3 / 0.1 = -2/3 * 10 = -20/3 ≈ -6.67 MW
+
+Let's check the loadings:
+- l12: 100 MW / 75 MW = 133.33% (OVERLOADED)
+- l23: 43.33 MW / 50 MW = 86.67%
+- l24: 36.67 MW / 50 MW = 73.33%
+- l34: 6.67 MW / 50 MW = 13.33%
+
+So, branch l12 is overloaded at 133.33% of its rating. This matches my earlier 
+calculation.
+
+Now, let me re-evaluate the "close l14" case with more accurate calculations:
+
+For the "close l14" case, we had:
+```
+[ 30 -10 -10 ] [θ_2]   [-20]
+[-10  20 -10 ] [θ_3] = [-50]
+[-10 -10  23.33] [θ_4]   [-30]
+```
+
+Let me solve this system more accurately:
+
+From (1): 3θ_2 - θ_3 - θ_4 = -2
+From (2): -θ_2 + 2θ_3 - θ_4 = -5
+From (3): -θ_2 - θ_3 + 2.333θ_4 = -3
+
+Let's solve this system:
+
+From (1): θ_3 = 3θ_2 - θ_4 + 2
+Substitute into (2):
+-θ_2 + 2(3θ_2 - θ_4 + 2) - θ_4 = -5
+-θ_2 + 6θ_2 - 2θ_4 + 4 - θ_4 = -5
+5θ_2 - 3θ_4 = -9
+5θ_2 = 3θ_4 - 9
+θ_2 = (3θ_4 - 9)/5
+
+Substitute θ_2 and θ_3 into (3):
+-(3θ_4 - 9)/5 - (3(3θ_4 - 9)/5 - θ_4 + 2) + 2.333θ_4 = -3
+-(3θ_4 - 9)/5 - (9θ_4 - 27)/5 + θ_4 - 2 + 2.333θ_4 = -3
+-(3θ_4 - 9 + 9θ_4 - 27)/5 + 3.333θ_4 - 2 = -3
+-(12θ_4 - 36)/5 + 3.333θ_4 - 2 = -3
+-12θ_4/5 + 36/5 + 3.333θ_4 - 2 = -3
+(-12θ_4 + 16.665θ_4)/5 + 36/5 - 2 = -3
+4.665θ_4/5 + 36/5 - 2 = -3
+4.665θ_4/5 + 36/5 - 10/5 = -3
+4.665θ_4/5 + 26/5 = -3
+4.665θ_4/5 = -3 - 26/5 = -15/5 - 26/5 = -41/5
+θ_4 = -41/4.665 ≈ -8.78
+
+Now, θ_2 = (3(-8.78) - 9)/5 = (-26.34 - 9)/5 = -35.34/5 ≈ -7.07
+And θ_3 = 3(-7.07) - (-8.78) + 2 = -21.21 + 8.78 + 2 = -10.43
+
+So, θ_1 = 0, θ_2 ≈ -7.07, θ_3 ≈ -10.43, θ_4 ≈ -8.78
+
+Now, let's calculate the power flows in each branch:
+- l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-7.07)) / 0.1 = 7.07 / 0.1 = 70.7 MW
+- l14: flow = (θ_1 - θ_4) / x_14 = (0 - (-8.78)) / 0.3 = 8.78 / 0.3 = 29.27 MW
+- l23: flow = (θ_2 - θ_3) / x_23 = (-7.07 - (-10.43)) / 0.1 = 3.36 / 0.1 = 33.6 
+MW
+- l24: flow = (θ_2 - θ_4) / x_24 = (-7.07 - (-8.78)) / 0.1 = 1.71 / 0.1 = 17.1 
+MW
+- l34: flow = (θ_3 - θ_4) / x_34 = (-10.43 - (-8.78)) / 0.1 = -1.65 / 0.1 = 
+-16.5 MW
+
+Let's check the loadings:
+- l12: 70.7 MW / 75 MW = 94.27%
+- l14: 29.27 MW / 50 MW = 58.54%
+- l23: 33.6 MW / 50 MW = 67.2%
+- l24: 17.1 MW / 50 MW = 34.2%
+- l34: 16.5 MW / 50 MW = 33.0%
+
+All branches are within their ratings. Closing l14 successfully resolves the 
+overload on l12.
+
+Let me update the submission.json file with these values:
+
+```json
+{
+  "close_branches": ["l14"],
+  "open_branches": [],
+  "reported_flows_mw": {
+    "l12": 70.7,
+    "l14": 29.27,
+    "l23": 33.6,
+    "l24": 17.1,
+    "l34": 16.5
+  },
+  "rationale": "Closing l14 provides an alternative path for power flow, 
+reducing the loading on l12 from 133.33% to 94.27%, which is within its rating. 
+All other branches remain within their ratings as well."
+}
+```
+
+Actually, let me be even more precise with my calculations. Let me use a more 
+precise value for 1/0.3:
+
+1/0.3 = 3.333333...
+
+So, the system for the "close l14" case is:
+```
+[ 30 -10 -10 ] [θ_2]   [-20]
+[-10  20 -10 ] [θ_3] = [-50]
+[-10 -10  23.333 ] [θ_4]   [-30]
+```
+
+Let me solve this system more accurately:
+
+From (1): 3θ_2 - θ_3 - θ_4 = -2
+From (2): -θ_2 + 2θ_3 - θ_4 = -5
+From (3): -θ_2 - θ_3 + 2.3333θ_4 = -3
+
+Let's solve this system:
+
+From (1): θ_3 = 3θ_2 - θ_4 + 2
+Substitute into (2):
+-θ_2 + 2(3θ_2 - θ_4 + 2) - θ_4 = -5
+-θ_2 + 6θ_2 - 2θ_4 + 4 - θ_4 = -5
+5θ_2 - 3θ_4 = -9
+5θ_2 = 3θ_4 - 9
+θ_2 = (3θ_4 - 9)/5
+
+Substitute θ_2 and θ_3 into (3):
+-(3θ_4 - 9)/5 - (3(3θ_4 - 9)/5 - θ_4 + 2) + 2.3333θ_4 = -3
+-(3θ_4 - 9)/5 - (9θ_4 - 27)/5 + θ_4 - 2 + 2.3333θ_4 = -3
+-(3θ_4 - 9 + 9θ_4 - 27)/5 + 3.3333θ_4 - 2 = -3
+-(12θ_4 - 36)/5 + 3.3333θ_4 - 2 = -3
+-12θ_4/5 + 36/5 + 3.3333θ_4 - 2 = -3
+(-12θ_4 + 16.6665θ_4)/5 + 36/5 - 2 = -3
+4.6665θ_4/5 + 36/5 - 2 = -3
+4.6665θ_4/5 + 36/5 - 10/5 = -3
+4.6665θ_4/5 + 26/5 = -3
+4.6665θ_4/5 = -3 - 26/5 = -15/5 - 26/5 = -41/5
+θ_4 = -41/4.6665 ≈ -8.78
+
+Now, θ_2 = (3(-8.78) - 9)/5 = (-26.34 - 9)/5 = -35.34/5 ≈ -7.07
+And θ_3 = 3(-7.07) - (-8.78) + 2 = -21.21 + 8.78 + 2 = -10.43
+
+So, θ_1 = 0, θ_2 ≈ -7.07, θ_3 ≈ -10.43, θ_4 ≈ -8.78
+
+Now, let's calculate the power flows in each branch:
+- l12: flow = (θ_1 - θ_2) / x_12 = (0 - (-7.07)) / 0.1 = 7.07 / 0.1 = 70.7 MW
+- l14: flow = (θ_1 - θ_4) / x_14 = (0 - (-8.78)) / 0.3 = 8.78 / 0.3 = 29.27 MW
+- l23: flow = (θ_2 - θ_3) / x_23 = (-7.07 - (-10.43)) / 0.1 = 3.36 / 0.1 = 33.6 
+MW
+- l24: flow = (θ_2 - θ_4) / x_24 = (-7.07 - (-8.78)) / 0.1 = 1.71 / 0.1 = 17.1 
+MW
+- l34: flow = (θ_3 - θ_4) / x_34 = (-10.43 - (-8.78)) / 0.1 = -1.65 / 0.1 = 
+-16.5 MW
+
+Let's check the loadings:
+- l12: 70.7 MW / 75 MW = 94.27%
+- l14: 29.27 MW / 50 MW = 58.54%
+- l23: 33.6 MW / 50 MW = 67.2%
+- l24: 17.1 MW / 50 MW = 34.2%
+- l34: 16.5 MW / 50 MW = 33.0%
+
+All branches are within their ratings. Closing l14 successfully resolves the 
+overload on l12.
+
+Let me update the submission.json file with these values:
+
+```json
+{
+  "close_branches": ["l14"],
+  "open_branches": [],
+  "reported_flows_mw": {
+    "l12": 70.7,
+    "l14": 29.27,
+    "l23": 33.6,
+    "l24": 17.1,
+    "l34": 16.5
+  },
+  "rationale": "Closing l14 provides an alternative path for power flow, 
+reducing the loading on l12 from 133.33% to 94.27%, which is within its rating. 
+All other branches remain within their ratings as well."
+}
+```
+
+I think this is accurate enough for our purposes. The key finding is that 
+closing l14 resolves the overload on l12, which is the objective of the task.
+
+Let me create the final submission.json file:
+
+------------
+► **ANSWER**
+
+I'll analyze the power system state and determine the best corrective switching 
+action to resolve the overload without islanding the network.
+
+
+
+First, let me understand the current state:
+
+- Branch l13 is out of service (contingency)
+
+- The system has one overloaded branch that needs to be fixed
+
+- We can perform at most one corrective switching action
+
+
+
+After analyzing the DC power flow, I found that branch l12 is overloaded at 
+133.33% of its rating (100 MW flow on a 75 MW rated branch).
+
+
+
+I evaluated all four candidate switching actions:
+
+1. Close l14: Reduces l12 loading to 94.27% (within rating)
+
+2. Open l23: Doesn't fix l12 overload and creates a new overload on l24
+
+3. Open l24: Doesn't fix l12 overload and creates a new overload on l23
+
+4. Open l34: Doesn't fix l12 overload
+
+
+
+Only closing l14 successfully resolves the overload on l12 without creating any 
+new overloads or islanding the network.
+
+
+
+submission.json
+
+```diff
+@@ -0,0 +1,12 @@
++{
++  "close_branches": ["l14"],
++  "open_branches": [],
++  "reported_flows_mw": {
++    "l12": 70.7,
++    "l14": 29.27,
++    "l23": 33.6,
++    "l24": 17.1,
++    "l34": 16.5
++  },
++  "rationale": "Closing l14 provides an alternative path for power flow, 
+reducing the loading on l12 from 133.33% to 94.27%, which is within its rating. 
+All other branches remain within their ratings as well."
++}
+```
+
+
+Tokens: 2.7k sent, 16k received.
+Applied edit to submission.json

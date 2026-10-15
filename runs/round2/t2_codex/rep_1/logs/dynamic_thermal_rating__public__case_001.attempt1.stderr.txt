@@ -1,0 +1,279 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13ad0-79bd-79d2-8554-85fa983170b6
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the benchmark instructions and task payload first, then write only the required submission file.
+exec
+/bin/bash -lc "pwd && rg --files -g 'instructions.md' -g 'task.json' -g 'submission.json'" in <sandbox_a1>
+ succeeded in 0ms:
+<sandbox_a1>
+task.json
+instructions.md
+
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/dynamic_thermal_rating__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,260p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "dynamic_thermal_rating_public_001",
+  "family": "dynamic_thermal_rating",
+  "candidate_id": "REL-TASK-014",
+  "substrate": "executable_overhead_line_thermal_rating_case",
+  "objective": "Compute the real-time ampacity of an overhead line from weather data using a compact steady-state heat-balance model.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-014 — Dynamic thermal rating of an overhead line",
+      "ru": "REL-TASK-014 — Динамический тепловой рейтинг воздушной линии"
+    },
+    "objective": {
+      "en": "Compute the limiting real-time ampacity over a short weather series.",
+      "ru": "Рассчитать предельный оперативный ток линии по короткому ряду погодных условий."
+    },
+    "instructions": {
+      "en": "Use thermal_rating_case. Solve the steady-state heat balance per metre of conductor at T_max (use exactly these terms): R_hot = (resistance_ohm_per_km_at_20c/1000) * (1 + resistance_temp_coeff_per_c*(T_max - 20)); convection = convective_w_per_m_c_at_1ms * max(wind_speed_m_s, 0.05)^0.6 * (T_max - ambient_temperature_c); radiation = emissivity * 5.670374419e-8 * (pi * diameter_mm/1000) * ((T_max+273.15)^4 - (ambient+273.15)^4) — note the radiating surface is pi*D per metre; solar gain = solar_absorptivity * solar_w_per_m2 * (diameter_mm/1000) — the projected width D per metre. Ampacity = sqrt(max(convection + radiation - solar gain, 0) / R_hot). Report ampacity_by_timestamp_a, minimum_ampacity_a, limiting_timestamp, and overload_timestamps where scheduled_current_a exceeds the rating.",
+      "ru": "Используйте thermal_rating_case. Решите установившийся тепловой баланс на метр провода при T_max (используйте ровно эти члены): R_hot = (resistance_ohm_per_km_at_20c/1000) * (1 + resistance_temp_coeff_per_c*(T_max - 20)); конвекция = convective_w_per_m_c_at_1ms * max(wind_speed_m_s, 0.05)^0.6 * (T_max - ambient_temperature_c); излучение = emissivity * 5.670374419e-8 * (pi * diameter_mm/1000) * ((T_max+273.15)^4 - (ambient+273.15)^4) — излучающая поверхность pi*D на метр; солнечный нагрев = solar_absorptivity * solar_w_per_m2 * (diameter_mm/1000) — проекция шириной D на метр. Допустимый ток = sqrt(max(конвекция + излучение - солнечный нагрев, 0) / R_hot). Укажите ampacity_by_timestamp_a, minimum_ampacity_a, limiting_timestamp и overload_timestamps, где scheduled_current_a превышает рейтинг."
+    }
+  },
+  "subdomain": "transmission operations & asset ratings",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-014",
+    "subdomain": "transmission operations & asset ratings",
+    "input_fields": [
+      "thermal_rating_case.conductor",
+      "thermal_rating_case.thermal_limits",
+      "thermal_rating_case.weather_series",
+      "thermal_rating_case.scheduled_current_a"
+    ]
+  },
+  "thermal_rating_case": {
+    "scheduled_current_a": 520.0,
+    "conductor": {
+      "type": "ACSR compact public case",
+      "diameter_mm": 22.4,
+      "resistance_ohm_per_km_at_20c": 0.118,
+      "resistance_temp_coeff_per_c": 0.00403,
+      "emissivity": 0.7,
+      "solar_absorptivity": 0.7
+    },
+    "thermal_limits": {
+      "max_conductor_temperature_c": 75.0
+    },
+    "model_constants": {
+      "convective_w_per_m_c_at_1ms": 0.72
+    },
+    "weather_series": [
+      {
+        "timestamp": "t00",
+        "ambient_temperature_c": 18.0,
+        "wind_speed_m_s": 2.8,
+        "solar_w_per_m2": 150.0
+      },
+      {
+        "timestamp": "t01",
+        "ambient_temperature_c": 31.0,
+        "wind_speed_m_s": 0.7,
+        "solar_w_per_m2": 850.0
+      },
+      {
+        "timestamp": "t02",
+        "ambient_temperature_c": 27.0,
+        "wind_speed_m_s": 1.4,
+        "solar_w_per_m2": 600.0
+      },
+      {
+        "timestamp": "t03",
+        "ambient_temperature_c": 22.0,
+        "wind_speed_m_s": 3.2,
+        "solar_w_per_m2": 100.0
+      }
+    ]
+  },
+  "submission_schema": {
+    "ampacity_by_timestamp_a": "object mapping timestamp to ampacity in amperes",
+    "minimum_ampacity_a": "minimum ampacity over the weather series",
+    "limiting_timestamp": "timestamp with the minimum ampacity",
+    "overload_timestamps": "timestamps where scheduled_current_a exceeds the dynamic rating",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "All timestamp ampacities must match the independent heat-balance calculation within 0.5 A.",
+    "The limiting timestamp and overload timestamp list must be correct.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted ratings satisfy all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:DOI:10.35833/mpce.2020.000641",
+    "source_card:docs/source_cards/dynamic_thermal_rating.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "N. Safari, S. M. Mazhari, C. Y. Chung, S. B. Ko, Secure Probabilistic Prediction of Dynamic Thermal Line Rating, Journal of Modern Power Systems and Clean Energy, 2022",
+      "locator": "DOI:10.35833/mpce.2020.000641",
+      "confidence": "medium",
+      "notes": "Replaces vague dynamic-line-rating slide locator with a DOI-resolved MPCE article plus local slide cross-reference; benchmark remains a compact heat-balance surrogate."
+    }
+  ]
+}
+
+codex
+The task defines the full heat-balance formula, so I’m calculating directly from those constants and the four weather points. Then I’ll create `submission.json` with only schema-compatible keys.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import math, json
+case={
+'scheduled_current_a':520.0,
+'conductor':{'diameter_mm':22.4,'resistance_ohm_per_km_at_20c':0.118,'resistance_temp_coeff_per_c':0.00403,'emissivity':0.7,'solar_absorptivity':0.7},
+'thermal_limits':{'max_conductor_temperature_c':75.0},
+'model_constants':{'convective_w_per_m_c_at_1ms':0.72},
+'weather_series':[
+{'timestamp':'t00','ambient_temperature_c':18.0,'wind_speed_m_s':2.8,'solar_w_per_m2':150.0},
+{'timestamp':'t01','ambient_temperature_c':31.0,'wind_speed_m_s':0.7,'solar_w_per_m2':850.0},
+{'timestamp':'t02','ambient_temperature_c':27.0,'wind_speed_m_s':1.4,'solar_w_per_m2':600.0},
+{'timestamp':'t03','ambient_temperature_c':22.0,'wind_speed_m_s':3.2,'solar_w_per_m2':100.0},]}
+c=case['conductor']; T=case['thermal_limits']['max_conductor_temperature_c']; k=case['model_constants']['convective_w_per_m_c_at_1ms']
+R=(c['resistance_ohm_per_km_at_20c']/1000)*(1+c['resistance_temp_coeff_per_c']*(T-20))
+ans={}
+for w in case['weather_series']:
+    amb=w['ambient_temperature_c']; wind=max(w['wind_speed_m_s'],0.05); D=c['diameter_mm']/1000
+    conv=k*(wind**0.6)*(T-amb)
+    rad=c['emissivity']*5.670374419e-8*(math.pi*D)*(((T+273.15)**4)-((amb+273.15)**4))
+    solar=c['solar_absorptivity']*w['solar_w_per_m2']*D
+    amp=math.sqrt(max(conv+rad-solar,0)/R)
+    ans[w['timestamp']]=amp
+    print(w['timestamp'], amp, 'conv rad solar net', conv, rad, solar, conv+rad-solar)
+print('R',R)
+print(json.dumps(ans, indent=2))
+print('min', min(ans.items(), key=lambda kv: kv[1]))
+print('over', [t for t,a in ans.items() if case['scheduled_current_a']>a])
+PY" in <sandbox_a1>
+ succeeded in 0ms:
+t00 810.6600518469957 conv rad solar net 76.12059440385774 20.96550938289636 2.352 94.73410378675409
+t01 451.4679563881969 conv rad solar net 25.576669814170373 17.133419105688176 13.328 29.38208891985855
+t02 596.2529746623851 conv rad solar net 42.2912532583685 18.36628112616556 9.408 51.24953438453406
+t03 811.6022038417384 conv rad solar net 76.68286898112447 19.83956338914324 1.568 94.95443237026771
+R 0.00014415469999999998
+{
+  "t00": 810.6600518469957,
+  "t01": 451.4679563881969,
+  "t02": 596.2529746623851,
+  "t03": 811.6022038417384
+}
+min ('t01', 451.4679563881969)
+over ['t01']
+
+codex
+The computed ratings are approximately 810.66 A, 451.47 A, 596.25 A, and 811.60 A. The minimum is at `t01`, and only `t01` exceeds the 520 A scheduled current.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_dynamic_thermal_rating__public__case_001_a1_gkln_4a5/submission.json b/bench_dynamic_thermal_rating__public__case_001_a1_gkln_4a5/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e575097270d1fec14054a97cec28961b9ccb9f3c
+--- /dev/null
++++ b/bench_dynamic_thermal_rating__public__case_001_a1_gkln_4a5/submission.json
+@@ -0,0 +1,13 @@
++{
++  "ampacity_by_timestamp_a": {
++    "t00": 810.6600518469957,
++    "t01": 451.4679563881969,
++    "t02": 596.2529746623851,
++    "t03": 811.6022038417384
++  },
++  "minimum_ampacity_a": 451.4679563881969,
++  "limiting_timestamp": "t01",
++  "overload_timestamps": [
++    "t01"
++  ]
++}
+
+diff --git a/bench_dynamic_thermal_rating__public__case_001_a1_gkln_4a5/submission.json b/bench_dynamic_thermal_rating__public__case_001_a1_gkln_4a5/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e575097270d1fec14054a97cec28961b9ccb9f3c
+--- /dev/null
++++ b/bench_dynamic_thermal_rating__public__case_001_a1_gkln_4a5/submission.json
+@@ -0,0 +1,13 @@
++{
++  "ampacity_by_timestamp_a": {
++    "t00": 810.6600518469957,
++    "t01": 451.4679563881969,
++    "t02": 596.2529746623851,
++    "t03": 811.6022038417384
++  },
++  "minimum_ampacity_a": 451.4679563881969,
++  "limiting_timestamp": "t01",
++  "overload_timestamps": [
++    "t01"
++  ]
++}
+
+codex
+Done
+diff --git a/bench_dynamic_thermal_rating__public__case_001_a1_gkln_4a5/submission.json b/bench_dynamic_thermal_rating__public__case_001_a1_gkln_4a5/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e575097270d1fec14054a97cec28961b9ccb9f3c
+--- /dev/null
++++ b/bench_dynamic_thermal_rating__public__case_001_a1_gkln_4a5/submission.json
+@@ -0,0 +1,13 @@
++{
++  "ampacity_by_timestamp_a": {
++    "t00": 810.6600518469957,
++    "t01": 451.4679563881969,
++    "t02": 596.2529746623851,
++    "t03": 811.6022038417384
++  },
++  "minimum_ampacity_a": 451.4679563881969,
++  "limiting_timestamp": "t01",
++  "overload_timestamps": [
++    "t01"
++  ]
++}
+
+tokens used
+33,378

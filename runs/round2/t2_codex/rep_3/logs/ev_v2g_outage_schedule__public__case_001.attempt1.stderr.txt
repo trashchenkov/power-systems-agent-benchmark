@@ -1,0 +1,284 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13ad2-a994-7281-8c58-a76027bbf230
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task files first, then compute the required answer and write only `submission.json`.
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/ev_v2g_outage_schedule__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,240p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "ev_v2g_outage_schedule_public_001",
+  "family": "ev_v2g_outage_schedule",
+  "candidate_id": "REL-TASK-020",
+  "substrate": "executable_ev_v2g_outage_schedule_case",
+  "objective": "Schedule a small EV fleet for V2G support during a critical-load outage window while preserving reserve state of charge.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-020 — EV/V2G outage schedule",
+      "ru": "REL-TASK-020 — График EV/V2G при отключении"
+    },
+    "objective": {
+      "en": "Maximize critical-load energy served by an EV fleet subject to charger power and reserve SOC constraints.",
+      "ru": "Максимизировать энергию критической нагрузки, покрытую EV-флотом, с учётом ограничений зарядной мощности и резервного SOC."
+    },
+    "instructions": {
+      "en": "Use v2g_outage_case. For each outage interval and EV, choose dispatch_kw: positive discharges to the critical-load bus, negative charges. Respect each EV's charge/discharge limits, capacity, efficiency, and reserve SOC. Report dispatch_kw by timestamp, served_energy_kwh, and final_soc_kwh.",
+      "ru": "Используйте v2g_outage_case. Для каждого интервала аварии и EV выберите dispatch_kw: положительное значение разряжает EV в шину критической нагрузки, отрицательное заряжает. Соблюдайте ограничения мощности, ёмкости, КПД и резервного SOC каждого EV. Укажите dispatch_kw по интервалам, served_energy_kwh и final_soc_kwh."
+    }
+  },
+  "subdomain": "distribution systems & DER/EV",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-020",
+    "subdomain": "distribution systems & DER/EV",
+    "input_fields": [
+      "v2g_outage_case.critical_load_kw",
+      "v2g_outage_case.evs"
+    ]
+  },
+  "v2g_outage_case": {
+    "time_periods": [
+      "t1",
+      "t2",
+      "t3"
+    ],
+    "interval_hours": 0.5,
+    "critical_load_kw": {
+      "t1": 10.0,
+      "t2": 12.0,
+      "t3": 9.0
+    },
+    "evs": {
+      "ev_a": {
+        "capacity_kwh": 40.0,
+        "initial_soc_kwh": 24.0,
+        "reserve_soc_kwh": 16.0,
+        "charge_max_kw": 4.0,
+        "discharge_max_kw": 8.0,
+        "charge_efficiency": 0.95,
+        "discharge_efficiency": 0.9,
+        "dispatch_step_kw": 4.0
+      },
+      "ev_b": {
+        "capacity_kwh": 32.0,
+        "initial_soc_kwh": 20.0,
+        "reserve_soc_kwh": 12.0,
+        "charge_max_kw": 3.0,
+        "discharge_max_kw": 6.0,
+        "charge_efficiency": 0.95,
+        "discharge_efficiency": 0.9,
+        "dispatch_step_kw": 3.0
+      }
+    }
+  },
+  "submission_schema": {
+    "dispatch_kw": "object mapping timestamp to EV kW commands",
+    "served_energy_kwh": "critical-load energy served over the event",
+    "final_soc_kwh": "final EV SOC by ID",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Commands must satisfy EV power limits and reserve SOC constraints.",
+    "Served energy and final SOC must match the independent enumeration optimum within tolerance.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted V2G schedule satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:DOI:10.1109/RTUCON51174.2020.9316604",
+    "source_card:docs/source_cards/ev_v2g_outage_schedule.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "The Role of Electrical Vehicles for Power Quality and Security during Outages in the Distribution Grid",
+      "locator": "DOI:10.1109/RTUCON51174.2020.9316604",
+      "confidence": "medium",
+      "notes": "Grounds EV/V2G outage-support scheduling; the task uses explicit energy/SOC constraints."
+    }
+  ]
+}
+
+exec
+/bin/bash -lc 'ls -la' in <sandbox_a1>
+ succeeded in 0ms:
+total 396
+drwx------    5 root root   4096 Oct 14 17:30 .
+drwxrwxrwt 2058 root root 385024 Oct 14 17:30 ..
+dr-xr-xr-x    2 root root     40 Oct 14 17:30 .agents
+dr-xr-xr-x    2 root root     40 Oct 14 17:30 .codex
+dr-xr-xr-x    2 root root     40 Oct 14 17:30 .git
+-rw-r--r--    1 root root   1174 Oct 14 17:30 instructions.md
+-rw-r--r--    1 root root   4113 Oct 14 17:30 task.json
+
+codex
+The case is small enough to enumerate by hand, but I’m going to use a short in-directory calculation to avoid arithmetic drift, then write the JSON directly.
+exec
+/bin/bash -lc "node - <<'NODE'
+const dt=0.5;
+const load={t1:10,t2:12,t3:9};
+const vals={ev_a:[-4,0,4,8],ev_b:[-3,0,3,6]};
+const evs={ev_a:{soc:24,res:16,cap:40,ce:0.95,de:0.9},ev_b:{soc:20,res:12,cap:32,ce:0.95,de:0.9}};
+const times=['t1','t2','t3'];
+let best=[]; let bestServ=-1;
+function upd(soc,p,e){return p>=0 ? soc - p*dt/e.de : soc + (-p)*dt*e.ce;}
+function rec(i,socs,sched,served){
+ if(i===times.length){
+   if(served>bestServ+1e-9){bestServ=served; best=[];}
+   if(Math.abs(served-bestServ)<1e-9) best.push({sched:JSON.parse(JSON.stringify(sched)),served,socs:{...socs}});
+   return;
+ }
+ const t=times[i];
+ for(const pa of vals.ev_a) for(const pb of vals.ev_b){
+   const na=upd(socs.ev_a,pa,evs.ev_a), nb=upd(socs.ev_b,pb,evs.ev_b);
+   if(na < evs.ev_a.res-1e-9 || na > evs.ev_a.cap+1e-9 || nb < evs.ev_b.res-1e-9 || nb > evs.ev_b.cap+1e-9) continue;
+   const net=pa+pb;
+   const add=Math.min(load[t], Math.max(0,net))*dt;
+   sched[t]={ev_a:pa,ev_b:pb};
+   rec(i+1,{ev_a:na,ev_b:nb},sched,served+add);
+   delete sched[t];
+ }
+}
+rec(0,{ev_a:24,ev_b:20},{},0);
+console.log('bestServ',bestServ,'count',best.length);
+for(const b of best.slice(0,20)) console.log(JSON.stringify(b));
+NODE" in <sandbox_a1>
+ succeeded in 139ms:
+codex
+Enumeration gives a maximum served energy of `12.0 kWh`; one valid optimum is `t1: (0,6)`, `t2: (4,6)`, `t3: (8,0)`, leaving SOC at `17.3333333333` and `13.3333333333 kWh`. I’m writing that schedule with only schema-compatible fields.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_ev_v2g_outage_schedule__public__case_001_a1_g0mb8qz0/submission.json b/bench_ev_v2g_outage_schedule__public__case_001_a1_g0mb8qz0/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..514c3afa1068aca569c8cff56ce49de242d84279
+--- /dev/null
++++ b/bench_ev_v2g_outage_schedule__public__case_001_a1_g0mb8qz0/submission.json
+@@ -0,0 +1,21 @@
++{
++  "dispatch_kw": {
++    "t1": {
++      "ev_a": 0.0,
++      "ev_b": 6.0
++    },
++    "t2": {
++      "ev_a": 4.0,
++      "ev_b": 6.0
++    },
++    "t3": {
++      "ev_a": 8.0,
++      "ev_b": 0.0
++    }
++  },
++  "served_energy_kwh": 12.0,
++  "final_soc_kwh": {
++    "ev_a": 17.333333333333336,
++    "ev_b": 13.333333333333336
++  }
++}
+
+diff --git a/bench_ev_v2g_outage_schedule__public__case_001_a1_g0mb8qz0/submission.json b/bench_ev_v2g_outage_schedule__public__case_001_a1_g0mb8qz0/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..514c3afa1068aca569c8cff56ce49de242d84279
+--- /dev/null
++++ b/bench_ev_v2g_outage_schedule__public__case_001_a1_g0mb8qz0/submission.json
+@@ -0,0 +1,21 @@
++{
++  "dispatch_kw": {
++    "t1": {
++      "ev_a": 0.0,
++      "ev_b": 6.0
++    },
++    "t2": {
++      "ev_a": 4.0,
++      "ev_b": 6.0
++    },
++    "t3": {
++      "ev_a": 8.0,
++      "ev_b": 0.0
++    }
++  },
++  "served_energy_kwh": 12.0,
++  "final_soc_kwh": {
++    "ev_a": 17.333333333333336,
++    "ev_b": 13.333333333333336
++  }
++}
+
+codex
+Done.
+diff --git a/bench_ev_v2g_outage_schedule__public__case_001_a1_g0mb8qz0/submission.json b/bench_ev_v2g_outage_schedule__public__case_001_a1_g0mb8qz0/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..514c3afa1068aca569c8cff56ce49de242d84279
+--- /dev/null
++++ b/bench_ev_v2g_outage_schedule__public__case_001_a1_g0mb8qz0/submission.json
+@@ -0,0 +1,21 @@
++{
++  "dispatch_kw": {
++    "t1": {
++      "ev_a": 0.0,
++      "ev_b": 6.0
++    },
++    "t2": {
++      "ev_a": 4.0,
++      "ev_b": 6.0
++    },
++    "t3": {
++      "ev_a": 8.0,
++      "ev_b": 0.0
++    }
++  },
++  "served_energy_kwh": 12.0,
++  "final_soc_kwh": {
++    "ev_a": 17.333333333333336,
++    "ev_b": 13.333333333333336
++  }
++}
+
+tokens used
+24,453

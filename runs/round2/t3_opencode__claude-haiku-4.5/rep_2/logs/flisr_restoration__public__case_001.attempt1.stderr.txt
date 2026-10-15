@@ -1,0 +1,1021 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+from itertools import combinations
+
+# Load task
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+buses_dict = {b['id']: b for b in task['buses']}
+branches_dict = {b['id']: b for b in task['branches']}
+
+source_bus = task['source_bus']
+faulted_branches = set(task['faulted_branches'])
+min_priority = task['min_priority_restored']
+
+print("=== Network Analysis ===")
+print(f"Source: {source_bus}")
+print(f"Faulted branches: {faulted_branches}")
+print(f"Min priority to restore: {min_priority}")
+print(f"\nBuses and loads:")
+for b in task['buses']:
+    print(f"  {b['id']}: {b['load_kw']} kW, priority {b['priority']}")
+print(f"\nBranches:")
+for b in task['branches']:
+    print(f"  {b['id']}: {b['from_bus']}-{b['to_bus']}, normally_closed={b['normally_closed']}, capacity={b['capacity_kw']}")
+
+def is_connected(bus, branches_state, source):
+    """Check if a bus is reachable from source given branch states"""
+    edges = {}
+    for bid, branch in branches_dict.items():
+        if branches_state.get(bid, branch['normally_closed']):  # branch is closed
+            u, v = branch['from_bus'], branch['to_bus']
+            if u not in edges:
+                edges[u] = []
+            if v not in edges:
+                edges[v] = []
+            edges[u].append(v)
+            edges[v].append(u)
+    
+    # BFS from source
+    visited = set()
+    queue = [source]
+    visited.add(source)
+    while queue:
+        current = queue.pop(0)
+        if current == bus:
+            return True
+        if current in edges:
+            for neighbor in edges[current]:
+                if neighbor not in visited:
+                    visited.add(neighbor)
+                    queue.append(neighbor)
+    return False
+
+def is_radial(branches_state):
+    """Check if network is radial (tree, no cycles)"""
+    edges = {}
+    edge_count = 0
+    for bid, branch in branches_dict.items():
+        if branches_state.get(bid, branch['normally_closed']):
+            u, v = branch['from_bus'], branch['to_bus']
+            if u not in edges:
+                edges[u] = []
+            if v not in edges:
+                edges[v] = []
+            edges[u].append(v)
+            edges[v].append(u)
+            edge_count += 1
+    
+    # For a tree: E = V - 1 where E is edges and V is nodes
+    # But we only count connected components
+    visited = set()
+    def dfs(node):
+        visited.add(node)
+        for neighbor in edges.get(node, []):
+            if neighbor not in visited:
+                dfs(neighbor)
+    
+    components = 0
+    for node in edges:
+        if node not in visited:
+            components += 1
+            dfs(node)
+    
+    num_nodes = len(edges)
+    return edge_count == num_nodes - components
+
+# Try all possible switching combinations
+print("\n=== Searching for valid solutions ===")
+
+best_solution = None
+best_score = -1
+
+# Branch IDs that are not faulted
+non_faulted = [b['id'] for b in task['branches'] if b['id'] not in faulted_branches]
+tie_switches = [b['id'] for b in task['branches'] if not b['normally_closed']]
+normally_closed_non_faulted = [b['id'] for b in task['branches'] if b['normally_closed'] and b['id'] not in faulted_branches]
+
+print(f"Normally closed (non-faulted): {normally_closed_non_faulted}")
+print(f"Tie switches (normally open): {tie_switches}")
+
+# Try different switching plans
+for open_count in range(len(normally_closed_non_faulted) + 1):
+    for to_open in combinations(normally_closed_non_faulted, open_count):
+        for close_count in range(len(tie_switches) + 1):
+            for to_close in combinations(tie_switches, close_count):
+                # Build branch state
+                branches_state = {}
+                
+                # All normally closed branches
+                for bid in normally_closed_non_faulted:
+                    branches_state[bid] = True
+                
+                # Open faulted branch
+                for bid in faulted_branches:
+                    branches_state[bid] = False
+                
+                # Open specified switches
+                for bid in to_open:
+                    branches_state[bid] = False
+                
+                # Close tie switches
+                for bid in tie_switches:
+                    if bid in to_close:
+                        branches_state[bid] = True
+                    else:
+                        branches_state[bid] = False
+                
+                # Check hard constraints
+                # 1. All faulted branches must be open
+                if not all(not branches_state.get(bid, True) for bid in faulted_branches):
+                    continue
+                
+                # 2. Network must be radial
+                if not is_radial(branches_state):
+                    continue
+                
+                # 3. Calculate restored load and priority
+                restored_priority = 0
+                restored_load = 0
+                for bus_id, bus in buses_dict.items():
+                    if is_connected(bus_id, branches_state, source_bus):
+                        restored_priority += bus['priority']
+                        restored_load += bus['load_kw']
+                
+                # 4. Check if meets min priority
+                if restored_priority < min_priority:
+                    continue
+                
+                # Calculate score
+                switch_count = len(to_open) + len(to_close)
+                switch_penalty = task['switch_penalty'] * switch_count
+                score = restored_priority - switch_penalty if restored_priority >= min_priority else 0
+                
+                solution = {
+                    'open_switches': list(to_open),
+                    'close_switches': list(to_close),
+                    'restored_priority': restored_priority,
+                    'restored_load': restored_load,
+                    'switch_count': switch_count,
+                    'score': score
+                }
+                
+                if score > best_score or (score == best_score and (best_solution is None or len(to_open) + len(to_close) < len(best_solution['open_switches']) + len(best_solution['close_switches']))):
+                    best_score = score
+                    best_solution = solution
+                    print(f"Found feasible solution: open={list(to_open)}, close={list(to_close)}, priority={restored_priority}, load={restored_load}, score={score}")
+
+if best_solution:
+    print(f"\n=== Best Solution ===")
+    print(json.dumps(best_solution, indent=2))
+else:
+    print("\n=== No feasible solution found ===")
+    print("Checking which buses can be restored at all...")
+    
+    # Try simplest case: just open l23
+    branches_state = {}
+    for b in task['branches']:
+        if b['id'] == 'l23':
+            branches_state[b['id']] = False
+        else:
+            branches_state[b['id']] = b['normally_closed']
+    
+    print("\nIf we only open l23:")
+    for bus_id in buses_dict:
+        reachable = is_connected(bus_id, branches_state, source_bus)
+        print(f"  {bus_id}: {reachable}")
+
+EOF
+
+=== Network Analysis ===
+Source: s
+Faulted branches: {'l23'}
+Min priority to restore: 10.0
+
+Buses and loads:
+  s: 0.0 kW, priority 0
+  b1: 0.0 kW, priority 0
+  b2: 50.0 kW, priority 3
+  b3: 80.0 kW, priority 5
+  b4: 40.0 kW, priority 2
+
+Branches:
+  l_s1: s-b1, normally_closed=True, capacity=250.0
+  l12: b1-b2, normally_closed=True, capacity=160.0
+  l23: b2-b3, normally_closed=True, capacity=120.0
+  l34: b3-b4, normally_closed=True, capacity=130.0
+  tie_24: b2-b4, normally_closed=False, capacity=120.0
+
+=== Searching for valid solutions ===
+Normally closed (non-faulted): ['l_s1', 'l12', 'l34']
+Tie switches (normally open): ['tie_24']
+Found feasible solution: open=[], close=['tie_24'], priority=10, load=170.0, score=8.0
+
+=== Best Solution ===
+{
+  "open_switches": [],
+  "close_switches": [
+    "tie_24"
+  ],
+  "restored_priority": 10,
+  "restored_load": 170.0,
+  "switch_count": 1,
+  "score": 8.0
+}
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+from collections import defaultdict, deque
+
+# Load task
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+buses_dict = {b['id']: b for b in task['buses']}
+branches_dict = {b['id']: b for b in task['branches']}
+
+source_bus = task['source_bus']
+faulted_branches = set(task['faulted_branches'])
+
+def build_graph(branches_state):
+    """Build adjacency list from closed branches"""
+    graph = defaultdict(list)
+    edge_list = []
+    for bid, branch in branches_dict.items():
+        is_closed = branches_state.get(bid, branch['normally_closed'])
+        if is_closed:
+            u, v = branch['from_bus'], branch['to_bus']
+            graph[u].append((v, bid))
+            graph[v].append((u, bid))
+            edge_list.append((u, v, bid))
+    return graph, edge_list
+
+def find_connected_component(start, graph):
+    """Find all nodes in connected component from start"""
+    visited = set()
+    queue = deque([start])
+    visited.add(start)
+    while queue:
+        node = queue.popleft()
+        for neighbor, _ in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+    return visited
+
+def is_radial(branches_state):
+    """Check if graph is a forest (no cycles)"""
+    graph, edge_list = build_graph(branches_state)
+    
+    # Count edges and nodes in each component
+    visited_global = set()
+    components_info = []
+    
+    for node in graph:
+        if node not in visited_global:
+            component = find_connected_component(node, graph)
+            visited_global.update(component)
+            
+            # Count edges in this component
+            edge_count = 0
+            for u, v, _ in edge_list:
+                if u in component and v in component:
+                    edge_count += 1
+            
+            # For tree: edges = nodes - 1
+            if edge_count != len(component) - 1:
+                return False
+            components_info.append((component, edge_count))
+    
+    return True
+
+# Test the problematic solution: close only tie_24, don't open l23
+print("=== Testing: close tie_24 only, DON'T open l23 ===")
+branches_state = {}
+for b in task['branches']:
+    if b['id'] == 'tie_24':
+        branches_state[b['id']] = True  # Close tie_24
+    else:
+        branches_state[b['id']] = b['normally_closed']
+
+print("\nBranches state:")
+for bid in ['l_s1', 'l12', 'l23', 'l34', 'tie_24']:
+    is_closed = branches_state.get(bid, task['branches'].__iter__().__next__())
+    print(f"  {bid}: {'CLOSED' if branches_state.get(bid, branches_dict[bid]['normally_closed']) else 'OPEN'}")
+
+graph, edge_list = build_graph(branches_state)
+print(f"\nEdges in graph: {edge_list}")
+
+# Check connectivity
+component = find_connected_component(source_bus, graph)
+print(f"\nConnected to source {source_bus}: {component}")
+
+# Check radiality
+is_rad = is_radial(branches_state)
+print(f"Is radial: {is_rad}")
+
+# Check hard constraints
+print(f"\n=== Hard Constraints ===")
+print(f"1. l23 (faulted) open? {not branches_state.get('l23', True)}")
+print(f"2. Is radial? {is_rad}")
+
+# If l23 is closed AND we have tie_24 closed, we have a cycle
+if branches_state.get('l23', True) and branches_state.get('tie_24', False):
+    print(f"\n*** PROBLEM: l23 is closed AND tie_24 is closed -> creates cycle b2-b3-b4-b2")
+    print(f"*** This violates the hard constraint that the fault must be isolated!")
+
+EOF
+
+=== Testing: close tie_24 only, DON'T open l23 ===
+
+Branches state:
+  l_s1: CLOSED
+  l12: CLOSED
+  l23: CLOSED
+  l34: CLOSED
+  tie_24: CLOSED
+
+Edges in graph: [('s', 'b1', 'l_s1'), ('b1', 'b2', 'l12'), ('b2', 'b3', 'l23'), ('b3', 'b4', 'l34'), ('b2', 'b4', 'tie_24')]
+
+Connected to source s: {'s', 'b4', 'b1', 'b2', 'b3'}
+Is radial: False
+
+=== Hard Constraints ===
+1. l23 (faulted) open? False
+2. Is radial? False
+
+*** PROBLEM: l23 is closed AND tie_24 is closed -> creates cycle b2-b3-b4-b2
+*** This violates the hard constraint that the fault must be isolated!
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+from collections import defaultdict, deque
+from itertools import combinations
+
+# Load task
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+buses_dict = {b['id']: b for b in task['buses']}
+branches_dict = {b['id']: b for b in task['branches']}
+
+source_bus = task['source_bus']
+faulted_branches = set(task['faulted_branches'])
+min_priority = task['min_priority_restored']
+
+def build_graph(branches_state):
+    """Build adjacency list from closed branches"""
+    graph = defaultdict(list)
+    edge_list = []
+    for bid, branch in branches_dict.items():
+        is_closed = branches_state.get(bid, branch['normally_closed'])
+        if is_closed:
+            u, v = branch['from_bus'], branch['to_bus']
+            graph[u].append((v, bid))
+            graph[v].append((u, bid))
+            edge_list.append((u, v, bid))
+    return graph, edge_list
+
+def find_connected_component(start, graph):
+    """Find all nodes in connected component from start"""
+    visited = set()
+    queue = deque([start])
+    visited.add(start)
+    while queue:
+        node = queue.popleft()
+        for neighbor, _ in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+    return visited
+
+def is_radial(branches_state):
+    """Check if graph is a forest (no cycles)"""
+    graph, edge_list = build_graph(branches_state)
+    
+    visited_global = set()
+    for node in graph:
+        if node not in visited_global:
+            component = find_connected_component(node, graph)
+            visited_global.update(component)
+            
+            # Count edges in this component
+            edge_count = 0
+            for u, v, _ in edge_list:
+                if u in component and v in component:
+                    edge_count += 1
+            
+            # For tree: edges = nodes - 1
+            if edge_count != len(component) - 1:
+                return False
+    
+    return True
+
+def check_faulted_open(branches_state):
+    """Check all faulted branches are open"""
+    for bid in faulted_branches:
+        if branches_state.get(bid, True):  # if closed
+            return False
+    return True
+
+def get_restored_buses(branches_state):
+    """Get buses reachable from source"""
+    graph, _ = build_graph(branches_state)
+    return find_connected_component(source_bus, graph)
+
+# Collect branches that can be opened/closed
+normally_closed_non_faulted = [b['id'] for b in task['branches'] if b['normally_closed'] and b['id'] not in faulted_branches]
+tie_switches = [b['id'] for b in task['branches'] if not b['normally_closed']]
+
+print(f"Normally closed branches (non-faulted): {normally_closed_non_faulted}")
+print(f"Tie switches (normally open): {tie_switches}")
+print(f"Faulted branches: {list(faulted_branches)}")
+print()
+
+best_solutions = []
+
+# Try all combinations
+for open_count in range(len(normally_closed_non_faulted) + 1):
+    for to_open in combinations(normally_closed_non_faulted, open_count):
+        to_open_set = set(to_open)
+        for close_count in range(len(tie_switches) + 1):
+            for to_close in combinations(tie_switches, close_count):
+                to_close_set = set(to_close)
+                
+                # Build branch state
+                branches_state = {}
+                
+                # Start with all normally_closed branches
+                for bid in normally_closed_non_faulted:
+                    branches_state[bid] = True
+                
+                # Faulted branches are open
+                for bid in faulted_branches:
+                    branches_state[bid] = False
+                
+                # Apply switching actions
+                for bid in to_open_set:
+                    branches_state[bid] = False
+                for bid in to_close_set:
+                    branches_state[bid] = True
+                for bid in tie_switches:
+                    if bid not in to_close_set:
+                        branches_state[bid] = False
+                
+                # Check hard constraints
+                if not check_faulted_open(branches_state):
+                    continue
+                if not is_radial(branches_state):
+                    continue
+                
+                # Calculate restored buses
+                restored_buses = get_restored_buses(branches_state)
+                
+                # Calculate priority and load
+                restored_priority = sum(buses_dict[b]['priority'] for b in restored_buses if b in buses_dict)
+                restored_load = sum(buses_dict[b]['load_kw'] for b in restored_buses if b in buses_dict)
+                
+                # Check minimum priority
+                if restored_priority < min_priority:
+                    continue
+                
+                # Calculate score
+                switch_count = len(to_open_set) + len(to_close_set)
+                score = restored_priority - task['switch_penalty'] * switch_count
+                
+                solution = {
+                    'open_switches': sorted(list(to_open_set)),
+                    'close_switches': sorted(list(to_close_set)),
+                    'restored_priority': restored_priority,
+                    'restored_load': restored_load,
+                    'restored_buses': sorted(list(restored_buses)),
+                    'switch_count': switch_count,
+                    'score': score
+                }
+                
+                best_solutions.append(solution)
+
+if best_solutions:
+    # Sort by score descending, then by switch_count ascending
+    best_solutions.sort(key=lambda x: (-x['score'], x['switch_count']))
+    
+    print(f"Found {len(best_solutions)} feasible solutions\n")
+    print("=== Top 5 Solutions ===")
+    for i, sol in enumerate(best_solutions[:5]):
+        print(f"\n{i+1}. Open: {sol['open_switches']}, Close: {sol['close_switches']}")
+        print(f"   Priority restored: {sol['restored_priority']}, Load: {sol['restored_load']} kW")
+        print(f"   Buses: {sol['restored_buses']}")
+        print(f"   Switches: {sol['switch_count']}, Score: {sol['score']}")
+    
+    best = best_solutions[0]
+    print(f"\n=== BEST SOLUTION ===")
+    print(json.dumps({
+        'open_switches': best['open_switches'],
+        'close_switches': best['close_switches'],
+        'rationale': f"Restores priority {best['restored_priority']} and {best['restored_load']:.1f} kW of load. Score: {best['score']}"
+    }, indent=2))
+else:
+    print("No feasible solutions found!")
+
+EOF
+
+Normally closed branches (non-faulted): ['l_s1', 'l12', 'l34']
+Tie switches (normally open): ['tie_24']
+Faulted branches: ['l23']
+
+Found 1 feasible solutions
+
+=== Top 5 Solutions ===
+
+1. Open: [], Close: ['tie_24']
+   Priority restored: 10, Load: 170.0 kW
+   Buses: ['b1', 'b2', 'b3', 'b4', 's']
+   Switches: 1, Score: 8.0
+
+=== BEST SOLUTION ===
+{
+  "open_switches": [],
+  "close_switches": [
+    "tie_24"
+  ],
+  "rationale": "Restores priority 10 and 170.0 kW of load. Score: 8.0"
+}
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+from collections import defaultdict, deque
+
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+branches_dict = {b['id']: b for b in task['branches']}
+
+# Solution: open=[], close=['tie_24']
+# Start with all normally closed
+branches_state = {
+    'l_s1': True,   # normally closed
+    'l12': True,    # normally closed
+    'l23': True,    # normally closed (FAULTED - should be open!)
+    'l34': True,    # normally closed
+    'tie_24': True  # normally open, close it
+}
+
+print("=== Branches State ===")
+for bid in branches_state:
+    branch = branches_dict[bid]
+    state = "CLOSED" if branches_state[bid] else "OPEN"
+    print(f"{bid}: {state} (normally_closed={branch['normally_closed']})")
+
+print("\n=== Network Graph ===")
+edges = []
+for bid, is_closed in branches_state.items():
+    if is_closed:
+        branch = branches_dict[bid]
+        edges.append(f"{branch['from_bus']} -- {bid} -- {branch['to_bus']}")
+        print(f"  {bid}: {branch['from_bus']} -- {branch['to_bus']}")
+
+print("\n*** BIG PROBLEM: l23 is CLOSED in this solution! ***")
+print("*** l23 is the faulted branch and must be OPEN! ***")
+print("*** This is a HARD CONSTRAINT violation! ***")
+
+# The solution script said: "Faulted branches are open" with:
+# for bid in faulted_branches:
+#     branches_state[bid] = False
+# But it seems this didn't happen. Let me check the state after the fix
+
+EOF
+
+=== Branches State ===
+l_s1: CLOSED (normally_closed=True)
+l12: CLOSED (normally_closed=True)
+l23: CLOSED (normally_closed=True)
+l34: CLOSED (normally_closed=True)
+tie_24: CLOSED (normally_closed=False)
+
+=== Network Graph ===
+  l_s1: s -- b1
+  l12: b1 -- b2
+  l23: b2 -- b3
+  l34: b3 -- b4
+  tie_24: b2 -- b4
+
+*** BIG PROBLEM: l23 is CLOSED in this solution! ***
+*** l23 is the faulted branch and must be OPEN! ***
+*** This is a HARD CONSTRAINT violation! ***
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+from collections import defaultdict, deque
+from itertools import combinations
+
+# Load task
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+buses_dict = {b['id']: b for b in task['buses']}
+branches_dict = {b['id']: b for b in task['branches']}
+
+source_bus = task['source_bus']
+faulted_branches = set(task['faulted_branches'])
+min_priority = task['min_priority_restored']
+
+def build_graph(branches_state):
+    """Build adjacency list from closed branches"""
+    graph = defaultdict(list)
+    edge_list = []
+    for bid, branch in branches_dict.items():
+        is_closed = branches_state[bid]  # Use actual state
+        if is_closed:
+            u, v = branch['from_bus'], branch['to_bus']
+            graph[u].append((v, bid))
+            graph[v].append((u, bid))
+            edge_list.append((u, v, bid))
+    return graph, edge_list
+
+def find_connected_component(start, graph):
+    """Find all nodes in connected component from start"""
+    visited = set()
+    queue = deque([start])
+    visited.add(start)
+    while queue:
+        node = queue.popleft()
+        for neighbor, _ in graph[node]:
+            if neighbor not in visited:
+                visited.add(neighbor)
+                queue.append(neighbor)
+    return visited
+
+def is_radial(branches_state):
+    """Check if graph is a forest (no cycles)"""
+    graph, edge_list = build_graph(branches_state)
+    
+    visited_global = set()
+    for node in graph:
+        if node not in visited_global:
+            component = find_connected_component(node, graph)
+            visited_global.update(component)
+            
+            # Count edges in this component
+            edge_count = 0
+            for u, v, _ in edge_list:
+                if u in component and v in component:
+                    edge_count += 1
+            
+            # For tree: edges = nodes - 1
+            if edge_count != len(component) - 1:
+                return False
+    
+    return True
+
+def check_faulted_open(branches_state):
+    """Check all faulted branches are open"""
+    for bid in faulted_branches:
+        if branches_state[bid]:  # if closed, return False
+            return False
+    return True
+
+def get_restored_buses(branches_state):
+    """Get buses reachable from source"""
+    graph, _ = build_graph(branches_state)
+    return find_connected_component(source_bus, graph)
+
+# Collect branches that can be opened/closed
+normally_closed_non_faulted = [b['id'] for b in task['branches'] if b['normally_closed'] and b['id'] not in faulted_branches]
+tie_switches = [b['id'] for b in task['branches'] if not b['normally_closed']]
+
+print(f"Normally closed branches (non-faulted): {normally_closed_non_faulted}")
+print(f"Tie switches (normally open): {tie_switches}")
+print(f"Faulted branches: {list(faulted_branches)}")
+print()
+
+best_solutions = []
+
+# Try all combinations
+for open_count in range(len(normally_closed_non_faulted) + 1):
+    for to_open in combinations(normally_closed_non_faulted, open_count):
+        to_open_set = set(to_open)
+        for close_count in range(len(tie_switches) + 1):
+            for to_close in combinations(tie_switches, close_count):
+                to_close_set = set(to_close)
+                
+                # Build branch state - EXPLICIT initialization
+                branches_state = {}
+                
+                # Initialize ALL branches
+                for bid in branches_dict:
+                    if bid in faulted_branches:
+                        # Faulted branches MUST be open
+                        branches_state[bid] = False
+                    elif bid in normally_closed_non_faulted:
+                        # Start closed, then apply to_open
+                        branches_state[bid] = bid not in to_open_set
+                    elif bid in tie_switches:
+                        # Start open, then apply to_close
+                        branches_state[bid] = bid in to_close_set
+                    else:
+                        branches_state[bid] = branches_dict[bid]['normally_closed']
+                
+                # Verify explicit state for l23
+                assert branches_state['l23'] == False, "l23 must be open!"
+                
+                # Check hard constraints
+                if not check_faulted_open(branches_state):
+                    continue
+                if not is_radial(branches_state):
+                    continue
+                
+                # Calculate restored buses
+                restored_buses = get_restored_buses(branches_state)
+                
+                # Calculate priority and load
+                restored_priority = sum(buses_dict[b]['priority'] for b in restored_buses if b in buses_dict)
+                restored_load = sum(buses_dict[b]['load_kw'] for b in restored_buses if b in buses_dict)
+                
+                # Check minimum priority
+                if restored_priority < min_priority:
+                    continue
+                
+                # Calculate score
+                switch_count = len(to_open_set) + len(to_close_set)
+                score = restored_priority - task['switch_penalty'] * switch_count
+                
+                solution = {
+                    'open_switches': sorted(list(to_open_set)),
+                    'close_switches': sorted(list(to_close_set)),
+                    'restored_priority': restored_priority,
+                    'restored_load': restored_load,
+                    'restored_buses': sorted(list(restored_buses)),
+                    'switch_count': switch_count,
+                    'score': score
+                }
+                
+                best_solutions.append(solution)
+
+if best_solutions:
+    # Sort by score descending, then by switch_count ascending
+    best_solutions.sort(key=lambda x: (-x['score'], x['switch_count']))
+    
+    print(f"Found {len(best_solutions)} feasible solutions\n")
+    print("=== Top 5 Solutions ===")
+    for i, sol in enumerate(best_solutions[:5]):
+        print(f"\n{i+1}. Open: {sol['open_switches']}, Close: {sol['close_switches']}")
+        print(f"   Priority restored: {sol['restored_priority']}, Load: {sol['restored_load']} kW")
+        print(f"   Buses: {sol['restored_buses']}")
+        print(f"   Switches: {sol['switch_count']}, Score: {sol['score']}")
+    
+    best = best_solutions[0]
+    print(f"\n=== BEST SOLUTION ===")
+    print(json.dumps({
+        'open_switches': best['open_switches'],
+        'close_switches': best['close_switches'],
+        'rationale': f"Restores priority {best['restored_priority']} and {best['restored_load']:.1f} kW of load. Score: {best['score']}"
+    }, indent=2))
+else:
+    print("No feasible solutions found!")
+
+EOF
+
+Normally closed branches (non-faulted): ['l_s1', 'l12', 'l34']
+Tie switches (normally open): ['tie_24']
+Faulted branches: ['l23']
+
+Found 1 feasible solutions
+
+=== Top 5 Solutions ===
+
+1. Open: [], Close: ['tie_24']
+   Priority restored: 10, Load: 170.0 kW
+   Buses: ['b1', 'b2', 'b3', 'b4', 's']
+   Switches: 1, Score: 8.0
+
+=== BEST SOLUTION ===
+{
+  "open_switches": [],
+  "close_switches": [
+    "tie_24"
+  ],
+  "rationale": "Restores priority 10 and 170.0 kW of load. Score: 8.0"
+}
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+from collections import defaultdict, deque
+
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+buses_dict = {b['id']: b for b in task['buses']}
+branches_dict = {b['id']: b for b in task['branches']}
+
+# Manually test: open=[], close=['tie_24']
+branches_state = {
+    'l_s1': True,      # normally closed, not opened
+    'l12': True,       # normally closed, not opened  
+    'l23': False,      # FAULTED, must be open
+    'l34': True,       # normally closed, not opened
+    'tie_24': True     # normally open, close it
+}
+
+print("=== Branch State ===")
+for bid in sorted(branches_state.keys()):
+    print(f"{bid}: {branches_state[bid]}")
+
+print("\n=== Building Graph ===")
+graph = defaultdict(list)
+for bid, is_closed in branches_state.items():
+    if is_closed:
+        branch = branches_dict[bid]
+        u, v = branch['from_bus'], branch['to_bus']
+        graph[u].append((v, bid))
+        graph[v].append((u, bid))
+        print(f"  {bid}: {u} -- {v}")
+
+print(f"\nGraph adjacency:")
+for node in sorted(graph.keys()):
+    neighbors = [f"{n}({bid})" for n, bid in graph[node]]
+    print(f"  {node}: {neighbors}")
+
+print("\n=== BFS from source 's' ===")
+visited = set()
+queue = deque(['s'])
+visited.add('s')
+parent = {'s': None}
+
+while queue:
+    node = queue.popleft()
+    print(f"Visit {node}")
+    for neighbor, bid in graph[node]:
+        if neighbor not in visited:
+            visited.add(neighbor)
+            parent[neighbor] = (node, bid)
+            queue.append(neighbor)
+            print(f"  -> Add {neighbor} via {bid}")
+
+print(f"\nConnected nodes: {sorted(visited)}")
+print(f"Path to each:")
+for node in sorted(visited):
+    path = []
+    current = node
+    while current is not None:
+        path.append(current)
+        if current in parent:
+            p = parent[current]
+            if p:
+                current = p[0]
+            else:
+                current = None
+        else:
+            current = None
+    print(f"  {node}: {' <- '.join(reversed(path))}")
+
+EOF
+
+=== Branch State ===
+l12: True
+l23: False
+l34: True
+l_s1: True
+tie_24: True
+
+=== Building Graph ===
+  l_s1: s -- b1
+  l12: b1 -- b2
+  l34: b3 -- b4
+  tie_24: b2 -- b4
+
+Graph adjacency:
+  b1: ['s(l_s1)', 'b2(l12)']
+  b2: ['b1(l12)', 'b4(tie_24)']
+  b3: ['b4(l34)']
+  b4: ['b3(l34)', 'b2(tie_24)']
+  s: ['b1(l_s1)']
+
+=== BFS from source 's' ===
+Visit s
+  -> Add b1 via l_s1
+Visit b1
+  -> Add b2 via l12
+Visit b2
+  -> Add b4 via tie_24
+Visit b4
+  -> Add b3 via l34
+Visit b3
+
+Connected nodes: ['b1', 'b2', 'b3', 'b4', 's']
+Path to each:
+  b1: s <- b1
+  b2: s <- b1 <- b2
+  b3: s <- b1 <- b2 <- b4 <- b3
+  b4: s <- b1 <- b2 <- b4
+  s: s
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+print("=== Solution Verification ===")
+print("\nSwitch Plan:")
+print("  Open: []")
+print("  Close: ['tie_24']")
+
+print("\n=== Hard Constraints ===")
+print("1. All faulted branches must be open:")
+print("   l23 is OPEN ✓")
+
+print("\n2. Network must remain radial (tree, no cycles):")
+print("   Graph has nodes: s, b1, b2, b3, b4 (5 nodes)")
+print("   Closed branches: l_s1, l12, tie_24, l34 (4 edges)")
+print("   For tree: edges = nodes - 1 => 4 = 5 - 1 ✓")
+
+print("\n3. Restored load counted for buses reachable from source:")
+print("   Reachable from 's': s, b1, b2, b3, b4")
+print("   Path to b3: s → b1 → b2 → b4 → b3 (via tie_24 + l34)")
+print("   Path verification: s-[l_s1]-b1-[l12]-b2-[tie_24]-b4-[l34]-b3 ✓")
+
+print("\n4. Priority restoration:")
+restored_priority = 0
+for b in task['buses']:
+    if b['id'] in ['b1', 'b2', 'b3', 'b4', 's']:
+        restored_priority += b['priority']
+        print(f"   {b['id']}: priority {b['priority']}, load {b['load_kw']} kW")
+
+print(f"\n   Total restored priority: {restored_priority}")
+print(f"   Min required: {task['min_priority_restored']}")
+print(f"   Meets constraint: {restored_priority >= task['min_priority_restored']} ✓")
+
+print("\n=== Metrics ===")
+restored_load = sum(b['load_kw'] for b in task['buses'] if b['id'] in ['b1', 'b2', 'b3', 'b4', 's'])
+switch_count = 1  # close tie_24
+switch_penalty = task['switch_penalty'] * switch_count
+score = restored_priority - switch_penalty
+
+print(f"Priority restored: {restored_priority}")
+print(f"Load restored: {restored_load} kW")
+print(f"Switch count: {switch_count}")
+print(f"Score: {restored_priority} - {switch_penalty} = {score}")
+
+EOF
+
+=== Solution Verification ===
+
+Switch Plan:
+  Open: []
+  Close: ['tie_24']
+
+=== Hard Constraints ===
+1. All faulted branches must be open:
+   l23 is OPEN ✓
+
+2. Network must remain radial (tree, no cycles):
+   Graph has nodes: s, b1, b2, b3, b4 (5 nodes)
+   Closed branches: l_s1, l12, tie_24, l34 (4 edges)
+   For tree: edges = nodes - 1 => 4 = 5 - 1 ✓
+
+3. Restored load counted for buses reachable from source:
+   Reachable from 's': s, b1, b2, b3, b4
+   Path to b3: s → b1 → b2 → b4 → b3 (via tie_24 + l34)
+   Path verification: s-[l_s1]-b1-[l12]-b2-[tie_24]-b4-[l34]-b3 ✓
+
+4. Priority restoration:
+   s: priority 0, load 0.0 kW
+   b1: priority 0, load 0.0 kW
+   b2: priority 3, load 50.0 kW
+   b3: priority 5, load 80.0 kW
+   b4: priority 2, load 40.0 kW
+
+   Total restored priority: 10
+   Min required: 10.0
+   Meets constraint: True ✓
+
+=== Metrics ===
+Priority restored: 10
+Load restored: 170.0 kW
+Switch count: 1
+Score: 10 - 2.0 = 8.0
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 -m json.tool submission.json && echo "✓ Valid JSON"
+{
+    "open_switches": [],
+    "close_switches": [
+        "tie_24"
+    ],
+    "rationale": "Closes tie_24 to restore all buses while keeping l23 (faulted branch) open. This maintains radiality and achieves maximum priority restoration of 10 and load restoration of 170 kW with minimal switching (1 switch action)."
+}
+✓ Valid JSON
+[0m

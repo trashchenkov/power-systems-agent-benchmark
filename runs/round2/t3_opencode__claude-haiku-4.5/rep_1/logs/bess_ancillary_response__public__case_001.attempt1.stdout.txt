@@ -1,0 +1,46 @@
+I'll read the instructions and task files to understand what needs to be done.
+Now I understand the task. I need to compute the BESS (Battery Energy Storage System) active and reactive power responses to frequency and voltage disturbances. Let me work through the calculation:
+
+**Key Parameters:**
+- Nominal frequency: 50.0 Hz
+- Target voltage: 1.0 pu
+- Interval: 10 seconds
+- Initial SOC: 4.8 MWh
+- P discharge limit: 4.0 MW, charge limit: 3.0 MW
+- S rating: 5.0 MVA
+- Frequency droop: 18.0 MW/Hz
+- Voltage droop: 30.0 Mvar/pu
+- Charge efficiency: 0.96, discharge efficiency: 0.94
+
+**For each timestamp, I need to:**
+1. Calculate P response from frequency deviation
+2. Clip P by charge/discharge limits
+3. Calculate Q response from voltage deviation, clipped by apparent-power capability
+4. Update SOC
+
+Let me write a calculation script:
+Now let me run the calculation:
+Let me verify the calculations are correct by checking the logic:
+Perfect! The submission.json file has been created with the calculated values. Let me verify the calculation is correct by checking the math:
+
+**Verification:**
+
+**t0:** frequency = 49.86 Hz, voltage = 0.965 pu
+- P: (50.0 - 49.86) × 18.0 = 0.14 × 18.0 = 2.52 MW ✓ (within discharge limit 4.0)
+- Q: (1.0 - 0.965) × 30.0 = 0.035 × 30.0 = 1.05 Mvar ✓ (Q_max = √(5.0² - 2.52²) = √(25 - 6.3504) = √18.6496 ≈ 4.32)
+- SOC change: discharge 2.52 MW for 10s: -2.52 × 10/(3600 × 0.94) = -0.00746 MWh
+- New SOC: 4.8 - 0.00746 = 4.79254 MWh
+
+**t1:** frequency = 49.92 Hz, voltage = 0.982 pu
+- P: (50.0 - 49.92) × 18.0 = 0.08 × 18.0 = 1.44 MW ✓
+- Q: (1.0 - 0.982) × 30.0 = 0.018 × 30.0 = 0.54 Mvar ✓
+- SOC change: discharge 1.44 MW for 10s: -1.44 × 10/(3600 × 0.94) = -0.00427 MWh
+- New SOC: 4.79254 - 0.00427 = 4.78827 MWh
+
+**t2:** frequency = 50.04 Hz, voltage = 1.018 pu
+- P: (50.0 - 50.04) × 18.0 = -0.04 × 18.0 = -0.72 MW ✓ (charging)
+- Q: (1.0 - 1.018) × 30.0 = -0.018 × 30.0 = -0.54 Mvar ✓
+- SOC change: charge 0.72 MW for 10s: 0.72 × 10/(3600) × 0.96 = +0.00192 MWh
+- New SOC: 4.78827 + 0.00192 = 4.79019 MWh ≈ 4.790218 MWh ✓
+
+The submission is complete and valid.

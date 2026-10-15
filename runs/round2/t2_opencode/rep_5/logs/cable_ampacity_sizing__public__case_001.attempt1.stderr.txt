@@ -1,0 +1,35 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+I=180.0; pf=0.9; V=400.0; L=250.0; maxdU=5.0
+df=0.96*0.8
+sinp=math.sqrt(1-pf**2)
+fault=12.0; t=0.4; k=143.0
+minth=fault*1000*math.sqrt(t)/k
+print('derate',df,'sinphi',sinp,'min thermal',minth)
+cat=[(50,192,0.387,0.085),(70,246,0.268,0.082),(95,298,0.193,0.082),(120,346,0.153,0.08),(150,399,0.124,0.08),(185,456,0.0991,0.08)]
+for s,b,r,x in cat:
+    da=b*df
+    dU=math.sqrt(3)*I*(L/1000)*(r*pf+x*sinp)
+    pct=dU/V*100
+    print(s, round(da,4), round(pct,6), 'amp',da>=I,'v',pct<=maxdU,'th',s>=minth)
+"
+derate 0.768 sinphi 0.4358898943540673 min thermal 53.07319149932945
+50 147.456 7.508778 amp False v False th False
+70 188.928 5.396392 amp True v False th True
+95 228.864 4.081116 amp True v True th True
+120 265.728 3.362648 amp True v True th True
+150 306.432 2.854075 amp True v True th True
+185 350.208 2.417403 amp True v True th True
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

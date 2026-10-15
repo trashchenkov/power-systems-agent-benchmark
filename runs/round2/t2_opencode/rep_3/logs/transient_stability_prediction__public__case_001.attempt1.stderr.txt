@@ -1,0 +1,48 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+cases=[('fault_a',0.1,0.17,142.0,0.76,5.0),('fault_b',0.16,0.14,188.0,0.68,2.2),('fault_c',0.08,0.11,171.0,0.72,3.4)]
+al=180.0; vf=0.7; md=3.0
+res={}; stable=0
+for cid,fct,cct,mra,mv,dr in cases:
+    am=al-mra; vm=mv-vf; cm=cct-fct; dm=dr-md
+    lab='stable' if min(am,vm,cm,dm)>=0 else 'unstable'
+    if lab=='stable': stable+=1
+    rs=max(0,-am/60)+max(0,-vm/0.1)+max(0,-cm/0.1)+max(0,-dm/5)+max(0,1-cm/0.2)*0.1
+    res[cid]={'label':lab,'risk_score':round(rs,3),'clearing_margin_s':round(cm,3)}
+hi=max(res,key=lambda k:(res[k]['risk_score'],k))
+import json
+print(json.dumps({'case_results':res,'stable_case_count':stable,'highest_risk_case':hi},indent=2))
+"
+{
+  "case_results": {
+    "fault_a": {
+      "label": "stable",
+      "risk_score": 0.065,
+      "clearing_margin_s": 0.07
+    },
+    "fault_b": {
+      "label": "unstable",
+      "risk_score": 0.803,
+      "clearing_margin_s": -0.02
+    },
+    "fault_c": {
+      "label": "stable",
+      "risk_score": 0.085,
+      "clearing_margin_s": 0.03
+    }
+  },
+  "stable_case_count": 2,
+  "highest_risk_case": "fault_b"
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

@@ -1,0 +1,323 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13ae0-3749-7601-bc7a-eaccd301c429
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task inputs first, then compute the required answer and write only `submission.json`.
+exec
+/bin/bash -lc "pwd && rg --files -g 'instructions.md' -g 'task.json' -g 'submission.json'" in <sandbox_a1>
+ succeeded in 0ms:
+<sandbox_a1>
+task.json
+instructions.md
+
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/harmonic_ieee519_compliance__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,260p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "harmonic_ieee519_compliance_public_001",
+  "family": "harmonic_ieee519_compliance",
+  "candidate_id": "CORE-SWAP-003",
+  "substrate": "executable_pcc_harmonic_distortion_limit_check_case",
+  "objective": "Compute TDD and voltage THD at a PCC, select the IEEE 519 current-distortion limit row by Isc/IL, and report all limit violations with a compliance verdict.",
+  "bilingual": {
+    "title": {
+      "en": "CORE-SWAP-003 — IEEE 519 harmonic distortion compliance at the PCC",
+      "ru": "CORE-SWAP-003 — Проверка гармонических искажений в точке общего присоединения по IEEE 519"
+    },
+    "objective": {
+      "en": "Compute TDD and voltage THD at a PCC, select the IEEE 519 current-distortion limit row by Isc/IL, and report all limit violations with a compliance verdict.",
+      "ru": "Рассчитать TDD и THD напряжения в точке общего присоединения, выбрать строку лимитов IEEE 519 по отношению Isc/IL и перечислить все нарушения с вердиктом о соответствии."
+    },
+    "instructions": {
+      "en": "Use harmonic_case. Compute the short-circuit ratio Isc/IL from pcc data (Isc in amperes over max_demand_current_a) and pick the first current_limit_table row whose isc_il_below exceeds the ratio. TDD = sqrt(sum of squared harmonic currents)/IL*100; individual harmonic percentages also use IL as denominator and compare against the bucket limits by harmonic order. Voltage THD is the root-sum-square of harmonic_voltages_pct; individual voltage harmonics compare against voltage_limits.individual_pct. List violating items ('tdd'/'thd' plus harmonic orders as strings) and report the overall compliant verdict.",
+      "ru": "Используйте harmonic_case. Вычислите отношение Isc/IL по данным pcc (Isc в амперах к max_demand_current_a) и выберите первую строку current_limit_table, у которой isc_il_below больше этого отношения. TDD = sqrt(суммы квадратов гармонических токов)/IL*100; индивидуальные гармоники тока также нормируются на IL и сравниваются с лимитами по диапазонам порядков. THD напряжения — корень из суммы квадратов harmonic_voltages_pct; индивидуальные гармоники напряжения сравниваются с voltage_limits.individual_pct. Перечислите нарушения ('tdd'/'thd' и порядки гармоник строками) и дайте общий вердикт compliant."
+    }
+  },
+  "subdomain": "power quality & standards",
+  "public_inputs": {
+    "harmonic_case": {
+      "bus_voltage_kv": 10.5,
+      "pcc": {
+        "max_demand_current_a": 480.0,
+        "short_circuit_current_ka": 12.0
+      },
+      "measured": {
+        "fundamental_current_a": 460.0,
+        "harmonic_currents_a": {
+          "5": 28.0,
+          "7": 19.0,
+          "11": 9.0,
+          "13": 7.0,
+          "17": 4.0,
+          "19": 3.0,
+          "23": 1.5
+        },
+        "harmonic_voltages_pct": {
+          "5": 2.1,
+          "7": 1.6,
+          "11": 0.9
+        }
+      },
+      "current_limit_table": [
+        {
+          "isc_il_below": 20,
+          "tdd_pct": 5.0,
+          "h_below_11_pct": 4.0,
+          "h_11_to_17_pct": 2.0,
+          "h_17_to_23_pct": 1.5,
+          "h_23_to_35_pct": 0.6,
+          "h_35_up_pct": 0.3
+        },
+        {
+          "isc_il_below": 50,
+          "tdd_pct": 8.0,
+          "h_below_11_pct": 7.0,
+          "h_11_to_17_pct": 3.5,
+          "h_17_to_23_pct": 2.5,
+          "h_23_to_35_pct": 1.0,
+          "h_35_up_pct": 0.5
+        },
+        {
+          "isc_il_below": 100,
+          "tdd_pct": 12.0,
+          "h_below_11_pct": 10.0,
+          "h_11_to_17_pct": 4.5,
+          "h_17_to_23_pct": 4.0,
+          "h_23_to_35_pct": 1.5,
+          "h_35_up_pct": 0.7
+        },
+        {
+          "isc_il_below": 1000,
+          "tdd_pct": 15.0,
+          "h_below_11_pct": 12.0,
+          "h_11_to_17_pct": 5.5,
+          "h_17_to_23_pct": 5.0,
+          "h_23_to_35_pct": 2.0,
+          "h_35_up_pct": 1.0
+        },
+        {
+          "isc_il_below": 1000000000.0,
+          "tdd_pct": 20.0,
+          "h_below_11_pct": 15.0,
+          "h_11_to_17_pct": 7.0,
+          "h_17_to_23_pct": 6.0,
+          "h_23_to_35_pct": 2.5,
+          "h_35_up_pct": 1.4
+        }
+      ],
+      "voltage_limits": {
+        "individual_pct": 3.0,
+        "thd_pct": 5.0
+      }
+    }
+  },
+  "harmonic_case": {
+    "bus_voltage_kv": 10.5,
+    "pcc": {
+      "max_demand_current_a": 480.0,
+      "short_circuit_current_ka": 12.0
+    },
+    "measured": {
+      "fundamental_current_a": 460.0,
+      "harmonic_currents_a": {
+        "5": 28.0,
+        "7": 19.0,
+        "11": 9.0,
+        "13": 7.0,
+        "17": 4.0,
+        "19": 3.0,
+        "23": 1.5
+      },
+      "harmonic_voltages_pct": {
+        "5": 2.1,
+        "7": 1.6,
+        "11": 0.9
+      }
+    },
+    "current_limit_table": [
+      {
+        "isc_il_below": 20,
+        "tdd_pct": 5.0,
+        "h_below_11_pct": 4.0,
+        "h_11_to_17_pct": 2.0,
+        "h_17_to_23_pct": 1.5,
+        "h_23_to_35_pct": 0.6,
+        "h_35_up_pct": 0.3
+      },
+      {
+        "isc_il_below": 50,
+        "tdd_pct": 8.0,
+        "h_below_11_pct": 7.0,
+        "h_11_to_17_pct": 3.5,
+        "h_17_to_23_pct": 2.5,
+        "h_23_to_35_pct": 1.0,
+        "h_35_up_pct": 0.5
+      },
+      {
+        "isc_il_below": 100,
+        "tdd_pct": 12.0,
+        "h_below_11_pct": 10.0,
+        "h_11_to_17_pct": 4.5,
+        "h_17_to_23_pct": 4.0,
+        "h_23_to_35_pct": 1.5,
+        "h_35_up_pct": 0.7
+      },
+      {
+        "isc_il_below": 1000,
+        "tdd_pct": 15.0,
+        "h_below_11_pct": 12.0,
+        "h_11_to_17_pct": 5.5,
+        "h_17_to_23_pct": 5.0,
+        "h_23_to_35_pct": 2.0,
+        "h_35_up_pct": 1.0
+      },
+      {
+        "isc_il_below": 1000000000.0,
+        "tdd_pct": 20.0,
+        "h_below_11_pct": 15.0,
+        "h_11_to_17_pct": 7.0,
+        "h_17_to_23_pct": 6.0,
+        "h_23_to_35_pct": 2.5,
+        "h_35_up_pct": 1.4
+      }
+    ],
+    "voltage_limits": {
+      "individual_pct": 3.0,
+      "thd_pct": 5.0
+    }
+  },
+  "submission_schema": {
+    "isc_over_il": "short-circuit ratio at the PCC",
+    "tdd_pct": "total demand distortion in percent of IL",
+    "current_violations": "list of violated current items: 'tdd' and/or harmonic orders as strings",
+    "voltage_thd_pct": "voltage THD in percent",
+    "voltage_violations": "list of violated voltage items: 'thd' and/or harmonic orders as strings",
+    "compliant": "boolean overall verdict",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "The limit row must be selected by the recomputed Isc/IL ratio.",
+    "TDD, voltage THD, violation lists, and the verdict must match the recomputed study within tolerance.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether distortion indices, violation lists, and verdict match the recomputed study."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "1.0 if feasible, else 0.0."
+    }
+  ],
+  "source_evidence": [
+    "primary:IEEE 519-2014 current-distortion and voltage-distortion limits",
+    "source_status:standard_not_redistributed",
+    "source_card:docs/source_cards/harmonic_ieee519_compliance.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "IEEE 519-2014 harmonic-control limits",
+      "locator": "IEEE 519-2014 current-distortion and voltage-distortion limits",
+      "confidence": "high",
+      "notes": "The executable case directly applies IEEE-519-style TDD/THD limit-table logic; the standard is cited, not redistributed."
+    }
+  ]
+}
+
+codex
+The recomputed short-circuit ratio is `25`, which selects the current-limit row with `isc_il_below` of `50`. I’m writing the derived metrics and empty violation lists to `submission.json`.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_harmonic_ieee519_compliance__public__case_001_a1_2ci5fswj/submission.json b/bench_harmonic_ieee519_compliance__public__case_001_a1_2ci5fswj/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..818414f92d8e4d42cd32e80c00406a0b72270340
+--- /dev/null
++++ b/bench_harmonic_ieee519_compliance__public__case_001_a1_2ci5fswj/submission.json
+@@ -0,0 +1,9 @@
++{
++  "isc_over_il": 25.0,
++  "tdd_pct": 7.518192147776602,
++  "current_violations": [],
++  "voltage_thd_pct": 2.7892651361962706,
++  "voltage_violations": [],
++  "compliant": true,
++  "rationale": "Isc/IL = 12000/480 = 25, selecting the <50 current-limit row. TDD and voltage THD are below their limits, and all individual harmonic current and voltage percentages are within limits."
++}
+
+diff --git a/bench_harmonic_ieee519_compliance__public__case_001_a1_2ci5fswj/submission.json b/bench_harmonic_ieee519_compliance__public__case_001_a1_2ci5fswj/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..818414f92d8e4d42cd32e80c00406a0b72270340
+--- /dev/null
++++ b/bench_harmonic_ieee519_compliance__public__case_001_a1_2ci5fswj/submission.json
+@@ -0,0 +1,9 @@
++{
++  "isc_over_il": 25.0,
++  "tdd_pct": 7.518192147776602,
++  "current_violations": [],
++  "voltage_thd_pct": 2.7892651361962706,
++  "voltage_violations": [],
++  "compliant": true,
++  "rationale": "Isc/IL = 12000/480 = 25, selecting the <50 current-limit row. TDD and voltage THD are below their limits, and all individual harmonic current and voltage percentages are within limits."
++}
+
+codex
+Done.
+diff --git a/bench_harmonic_ieee519_compliance__public__case_001_a1_2ci5fswj/submission.json b/bench_harmonic_ieee519_compliance__public__case_001_a1_2ci5fswj/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..818414f92d8e4d42cd32e80c00406a0b72270340
+--- /dev/null
++++ b/bench_harmonic_ieee519_compliance__public__case_001_a1_2ci5fswj/submission.json
+@@ -0,0 +1,9 @@
++{
++  "isc_over_il": 25.0,
++  "tdd_pct": 7.518192147776602,
++  "current_violations": [],
++  "voltage_thd_pct": 2.7892651361962706,
++  "voltage_violations": [],
++  "compliant": true,
++  "rationale": "Isc/IL = 12000/480 = 25, selecting the <50 current-limit row. TDD and voltage THD are below their limits, and all individual harmonic current and voltage percentages are within limits."
++}
+
+tokens used
+24,385

@@ -1,0 +1,51 @@
+Let me understand the task:
+
+1. I need to design a Volt-VAR curve for a PV inverter
+2. The curve must have strictly increasing voltage_pu and monotonic non-increasing q_fraction
+3. The goal is to mitigate voltage violations at three timesteps:
+   - t_low: base_voltage=0.94 (below min 0.95), needs voltage boost
+   - t_nom: base_voltage=1.0 (within limits)
+   - t_high: base_voltage=1.07 (above max 1.05), needs voltage reduction
+
+4. Constraints:
+   - Voltage limits: 0.95 to 1.05 pu
+   - q_fraction in [-1, 1]
+   - Reactive power must stay within inverter capability: sqrt(kVA² - kW²)
+   - Corrected voltage must be within limits
+
+Let me calculate the reactive power capability for each timestep:
+- t_low: sqrt(100² - 60²) = sqrt(10000 - 3600) = sqrt(6400) = 80 kVAR
+- t_nom: sqrt(100² - 80²) = sqrt(10000 - 6400) = sqrt(3600) = 60 kVAR
+- t_high: sqrt(100² - 60²) = 80 kVAR
+
+For voltage correction:
+- Voltage change = q_fraction * max_kVAR * sensitivity
+- For t_low (0.94 → needs to reach ≥0.95): need +0.01 pu increase
+  - Required Q = 0.01 / 0.0007 = 14.29 kVAR
+  - q_fraction = 14.29 / 80 = 0.179
+  
+- For t_high (1.07 → needs to reach ≤1.05): need -0.02 pu decrease
+  - Required Q = -0.02 / 0.0007 = -28.57 kVAR
+  - q_fraction = -28.57 / 80 = -0.357
+
+The Volt-VAR curve should:
+- Inject reactive power (positive q) at low voltages to boost voltage
+- Absorb reactive power (negative q) at high voltages to reduce voltage
+- Be monotonic non-increasing in q_fraction as voltage rises
+
+A standard Volt-VAR curve design:
+- Below 0.95: inject max reactive power (q=1)
+- At 1.0: neutral (q=0)
+- Above 1.05: absorb max reactive power (q=-1)
+
+But we need to be more careful to exactly correct the violations. Let me design a curve that:
+- At 0.94: q ≈ 0.2 (to boost to 0.95+)
+- At 1.0: q = 0
+- At 1.07: q ≈ -0.4 (to bring down to 1.05)
+
+Let me verify:
+- t_low: V = 0.94 + 0.2 * 80 * 0.0007 = 0.94 + 0.0112 = 0.9512 ✓
+- t_high: V = 1.07 + (-0.357) * 80 * 0.0007 = 1.07 - 0.02 = 1.05 ✓
+
+I'll create a piecewise linear curve with breakpoints.
+The submission.json file has been created with a Volt-VAR curve that addresses the voltage violations at both the low voltage (0.94 pu) and high voltage (1.07 pu) timesteps while respecting all constraints.

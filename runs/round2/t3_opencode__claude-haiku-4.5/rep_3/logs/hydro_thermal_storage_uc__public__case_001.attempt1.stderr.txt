@@ -1,0 +1,1328 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+from pulp import *
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['public_inputs']['uc_case']
+emission_cap = case['emission_cap_ton']
+hours = case['hours']
+thermal_units = case['thermal_units']
+
+# Create optimization problem
+prob = LpProblem("UC", LpMinimize)
+
+# Decision variables: dispatch[unit][hour]
+dispatch = {}
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        dispatch[(unit_id, hour_id)] = LpVariable(f"dispatch_{unit_id}_{hour_id}", lowBound=0)
+
+# Objective: minimize cost
+cost_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    cost = unit['cost_usd_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        cost_expr += cost * dispatch[(unit_id, hour_id)]
+
+prob += cost_expr
+
+# Constraints:
+# 1. Demand balance: thermal dispatch must meet residual load each hour
+for hour in hours:
+    hour_id = hour['hour_id']
+    load = hour['load_mw']
+    hydro = hour['hydro_mw']
+    storage = hour['storage_discharge_mw']
+    residual_load = load - hydro - storage
+    
+    thermal_sum = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        thermal_sum += dispatch[(unit_id, hour_id)]
+    
+    prob += thermal_sum == residual_load, f"balance_{hour_id}"
+
+# 2. Min/max constraints for each unit in each hour
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    pmin = unit['pmin_mw']
+    pmax = unit['pmax_mw']
+    
+    for hour in hours:
+        hour_id = hour['hour_id']
+        # Only enforce min if unit is online (dispatch > 0)
+        # For simplicity, we'll allow the unit to be off (0) or between pmin and pmax
+        prob += dispatch[(unit_id, hour_id)] <= pmax, f"max_{unit_id}_{hour_id}"
+        # If dispatch > 0, then dispatch >= pmin. We need a binary variable for this.
+        # Since this is a continuous dispatch, let's assume if unit is used, it must be >= pmin
+        # We can add this as a constraint: either dispatch = 0 or dispatch >= pmin
+        
+# Actually, let me reconsider. The standard UC formulation requires binary on/off variables.
+# Let me redo this with binary variables.
+
+prob = LpProblem("UC", LpMinimize)
+
+# Binary on/off variables and continuous dispatch
+on_off = {}
+dispatch = {}
+
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        on_off[(unit_id, hour_id)] = LpVariable(f"on_{unit_id}_{hour_id}", cat='Binary')
+        dispatch[(unit_id, hour_id)] = LpVariable(f"dispatch_{unit_id}_{hour_id}", lowBound=0)
+
+# Objective: minimize cost
+cost_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    cost = unit['cost_usd_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        cost_expr += cost * dispatch[(unit_id, hour_id)]
+
+prob += cost_expr
+
+# Constraints:
+# 1. Demand balance
+for hour in hours:
+    hour_id = hour['hour_id']
+    load = hour['load_mw']
+    hydro = hour['hydro_mw']
+    storage = hour['storage_discharge_mw']
+    residual_load = load - hydro - storage
+    
+    thermal_sum = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        thermal_sum += dispatch[(unit_id, hour_id)]
+    
+    prob += thermal_sum == residual_load, f"balance_{hour_id}"
+
+# 2. Min/max constraints with on/off logic
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    pmin = unit['pmin_mw']
+    pmax = unit['pmax_mw']
+    
+    for hour in hours:
+        hour_id = hour['hour_id']
+        prob += dispatch[(unit_id, hour_id)] >= pmin * on_off[(unit_id, hour_id)], f"min_{unit_id}_{hour_id}"
+        prob += dispatch[(unit_id, hour_id)] <= pmax * on_off[(unit_id, hour_id)], f"max_{unit_id}_{hour_id}"
+
+# 3. Emission cap
+emission_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    emission_rate = unit['emission_ton_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        emission_expr += emission_rate * dispatch[(unit_id, hour_id)]
+
+prob += emission_expr <= emission_cap, "emission_cap"
+
+# Solve
+status = prob.solve(PULP_CBC_CMD(msg=0))
+
+# Extract results
+if status == 1:  # Optimal
+    dispatch_result = {}
+    for hour in hours:
+        hour_id = hour['hour_id']
+        dispatch_result[hour_id] = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            dispatch_result[hour_id][unit_id] = dispatch[(unit_id, hour_id)].varValue
+    
+    # Calculate total cost
+    total_cost = value(prob.objective)
+    
+    # Calculate total emissions
+    total_emissions = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        emission_rate = unit['emission_ton_per_mwh']
+        for hour in hours:
+            hour_id = hour['hour_id']
+            total_emissions += emission_rate * dispatch[(unit_id, hour_id)].varValue
+    
+    # Check if emission cap is satisfied
+    emission_cap_satisfied = total_emissions <= emission_cap
+    
+    print(f"Status: {LpStatus[status]}")
+    print(f"Total Cost: ${total_cost:.2f}")
+    print(f"Total Emissions: {total_emissions:.2f} tons")
+    print(f"Emission Cap Satisfied: {emission_cap_satisfied}")
+    print(f"\nDispatch by hour and unit:")
+    for hour in hours:
+        hour_id = hour['hour_id']
+        print(f"{hour_id}: coal={dispatch_result[hour_id]['coal']:.2f} MW, gas={dispatch_result[hour_id]['gas']:.2f} MW")
+    
+    # Format for submission
+    thermal_dispatch_mw = []
+    for hour in hours:
+        hour_id = hour['hour_id']
+        hour_dispatch = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            hour_dispatch[unit_id] = round(dispatch[(unit_id, hour_id)].varValue, 2)
+        thermal_dispatch_mw.append({hour_id: hour_dispatch})
+    
+    submission = {
+        "thermal_dispatch_mw": thermal_dispatch_mw,
+        "total_cost_usd": round(total_cost, 2),
+        "emissions_ton": round(total_emissions, 2),
+        "emission_cap_satisfied": emission_cap_satisfied
+    }
+    
+    print("\n" + "="*50)
+    print("Submission JSON:")
+    print(json.dumps(submission, indent=2))
+    
+    with open('submission.json', 'w') as f:
+        json.dump(submission, f, indent=2)
+    
+    print("\nSubmission written to submission.json")
+else:
+    print(f"Optimization failed: {LpStatus[status]}")
+
+EOF
+
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+ModuleNotFoundError: No module named 'pulp'
+[0m
+[0m$ [0mpip install pulp -q && cd <sandbox_a1> && python3 << 'EOF'
+import json
+from pulp import *
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['public_inputs']['uc_case']
+emission_cap = case['emission_cap_ton']
+hours = case['hours']
+thermal_units = case['thermal_units']
+
+# Create optimization problem
+prob = LpProblem("UC", LpMinimize)
+
+# Binary on/off variables and continuous dispatch
+on_off = {}
+dispatch = {}
+
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        on_off[(unit_id, hour_id)] = LpVariable(f"on_{unit_id}_{hour_id}", cat='Binary')
+        dispatch[(unit_id, hour_id)] = LpVariable(f"dispatch_{unit_id}_{hour_id}", lowBound=0)
+
+# Objective: minimize cost
+cost_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    cost = unit['cost_usd_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        cost_expr += cost * dispatch[(unit_id, hour_id)]
+
+prob += cost_expr
+
+# Constraints:
+# 1. Demand balance
+for hour in hours:
+    hour_id = hour['hour_id']
+    load = hour['load_mw']
+    hydro = hour['hydro_mw']
+    storage = hour['storage_discharge_mw']
+    residual_load = load - hydro - storage
+    
+    thermal_sum = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        thermal_sum += dispatch[(unit_id, hour_id)]
+    
+    prob += thermal_sum == residual_load, f"balance_{hour_id}"
+
+# 2. Min/max constraints with on/off logic
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    pmin = unit['pmin_mw']
+    pmax = unit['pmax_mw']
+    
+    for hour in hours:
+        hour_id = hour['hour_id']
+        prob += dispatch[(unit_id, hour_id)] >= pmin * on_off[(unit_id, hour_id)], f"min_{unit_id}_{hour_id}"
+        prob += dispatch[(unit_id, hour_id)] <= pmax * on_off[(unit_id, hour_id)], f"max_{unit_id}_{hour_id}"
+
+# 3. Emission cap
+emission_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    emission_rate = unit['emission_ton_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        emission_expr += emission_rate * dispatch[(unit_id, hour_id)]
+
+prob += emission_expr <= emission_cap, "emission_cap"
+
+# Solve
+status = prob.solve(PULP_CBC_CMD(msg=0))
+
+# Extract results
+if status == 1:  # Optimal
+    dispatch_result = {}
+    for hour in hours:
+        hour_id = hour['hour_id']
+        dispatch_result[hour_id] = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            dispatch_result[hour_id][unit_id] = dispatch[(unit_id, hour_id)].varValue
+    
+    # Calculate total cost
+    total_cost = value(prob.objective)
+    
+    # Calculate total emissions
+    total_emissions = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        emission_rate = unit['emission_ton_per_mwh']
+        for hour in hours:
+            hour_id = hour['hour_id']
+            total_emissions += emission_rate * dispatch[(unit_id, hour_id)].varValue
+    
+    # Check if emission cap is satisfied
+    emission_cap_satisfied = total_emissions <= emission_cap
+    
+    print(f"Status: {LpStatus[status]}")
+    print(f"Total Cost: ${total_cost:.2f}")
+    print(f"Total Emissions: {total_emissions:.2f} tons")
+    print(f"Emission Cap Satisfied: {emission_cap_satisfied}")
+    print(f"\nDispatch by hour and unit:")
+    for hour in hours:
+        hour_id = hour['hour_id']
+        print(f"{hour_id}: coal={dispatch_result[hour_id]['coal']:.2f} MW, gas={dispatch_result[hour_id]['gas']:.2f} MW")
+    
+    # Format for submission
+    thermal_dispatch_mw = []
+    for hour in hours:
+        hour_id = hour['hour_id']
+        hour_dispatch = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            hour_dispatch[unit_id] = round(dispatch[(unit_id, hour_id)].varValue, 2)
+        thermal_dispatch_mw.append({hour_id: hour_dispatch})
+    
+    submission = {
+        "thermal_dispatch_mw": thermal_dispatch_mw,
+        "total_cost_usd": round(total_cost, 2),
+        "emissions_ton": round(total_emissions, 2),
+        "emission_cap_satisfied": emission_cap_satisfied
+    }
+    
+    print("\n" + "="*50)
+    print("Submission JSON:")
+    print(json.dumps(submission, indent=2))
+    
+    with open('submission.json', 'w') as f:
+        json.dump(submission, f, indent=2)
+    
+    print("\nSubmission written to submission.json")
+else:
+    print(f"Optimization failed: {LpStatus[status]}")
+
+EOF
+
+error: externally-managed-environment
+
+× This environment is externally managed
+╰─> To install Python packages system-wide, try apt install
+    python3-xyz, where xyz is the package you are trying to
+    install.
+    
+    If you wish to install a non-Debian-packaged Python package,
+    create a virtual environment using python3 -m venv path/to/venv.
+    Then use path/to/venv/bin/python and path/to/venv/bin/pip. Make
+    sure you have python3-full installed.
+    
+    If you wish to install a non-Debian packaged Python application,
+    it may be easiest to use pipx install xyz, which will manage a
+    virtual environment for you. Make sure you have pipx installed.
+    
+    See /usr/share/doc/python3.12/README.venv for more information.
+
+note: If you believe this is a mistake, please contact your Python installation or OS distribution provider. You can override this, at the risk of breaking your Python installation or OS, by passing --break-system-packages.
+hint: See PEP 668 for the detailed specification.
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 -m venv venv && source venv/bin/activate && pip install pulp -q && python3 << 'EOF'
+import json
+from pulp import *
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['public_inputs']['uc_case']
+emission_cap = case['emission_cap_ton']
+hours = case['hours']
+thermal_units = case['thermal_units']
+
+# Create optimization problem
+prob = LpProblem("UC", LpMinimize)
+
+# Binary on/off variables and continuous dispatch
+on_off = {}
+dispatch = {}
+
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        on_off[(unit_id, hour_id)] = LpVariable(f"on_{unit_id}_{hour_id}", cat='Binary')
+        dispatch[(unit_id, hour_id)] = LpVariable(f"dispatch_{unit_id}_{hour_id}", lowBound=0)
+
+# Objective: minimize cost
+cost_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    cost = unit['cost_usd_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        cost_expr += cost * dispatch[(unit_id, hour_id)]
+
+prob += cost_expr
+
+# Constraints:
+# 1. Demand balance
+for hour in hours:
+    hour_id = hour['hour_id']
+    load = hour['load_mw']
+    hydro = hour['hydro_mw']
+    storage = hour['storage_discharge_mw']
+    residual_load = load - hydro - storage
+    
+    thermal_sum = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        thermal_sum += dispatch[(unit_id, hour_id)]
+    
+    prob += thermal_sum == residual_load, f"balance_{hour_id}"
+
+# 2. Min/max constraints with on/off logic
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    pmin = unit['pmin_mw']
+    pmax = unit['pmax_mw']
+    
+    for hour in hours:
+        hour_id = hour['hour_id']
+        prob += dispatch[(unit_id, hour_id)] >= pmin * on_off[(unit_id, hour_id)], f"min_{unit_id}_{hour_id}"
+        prob += dispatch[(unit_id, hour_id)] <= pmax * on_off[(unit_id, hour_id)], f"max_{unit_id}_{hour_id}"
+
+# 3. Emission cap
+emission_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    emission_rate = unit['emission_ton_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        emission_expr += emission_rate * dispatch[(unit_id, hour_id)]
+
+prob += emission_expr <= emission_cap, "emission_cap"
+
+# Solve
+status = prob.solve(PULP_CBC_CMD(msg=0))
+
+# Extract results
+if status == 1:  # Optimal
+    dispatch_result = {}
+    for hour in hours:
+        hour_id = hour['hour_id']
+        dispatch_result[hour_id] = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            dispatch_result[hour_id][unit_id] = dispatch[(unit_id, hour_id)].varValue
+    
+    # Calculate total cost
+    total_cost = value(prob.objective)
+    
+    # Calculate total emissions
+    total_emissions = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        emission_rate = unit['emission_ton_per_mwh']
+        for hour in hours:
+            hour_id = hour['hour_id']
+            total_emissions += emission_rate * dispatch[(unit_id, hour_id)].varValue
+    
+    # Check if emission cap is satisfied
+    emission_cap_satisfied = total_emissions <= emission_cap
+    
+    print(f"Status: {LpStatus[status]}")
+    print(f"Total Cost: ${total_cost:.2f}")
+    print(f"Total Emissions: {total_emissions:.2f} tons")
+    print(f"Emission Cap Satisfied: {emission_cap_satisfied}")
+    print(f"\nDispatch by hour and unit:")
+    for hour in hours:
+        hour_id = hour['hour_id']
+        print(f"{hour_id}: coal={dispatch_result[hour_id]['coal']:.2f} MW, gas={dispatch_result[hour_id]['gas']:.2f} MW")
+    
+    # Format for submission
+    thermal_dispatch_mw = []
+    for hour in hours:
+        hour_id = hour['hour_id']
+        hour_dispatch = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            hour_dispatch[unit_id] = round(dispatch[(unit_id, hour_id)].varValue, 2)
+        thermal_dispatch_mw.append({hour_id: hour_dispatch})
+    
+    submission = {
+        "thermal_dispatch_mw": thermal_dispatch_mw,
+        "total_cost_usd": round(total_cost, 2),
+        "emissions_ton": round(total_emissions, 2),
+        "emission_cap_satisfied": emission_cap_satisfied
+    }
+    
+    print("\n" + "="*50)
+    print("Submission JSON:")
+    print(json.dumps(submission, indent=2))
+    
+    with open('submission.json', 'w') as f:
+        json.dump(submission, f, indent=2)
+    
+    print("\nSubmission written to submission.json")
+else:
+    print(f"Optimization failed: {LpStatus[status]}")
+
+EOF
+
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+  File "<sandbox_a1>/venv/lib/python3.12/site-packages/pulp/__init__.py", line 60, in <module>
+    from .apis import *
+  File "<sandbox_a1>/venv/lib/python3.12/site-packages/pulp/apis/__init__.py", line 13, in <module>
+    from .highs import HiGHS, HiGHS_CMD
+  File "<sandbox_a1>/venv/lib/python3.12/site-packages/pulp/apis/highs.py", line 11, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+[0m
+[0m$ [0mcd <sandbox_a1> && source venv/bin/activate && pip install numpy -q && python3 << 'EOF'
+import json
+from pulp import *
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['public_inputs']['uc_case']
+emission_cap = case['emission_cap_ton']
+hours = case['hours']
+thermal_units = case['thermal_units']
+
+# Create optimization problem
+prob = LpProblem("UC", LpMinimize)
+
+# Binary on/off variables and continuous dispatch
+on_off = {}
+dispatch = {}
+
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        on_off[(unit_id, hour_id)] = LpVariable(f"on_{unit_id}_{hour_id}", cat='Binary')
+        dispatch[(unit_id, hour_id)] = LpVariable(f"dispatch_{unit_id}_{hour_id}", lowBound=0)
+
+# Objective: minimize cost
+cost_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    cost = unit['cost_usd_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        cost_expr += cost * dispatch[(unit_id, hour_id)]
+
+prob += cost_expr
+
+# Constraints:
+# 1. Demand balance
+for hour in hours:
+    hour_id = hour['hour_id']
+    load = hour['load_mw']
+    hydro = hour['hydro_mw']
+    storage = hour['storage_discharge_mw']
+    residual_load = load - hydro - storage
+    
+    thermal_sum = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        thermal_sum += dispatch[(unit_id, hour_id)]
+    
+    prob += thermal_sum == residual_load, f"balance_{hour_id}"
+
+# 2. Min/max constraints with on/off logic
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    pmin = unit['pmin_mw']
+    pmax = unit['pmax_mw']
+    
+    for hour in hours:
+        hour_id = hour['hour_id']
+        prob += dispatch[(unit_id, hour_id)] >= pmin * on_off[(unit_id, hour_id)], f"min_{unit_id}_{hour_id}"
+        prob += dispatch[(unit_id, hour_id)] <= pmax * on_off[(unit_id, hour_id)], f"max_{unit_id}_{hour_id}"
+
+# 3. Emission cap
+emission_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    emission_rate = unit['emission_ton_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        emission_expr += emission_rate * dispatch[(unit_id, hour_id)]
+
+prob += emission_expr <= emission_cap, "emission_cap"
+
+# Solve
+status = prob.solve(PULP_CBC_CMD(msg=0))
+
+# Extract results
+if status == 1:  # Optimal
+    dispatch_result = {}
+    for hour in hours:
+        hour_id = hour['hour_id']
+        dispatch_result[hour_id] = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            dispatch_result[hour_id][unit_id] = dispatch[(unit_id, hour_id)].varValue
+    
+    # Calculate total cost
+    total_cost = value(prob.objective)
+    
+    # Calculate total emissions
+    total_emissions = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        emission_rate = unit['emission_ton_per_mwh']
+        for hour in hours:
+            hour_id = hour['hour_id']
+            total_emissions += emission_rate * dispatch[(unit_id, hour_id)].varValue
+    
+    # Check if emission cap is satisfied
+    emission_cap_satisfied = total_emissions <= emission_cap
+    
+    print(f"Status: {LpStatus[status]}")
+    print(f"Total Cost: ${total_cost:.2f}")
+    print(f"Total Emissions: {total_emissions:.2f} tons")
+    print(f"Emission Cap Satisfied: {emission_cap_satisfied}")
+    print(f"\nDispatch by hour and unit:")
+    for hour in hours:
+        hour_id = hour['hour_id']
+        print(f"{hour_id}: coal={dispatch_result[hour_id]['coal']:.2f} MW, gas={dispatch_result[hour_id]['gas']:.2f} MW")
+    
+    # Format for submission
+    thermal_dispatch_mw = []
+    for hour in hours:
+        hour_id = hour['hour_id']
+        hour_dispatch = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            hour_dispatch[unit_id] = round(dispatch[(unit_id, hour_id)].varValue, 2)
+        thermal_dispatch_mw.append({hour_id: hour_dispatch})
+    
+    submission = {
+        "thermal_dispatch_mw": thermal_dispatch_mw,
+        "total_cost_usd": round(total_cost, 2),
+        "emissions_ton": round(total_emissions, 2),
+        "emission_cap_satisfied": emission_cap_satisfied
+    }
+    
+    print("\n" + "="*50)
+    print("Submission JSON:")
+    print(json.dumps(submission, indent=2))
+    
+    with open('submission.json', 'w') as f:
+        json.dump(submission, f, indent=2)
+    
+    print("\nSubmission written to submission.json")
+else:
+    print(f"Optimization failed: {LpStatus[status]}")
+
+EOF
+
+Traceback (most recent call last):
+  File "<stdin>", line 24, in <module>
+TypeError: LpVariable.__init__() got an unexpected keyword argument 'cat'
+[0m
+[0m$ [0mcd <sandbox_a1> && source venv/bin/activate && python3 << 'EOF'
+import json
+from pulp import *
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['public_inputs']['uc_case']
+emission_cap = case['emission_cap_ton']
+hours = case['hours']
+thermal_units = case['thermal_units']
+
+# Create optimization problem
+prob = LpProblem("UC", LpMinimize)
+
+# Binary on/off variables and continuous dispatch
+on_off = {}
+dispatch = {}
+
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        on_off[(unit_id, hour_id)] = LpVariable(f"on_{unit_id}_{hour_id}", cat=LpBinary)
+        dispatch[(unit_id, hour_id)] = LpVariable(f"dispatch_{unit_id}_{hour_id}", lowBound=0, cat=LpContinuous)
+
+# Objective: minimize cost
+cost_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    cost = unit['cost_usd_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        cost_expr += cost * dispatch[(unit_id, hour_id)]
+
+prob += cost_expr
+
+# Constraints:
+# 1. Demand balance
+for hour in hours:
+    hour_id = hour['hour_id']
+    load = hour['load_mw']
+    hydro = hour['hydro_mw']
+    storage = hour['storage_discharge_mw']
+    residual_load = load - hydro - storage
+    
+    thermal_sum = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        thermal_sum += dispatch[(unit_id, hour_id)]
+    
+    prob += thermal_sum == residual_load, f"balance_{hour_id}"
+
+# 2. Min/max constraints with on/off logic
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    pmin = unit['pmin_mw']
+    pmax = unit['pmax_mw']
+    
+    for hour in hours:
+        hour_id = hour['hour_id']
+        prob += dispatch[(unit_id, hour_id)] >= pmin * on_off[(unit_id, hour_id)], f"min_{unit_id}_{hour_id}"
+        prob += dispatch[(unit_id, hour_id)] <= pmax * on_off[(unit_id, hour_id)], f"max_{unit_id}_{hour_id}"
+
+# 3. Emission cap
+emission_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    emission_rate = unit['emission_ton_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        emission_expr += emission_rate * dispatch[(unit_id, hour_id)]
+
+prob += emission_expr <= emission_cap, "emission_cap"
+
+# Solve
+status = prob.solve(PULP_CBC_CMD(msg=0))
+
+# Extract results
+if status == 1:  # Optimal
+    dispatch_result = {}
+    for hour in hours:
+        hour_id = hour['hour_id']
+        dispatch_result[hour_id] = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            dispatch_result[hour_id][unit_id] = dispatch[(unit_id, hour_id)].varValue
+    
+    # Calculate total cost
+    total_cost = value(prob.objective)
+    
+    # Calculate total emissions
+    total_emissions = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        emission_rate = unit['emission_ton_per_mwh']
+        for hour in hours:
+            hour_id = hour['hour_id']
+            total_emissions += emission_rate * dispatch[(unit_id, hour_id)].varValue
+    
+    # Check if emission cap is satisfied
+    emission_cap_satisfied = total_emissions <= emission_cap
+    
+    print(f"Status: {LpStatus[status]}")
+    print(f"Total Cost: ${total_cost:.2f}")
+    print(f"Total Emissions: {total_emissions:.2f} tons")
+    print(f"Emission Cap Satisfied: {emission_cap_satisfied}")
+    print(f"\nDispatch by hour and unit:")
+    for hour in hours:
+        hour_id = hour['hour_id']
+        print(f"{hour_id}: coal={dispatch_result[hour_id]['coal']:.2f} MW, gas={dispatch_result[hour_id]['gas']:.2f} MW")
+    
+    # Format for submission
+    thermal_dispatch_mw = []
+    for hour in hours:
+        hour_id = hour['hour_id']
+        hour_dispatch = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            hour_dispatch[unit_id] = round(dispatch[(unit_id, hour_id)].varValue, 2)
+        thermal_dispatch_mw.append({hour_id: hour_dispatch})
+    
+    submission = {
+        "thermal_dispatch_mw": thermal_dispatch_mw,
+        "total_cost_usd": round(total_cost, 2),
+        "emissions_ton": round(total_emissions, 2),
+        "emission_cap_satisfied": emission_cap_satisfied
+    }
+    
+    print("\n" + "="*50)
+    print("Submission JSON:")
+    print(json.dumps(submission, indent=2))
+    
+    with open('submission.json', 'w') as f:
+        json.dump(submission, f, indent=2)
+    
+    print("\nSubmission written to submission.json")
+else:
+    print(f"Optimization failed: {LpStatus[status]}")
+
+EOF
+
+Traceback (most recent call last):
+  File "<stdin>", line 24, in <module>
+TypeError: LpVariable.__init__() got an unexpected keyword argument 'cat'
+[0m
+[0m$ [0mcd <sandbox_a1> && source venv/bin/activate && python3 << 'EOF'
+import json
+from pulp import *
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['public_inputs']['uc_case']
+emission_cap = case['emission_cap_ton']
+hours = case['hours']
+thermal_units = case['thermal_units']
+
+# Create optimization problem
+prob = LpProblem("UC", LpMinimize)
+
+# Binary on/off variables and continuous dispatch
+on_off = {}
+dispatch = {}
+
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        on_off[(unit_id, hour_id)] = LpVariable(f"on_{unit_id}_{hour_id}", 0, 1, LpBinary)
+        dispatch[(unit_id, hour_id)] = LpVariable(f"dispatch_{unit_id}_{hour_id}", 0, None, LpContinuous)
+
+# Objective: minimize cost
+cost_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    cost = unit['cost_usd_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        cost_expr += cost * dispatch[(unit_id, hour_id)]
+
+prob += cost_expr
+
+# Constraints:
+# 1. Demand balance
+for hour in hours:
+    hour_id = hour['hour_id']
+    load = hour['load_mw']
+    hydro = hour['hydro_mw']
+    storage = hour['storage_discharge_mw']
+    residual_load = load - hydro - storage
+    
+    thermal_sum = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        thermal_sum += dispatch[(unit_id, hour_id)]
+    
+    prob += thermal_sum == residual_load, f"balance_{hour_id}"
+
+# 2. Min/max constraints with on/off logic
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    pmin = unit['pmin_mw']
+    pmax = unit['pmax_mw']
+    
+    for hour in hours:
+        hour_id = hour['hour_id']
+        prob += dispatch[(unit_id, hour_id)] >= pmin * on_off[(unit_id, hour_id)], f"min_{unit_id}_{hour_id}"
+        prob += dispatch[(unit_id, hour_id)] <= pmax * on_off[(unit_id, hour_id)], f"max_{unit_id}_{hour_id}"
+
+# 3. Emission cap
+emission_expr = 0
+for unit in thermal_units:
+    unit_id = unit['unit_id']
+    emission_rate = unit['emission_ton_per_mwh']
+    for hour in hours:
+        hour_id = hour['hour_id']
+        emission_expr += emission_rate * dispatch[(unit_id, hour_id)]
+
+prob += emission_expr <= emission_cap, "emission_cap"
+
+# Solve
+status = prob.solve(PULP_CBC_CMD(msg=0))
+
+# Extract results
+if status == 1:  # Optimal
+    dispatch_result = {}
+    for hour in hours:
+        hour_id = hour['hour_id']
+        dispatch_result[hour_id] = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            dispatch_result[hour_id][unit_id] = dispatch[(unit_id, hour_id)].varValue
+    
+    # Calculate total cost
+    total_cost = value(prob.objective)
+    
+    # Calculate total emissions
+    total_emissions = 0
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        emission_rate = unit['emission_ton_per_mwh']
+        for hour in hours:
+            hour_id = hour['hour_id']
+            total_emissions += emission_rate * dispatch[(unit_id, hour_id)].varValue
+    
+    # Check if emission cap is satisfied
+    emission_cap_satisfied = total_emissions <= emission_cap
+    
+    print(f"Status: {LpStatus[status]}")
+    print(f"Total Cost: ${total_cost:.2f}")
+    print(f"Total Emissions: {total_emissions:.2f} tons")
+    print(f"Emission Cap Satisfied: {emission_cap_satisfied}")
+    print(f"\nDispatch by hour and unit:")
+    for hour in hours:
+        hour_id = hour['hour_id']
+        print(f"{hour_id}: coal={dispatch_result[hour_id]['coal']:.2f} MW, gas={dispatch_result[hour_id]['gas']:.2f} MW")
+    
+    # Format for submission
+    thermal_dispatch_mw = []
+    for hour in hours:
+        hour_id = hour['hour_id']
+        hour_dispatch = {}
+        for unit in thermal_units:
+            unit_id = unit['unit_id']
+            hour_dispatch[unit_id] = round(dispatch[(unit_id, hour_id)].varValue, 2)
+        thermal_dispatch_mw.append({hour_id: hour_dispatch})
+    
+    submission = {
+        "thermal_dispatch_mw": thermal_dispatch_mw,
+        "total_cost_usd": round(total_cost, 2),
+        "emissions_ton": round(total_emissions, 2),
+        "emission_cap_satisfied": emission_cap_satisfied
+    }
+    
+    print("\n" + "="*50)
+    print("Submission JSON:")
+    print(json.dumps(submission, indent=2))
+    
+    with open('submission.json', 'w') as f:
+        json.dump(submission, f, indent=2)
+    
+    print("\nSubmission written to submission.json")
+else:
+    print(f"Optimization failed: {LpStatus[status]}")
+
+EOF
+
+Traceback (most recent call last):
+  File "<stdin>", line 24, in <module>
+TypeError: LpVariable.__init__() takes 2 positional arguments but 5 were given
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['public_inputs']['uc_case']
+emission_cap = case['emission_cap_ton']
+hours = case['hours']
+thermal_units = case['thermal_units']
+
+# Sort thermal units by cost (efficiency)
+thermal_units_sorted = sorted(thermal_units, key=lambda x: x['cost_usd_per_mwh'])
+
+# Solve the UC problem using greedy economic dispatch
+# For each hour, we dispatch the cheapest units first while respecting emission cap
+
+# First, let's calculate residual load for each hour
+residual_loads = []
+for hour in hours:
+    load = hour['load_mw']
+    hydro = hour['hydro_mw']
+    storage = hour['storage_discharge_mw']
+    residual_load = load - hydro - storage
+    residual_loads.append({'hour_id': hour['hour_id'], 'residual_load': residual_load})
+
+print("Residual loads (after hydro and storage):")
+for rl in residual_loads:
+    print(f"  {rl['hour_id']}: {rl['residual_load']} MW")
+
+# Greedy approach: dispatch coal first (cheapest), then gas
+# We'll need to check the emissions cap constraint
+
+dispatch_solution = {}
+total_cost = 0
+total_emissions = 0
+
+for hour in hours:
+    hour_id = hour['hour_id']
+    # Find residual load
+    residual_load = next(rl['residual_load'] for rl in residual_loads if rl['hour_id'] == hour_id)
+    
+    dispatch_solution[hour_id] = {'coal': 0, 'gas': 0}
+    
+    # Try dispatching coal first (cheaper)
+    coal_unit = next(u for u in thermal_units if u['unit_id'] == 'coal')
+    gas_unit = next(u for u in thermal_units if u['unit_id'] == 'gas')
+    
+    coal_dispatch = min(coal_unit['pmax_mw'], residual_load)
+    remaining_load = residual_load - coal_dispatch
+    gas_dispatch = remaining_load
+    
+    # Check if gas is within limits
+    if gas_dispatch < gas_unit['pmin_mw'] or gas_dispatch > gas_unit['pmax_mw']:
+        # Try alternative: both units on
+        # Need to solve: coal + gas = residual_load
+        # with coal in [40, 100], gas in [20, 80]
+        
+        # Try to find a feasible combination
+        feasible = False
+        for coal_d in range(int(coal_unit['pmin_mw']), int(coal_unit['pmax_mw']) + 1):
+            gas_d = residual_load - coal_d
+            if gas_unit['pmin_mw'] <= gas_d <= gas_unit['pmax_mw']:
+                coal_dispatch = coal_d
+                gas_dispatch = gas_d
+                feasible = True
+                break
+        
+        if not feasible:
+            # Try without coal at min
+            for coal_d in range(0, int(coal_unit['pmax_mw']) + 1):
+                gas_d = residual_load - coal_d
+                if gas_unit['pmin_mw'] <= gas_d <= gas_unit['pmax_mw']:
+                    coal_dispatch = coal_d
+                    gas_dispatch = gas_d
+                    feasible = True
+                    break
+        
+        if not feasible:
+            print(f"WARNING: No feasible dispatch for {hour_id} with residual load {residual_load}")
+    
+    dispatch_solution[hour_id]['coal'] = coal_dispatch
+    dispatch_solution[hour_id]['gas'] = gas_dispatch
+    
+    # Calculate cost and emissions
+    hour_cost = coal_unit['cost_usd_per_mwh'] * coal_dispatch + gas_unit['cost_usd_per_mwh'] * gas_dispatch
+    hour_emissions = coal_unit['emission_ton_per_mwh'] * coal_dispatch + gas_unit['emission_ton_per_mwh'] * gas_dispatch
+    
+    total_cost += hour_cost
+    total_emissions += hour_emissions
+    
+    print(f"{hour_id}: coal={coal_dispatch:.1f} MW, gas={gas_dispatch:.1f} MW, emissions={hour_emissions:.2f} tons")
+
+print(f"\nTotal Cost: ${total_cost:.2f}")
+print(f"Total Emissions: {total_emissions:.2f} tons")
+print(f"Emission Cap: {emission_cap} tons")
+print(f"Emission Cap Satisfied: {total_emissions <= emission_cap}")
+
+# Check if we need to reduce emissions
+if total_emissions > emission_cap:
+    print(f"\nEmissions exceed cap by {total_emissions - emission_cap:.2f} tons. Attempting to reduce...")
+    
+    # Replace coal with gas where possible to reduce emissions
+    # Gas has lower emissions (0.35 vs 0.75)
+    excess_emissions = total_emissions - emission_cap
+    
+    for hour_id in dispatch_solution:
+        if dispatch_solution[hour_id]['coal'] > coal_unit['pmin_mw']:
+            # Can reduce coal
+            coal_reduction = min(dispatch_solution[hour_id]['coal'] - coal_unit['pmin_mw'], 
+                                excess_emissions / (coal_unit['emission_ton_per_mwh'] - gas_unit['emission_ton_per_mwh']))
+            
+            # But we need to increase gas
+            if dispatch_solution[hour_id]['gas'] + coal_reduction <= gas_unit['pmax_mw']:
+                dispatch_solution[hour_id]['coal'] -= coal_reduction
+                dispatch_solution[hour_id]['gas'] += coal_reduction
+                excess_emissions -= coal_reduction * (coal_unit['emission_ton_per_mwh'] - gas_unit['emission_ton_per_mwh'])
+                
+                if excess_emissions <= 0:
+                    break
+
+# Recalculate with optimized dispatch
+total_cost = 0
+total_emissions = 0
+
+for hour_id in dispatch_solution:
+    coal_d = dispatch_solution[hour_id]['coal']
+    gas_d = dispatch_solution[hour_id]['gas']
+    
+    total_cost += coal_unit['cost_usd_per_mwh'] * coal_d + gas_unit['cost_usd_per_mwh'] * gas_d
+    total_emissions += coal_unit['emission_ton_per_mwh'] * coal_d + gas_unit['emission_ton_per_mwh'] * gas_d
+
+print(f"\nFinal optimization:")
+print(f"Total Cost: ${total_cost:.2f}")
+print(f"Total Emissions: {total_emissions:.2f} tons")
+print(f"Emission Cap Satisfied: {total_emissions <= emission_cap}")
+
+# Format for submission
+thermal_dispatch_mw = []
+for hour in hours:
+    hour_id = hour['hour_id']
+    hour_dispatch = {}
+    for unit in thermal_units:
+        unit_id = unit['unit_id']
+        hour_dispatch[unit_id] = round(dispatch_solution[hour_id].get(unit_id, 0), 2)
+    thermal_dispatch_mw.append({hour_id: hour_dispatch})
+
+submission = {
+    "thermal_dispatch_mw": thermal_dispatch_mw,
+    "total_cost_usd": round(total_cost, 2),
+    "emissions_ton": round(total_emissions, 2),
+    "emission_cap_satisfied": total_emissions <= emission_cap
+}
+
+print("\n" + "="*50)
+print("Submission JSON:")
+print(json.dumps(submission, indent=2))
+
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+
+EOF
+
+Residual loads (after hydro and storage):
+  h1: 75 MW
+  h2: 90 MW
+  h3: 85 MW
+h1: coal=40.0 MW, gas=35.0 MW, emissions=42.25 tons
+h2: coal=40.0 MW, gas=50.0 MW, emissions=47.50 tons
+h3: coal=40.0 MW, gas=45.0 MW, emissions=45.75 tons
+
+Total Cost: $7580.00
+Total Emissions: 135.50 tons
+Emission Cap: 200 tons
+Emission Cap Satisfied: True
+
+Final optimization:
+Total Cost: $7580.00
+Total Emissions: 135.50 tons
+Emission Cap Satisfied: True
+
+==================================================
+Submission JSON:
+{
+  "thermal_dispatch_mw": [
+    {
+      "h1": {
+        "coal": 40,
+        "gas": 35
+      }
+    },
+    {
+      "h2": {
+        "coal": 40,
+        "gas": 50
+      }
+    },
+    {
+      "h3": {
+        "coal": 40,
+        "gas": 45
+      }
+    }
+  ],
+  "total_cost_usd": 7580,
+  "emissions_ton": 135.5,
+  "emission_cap_satisfied": true
+}
+
+Submission written to submission.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+
+# Load submission and task
+with open('submission.json', 'r') as f:
+    submission = json.load(f)
+
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['public_inputs']['uc_case']
+hours = case['hours']
+thermal_units = {u['unit_id']: u for u in case['thermal_units']}
+
+print("Verification of submission:")
+print("="*60)
+
+# Verify demand balance
+print("\n1. Demand Balance Check:")
+for i, hour in enumerate(hours):
+    hour_id = hour['hour_id']
+    load = hour['load_mw']
+    hydro = hour['hydro_mw']
+    storage = hour['storage_discharge_mw']
+    
+    # Get dispatch from submission
+    dispatch_hour = submission['thermal_dispatch_mw'][i][hour_id]
+    coal = dispatch_hour['coal']
+    gas = dispatch_hour['gas']
+    
+    total_gen = hydro + storage + coal + gas
+    residual = coal + gas
+    required_residual = load - hydro - storage
+    
+    print(f"  {hour_id}: Load={load}, Hydro={hydro}, Storage={storage}")
+    print(f"       Residual Load={required_residual}, Dispatch={residual} (coal={coal}, gas={gas})")
+    print(f"       Total Gen={total_gen}, Balanced: {total_gen == load}")
+
+# Verify min/max constraints
+print("\n2. Min/Max Constraints Check:")
+for i, hour in enumerate(hours):
+    hour_id = hour['hour_id']
+    dispatch_hour = submission['thermal_dispatch_mw'][i][hour_id]
+    
+    for unit_id, dispatch_val in dispatch_hour.items():
+        unit = thermal_units[unit_id]
+        pmin = unit['pmin_mw']
+        pmax = unit['pmax_mw']
+        
+        if dispatch_val == 0:
+            print(f"  {hour_id}/{unit_id}: OFF (allowed)")
+        elif pmin <= dispatch_val <= pmax:
+            print(f"  {hour_id}/{unit_id}: {dispatch_val} MW (within [{pmin}, {pmax}]) ✓")
+        else:
+            print(f"  {hour_id}/{unit_id}: {dispatch_val} MW (OUT OF BOUNDS [{pmin}, {pmax}]) ✗")
+
+# Verify emissions
+print("\n3. Emissions Check:")
+total_emissions = 0
+for i, hour in enumerate(hours):
+    hour_id = hour['hour_id']
+    dispatch_hour = submission['thermal_dispatch_mw'][i][hour_id]
+    hour_emissions = 0
+    
+    for unit_id, dispatch_val in dispatch_hour.items():
+        unit = thermal_units[unit_id]
+        emission_rate = unit['emission_ton_per_mwh']
+        hour_emissions += emission_rate * dispatch_val
+    
+    total_emissions += hour_emissions
+    print(f"  {hour_id}: {hour_emissions:.2f} tons")
+
+print(f"  Total Emissions: {total_emissions:.2f} tons")
+print(f"  Emission Cap: {case['emission_cap_ton']} tons")
+print(f"  Cap Satisfied: {total_emissions <= case['emission_cap_ton']} (submitted: {submission['emission_cap_satisfied']})")
+
+# Verify cost calculation
+print("\n4. Cost Check:")
+total_cost = 0
+for i, hour in enumerate(hours):
+    hour_id = hour['hour_id']
+    dispatch_hour = submission['thermal_dispatch_mw'][i][hour_id]
+    hour_cost = 0
+    
+    for unit_id, dispatch_val in dispatch_hour.items():
+        unit = thermal_units[unit_id]
+        cost_rate = unit['cost_usd_per_mwh']
+        hour_cost += cost_rate * dispatch_val
+    
+    total_cost += hour_cost
+    print(f"  {hour_id}: ${hour_cost:.2f}")
+
+print(f"  Total Cost: ${total_cost:.2f} (submitted: ${submission['total_cost_usd']})")
+
+print("\n" + "="*60)
+if (total_emissions <= case['emission_cap_ton'] and 
+    total_cost == submission['total_cost_usd'] and
+    total_emissions == submission['emissions_ton']):
+    print("✓ ALL CHECKS PASSED - Solution is feasible and correct")
+else:
+    print("✗ Some checks failed")
+
+EOF
+
+Verification of submission:
+============================================================
+
+1. Demand Balance Check:
+  h1: Load=120, Hydro=35, Storage=10
+       Residual Load=75, Dispatch=75 (coal=40, gas=35)
+       Total Gen=120, Balanced: True
+  h2: Load=150, Hydro=40, Storage=20
+       Residual Load=90, Dispatch=90 (coal=40, gas=50)
+       Total Gen=150, Balanced: True
+  h3: Load=130, Hydro=30, Storage=15
+       Residual Load=85, Dispatch=85 (coal=40, gas=45)
+       Total Gen=130, Balanced: True
+
+2. Min/Max Constraints Check:
+  h1/coal: 40 MW (within [40, 100]) ✓
+  h1/gas: 35 MW (within [20, 80]) ✓
+  h2/coal: 40 MW (within [40, 100]) ✓
+  h2/gas: 50 MW (within [20, 80]) ✓
+  h3/coal: 40 MW (within [40, 100]) ✓
+  h3/gas: 45 MW (within [20, 80]) ✓
+
+3. Emissions Check:
+  h1: 42.25 tons
+  h2: 47.50 tons
+  h3: 45.75 tons
+  Total Emissions: 135.50 tons
+  Emission Cap: 200 tons
+  Cap Satisfied: True (submitted: True)
+
+4. Cost Check:
+  h1: $2210.00
+  h2: $2780.00
+  h3: $2590.00
+  Total Cost: $7580.00 (submitted: $7580)
+
+============================================================
+✓ ALL CHECKS PASSED - Solution is feasible and correct
+[0m
+[0m→ [0mRead submission.json

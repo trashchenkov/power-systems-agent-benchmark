@@ -1,0 +1,29 @@
+Now I understand the task. I need to compute EV charger reactive-power commands for voltage support. Let me analyze the problem:
+
+**Given:**
+- Target voltage: 0.98 pu
+- Base voltages: bus_2 = 0.944 pu, bus_3 = 0.952 pu
+- Q sensitivity: bus_2 = 0.0016 pu/kvar, bus_3 = 0.0012 pu/kvar
+- EVs at bus_2: evse_1 (18 kVA, 10 kW), evse_2 (12 kVA, 6 kW)
+- EVs at bus_3: evse_3 (16 kVA, 8 kW)
+
+**Calculations needed:**
+1. For each bus, calculate the voltage deviation from target
+2. Calculate required reactive power to reach target using sensitivity
+3. Calculate maximum reactive power capability for each EV (using S² = P² + Q²)
+4. Aggregate capabilities per bus and clip the required Q
+5. Calculate corrected voltage after applying the clipped Q
+
+Let me write a Python script to compute this:
+The calculation is complete. Let me verify the submission file was created correctly:
+The submission.json file has been created with the correct calculations:
+
+**Summary:**
+- **bus_2**: Required 22.5 kvar to reach target, available capacity 25.36 kvar, so full 22.5 kvar dispatched. Voltage corrected to 0.98 pu.
+- **bus_3**: Required 23.33 kvar to reach target, but only 13.86 kvar available, so clipped to max capacity. Voltage corrected to 0.9686 pu (below target due to capacity constraint).
+- **Total absolute reactive power**: 36.36 kvar
+
+The solution respects the hard constraints by:
+1. Computing target-seeking reactive commands based on voltage sensitivity
+2. Clipping by aggregate EV inverter capability at each bus (using S² = P² + Q²)
+3. Calculating corrected voltages based on actual dispatched Q

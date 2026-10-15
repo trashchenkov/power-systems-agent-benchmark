@@ -1,0 +1,36 @@
+I need to design a Volt-VAR curve for PV inverter reactive power control.
+
+Given:
+- Voltage limits: 0.95-1.05 pu
+- Three timesteps:
+  - t_low: base=0.94 pu (below min), pv_kw=60, inverter=100 kVA, sensitivity=0.0007 pu/kVAR
+  - t_nom: base=1.0 pu (nominal), pv_kw=80, inverter=100 kVA, sensitivity=0.00055 pu/kVAR  
+  - t_high: base=1.07 pu (above max), pv_kw=60, inverter=100 kVA, sensitivity=0.0007 pu/kVAR
+
+Inverter reactive capability: Q_max = sqrt(100² - P²)
+- t_low: Q_max = sqrt(10000 - 3600) = sqrt(6400) = 80 kVAR
+- t_nom: Q_max = sqrt(10000 - 6400) = sqrt(3600) = 60 kVAR
+- t_high: Q_max = sqrt(10000 - 3600) = 80 kVAR
+
+To fix low voltage (t_low=0.94), we need to INJECT reactive power (positive q_fraction) to raise voltage.
+To fix high voltage (t_high=1.07), we need to ABSORB reactive power (negative q_fraction) to lower voltage.
+
+A monotonic Volt-VAR curve has strictly increasing voltage breakpoints with non-increasing q_fraction.
+
+Designing breakpoints:
+- At low voltage (0.94 pu), inject max Q: q_fraction = +1.0
+- At high voltage (1.07 pu), absorb max Q: q_fraction = -1.0
+
+Using breakpoints that ensure corrected voltages are within limits:
+
+Let me calculate what's needed:
+- t_low: need to raise 0.94 → 0.95+, need ΔV = 0.01 pu, so Q = 0.01/0.0007 ≈ 14.29 kVAR → q ≈ 0.18
+- t_high: need to lower 1.07 → 1.05-, need ΔV = -0.02 pu, so Q = -0.02/0.0007 ≈ -28.57 kVAR → q ≈ -0.36
+
+A simple monotonic curve: [(0.94, 1.0), (1.07, -1.0)]
+
+Let me verify corrected voltages with this curve and linear interpolation:
+All three curves are feasible. Curve 2 has the lowest control effort (82.31 kVAR total) while keeping all corrected voltages within bounds.
+
+I should use a minimal curve that achieves feasibility with minimal effort. The curve `[(0.94, 0.5), (1.07, -0.5)]` works well.
+Done.

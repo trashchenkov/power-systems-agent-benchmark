@@ -1,0 +1,109 @@
+I need to find the minimum synchronous-machine share that satisfies both inertia (RoCoF) and SCR constraints.
+
+**Given:**
+- Demand: 1000 MW
+- IBR capacity: 720 MVA
+- Largest loss: 180 MW
+- Max RoCoF: 2.0 Hz/s
+- Min SCR: 2.25
+- Grid short-circuit base: 1180 MVA
+
+**Units:**
+- g1: 120 MW, H=4.5, SC=280 MVA
+- g2: 180 MW, H=5.0, SC=360 MVA
+- g3: 240 MW, H=3.8, SC=440 MVA
+- g4: 90 MW, H=6.0, SC=190 MVA
+
+**Formulas:**
+- System inertia (GWh): sum(H_s * P_MW) / 1000
+- RoCoF: largest_loss_mw * nominal_frequency_hz / (2 * inertia_GWs * 1000)
+- SCR: (grid_base + online_unit_short_circuit_mva) / IBR_mva
+- Synchronous share: (online synchronous MW) / demand * 100%
+
+I need to find the minimum synchronous share while satisfying:
+1. RoCoF ≤ 2.0 Hz/s
+2. SCR ≥ 2.25
+
+Let me check combinations:
+
+**Checking unit g4 alone (90 MW):**
+- Inertia = 90*6/1000 = 0.54 GWh
+- RoCoF = 180*50/(2*0.54*1000) = 9000/1080 = 8.33 Hz/s > 2.0 ❌
+
+**Checking g1 + g4 (120+90=210 MW):**
+- Inertia = (120*4.5 + 90*6)/1000 = (540+540)/1000 = 1.08 GWh
+- RoCoF = 180*50/(2*1.08*1000) = 9000/2160 = 4.17 Hz/s > 2.0 ❌
+
+**Checking g2 + g4 (180+90=270 MW):**
+- Inertia = (180*5 + 90*6)/1000 = (900+540)/1000 = 1.44 GWh
+- RoCoF = 180*50/(2*1.44*1000) = 9000/2880 = 3.125 Hz/s > 2.0 ❌
+
+**Checking g1 + g2 + g4 (120+180+90=390 MW):**
+- Inertia = (120*4.5 + 180*5 + 90*6)/1000 = (540+900+540)/1000 = 1.98 GWh
+- RoCoF = 180*50/(2*1.98*1000) = 9000/3960 = 2.27 Hz/s > 2.0 ❌
+
+**Checking g1 + g2 + g3 + g4 (all, 630 MW):**
+- Inertia = (120*4.5 + 180*5 + 240*3.8 + 90*6)/1000 = (540+900+912+540)/1000 = 2.892 GWh
+- RoCoF = 180*50/(2*2.892*1000) = 9000/5784 = 1.556 Hz/s ≤ 2.0 ✓
+- SCR = (1180 + 280+360+440+190)/720 = (1180+1270)/720 = 2450/720 = 3.40 ≥ 2.25 ✓
+
+But I need the minimum. Let me try other combinations:
+
+**Checking g2 + g3 + g4 (180+240+90=510 MW):**
+- Inertia = (180*5 + 240*3.8 + 90*6)/1000 = (900+912+540)/1000 = 2.352 GWh
+- RoCoF = 180*50/(2*2.352*1000) = 9000/4704 = 1.913 Hz/s ≤ 2.0 ✓
+- SCR = (1180 + 360+440+190)/720 = (1180+990)/720 = 2170/720 = 3.01 ≥ 2.25 ✓
+
+**Checking g1 + g3 + g4 (120+240+90=450 MW):**
+- Inertia = (120*4.5 + 240*3.8 + 90*6)/1000 = (540+912+540)/1000 = 1.992 GWh
+- RoCoF = 180*50/(2*1.992*1000) = 9000/3984 = 2.26 Hz/s > 2.0 ❌
+
+**Checking g1 + g2 + g4 (390 MW) again:**
+- Inertia = 1.98 GWh, RoCoF = 2.27 Hz/s > 2.0 ❌
+
+**Checking g1 + g2 + g3 (120+180+240=540 MW):**
+- Inertia = (120*4.5 + 180*5 + 240*3.8)/1000 = (540+900+912)/1000 = 2.352 GWh
+- RoCoF = 180*50/(2*2.352*1000) = 9000/4704 = 1.913 Hz/s ≤ 2.0 ✓
+- SCR = (1180 + 280+360+440)/720 = (1180+1080)/720 = 2260/720 = 3.14 ≥ 2.25 ✓
+
+But g2+g3+g4 (510 MW) has lower share than g1+g2+g3 (540 MW).
+
+**Checking g1 + g2 (300 MW):**
+- Inertia = (120*4.5 + 180*5)/1000 = (540+900)/1000 = 1.44 GWh
+- RoCoF = 180*50/(2*1.44*1000) = 9000/2880 = 3.125 Hz/s > 2.0 ❌
+
+**Checking g3 + g4 (240+90=330 MW):**
+- Inertia = (240*3.8 + 90*6)/1000 = (912+540)/1000 = 1.452 GWh
+- RoCoF = 180*50/(2*1.452*1000) = 9000/2904 = 3.10 Hz/s > 2.0 ❌
+
+**Checking g2 + g3 (180+240=420 MW):**
+- Inertia = (180*5 + 240*3.8)/1000 = (900+912)/1000 = 1.812 GWh
+- RoCoF = 180*50/(2*1.812*1000) = 9000/3624 = 2.48 Hz/s > 2.0 ❌
+
+**Checking g1 + g3 (120+240=360 MW):**
+- Inertia = (120*4.5 + 240*3.8)/1000 = (540+912)/1000 = 1.452 GWh
+- RoCoF = 3.10 Hz/s > 2.0 ❌
+
+**Checking g1 + g4 (210 MW):**
+- Already checked, RoCoF = 4.17 Hz/s > 2.0 ❌
+
+**Checking g2 + g4 (270 MW):**
+- Already checked, RoCoF = 3.125 Hz/s > 2.0 ❌
+
+**Checking g1 + g2 + g4 (390 MW):**
+- Already checked, RoCoF = 2.27 Hz/s > 2.0 ❌
+
+The feasible combinations so far are:
+1. g1+g2+g3 (540 MW) - share = 54%
+2. g2+g3+g4 (510 MW) - share = 51%
+
+g2+g3+g4 is better (lower share).
+
+Let me verify g2+g3+g4 calculations again:
+- Online synchronous MW: 180+240+90 = 510 MW
+- Synchronous share: 510/1000 * 100 = 51%
+- System inertia: (180*5 + 240*3.8 + 90*6) / 1000 = (900 + 912 + 540) / 1000 = 2352/1000 = 2.352 GWh
+- RoCoF: 180 * 50 / (2 * 2.352 * 1000) = 9000 / 4704 = 1.913 Hz/s ≤ 2.0 ✓
+- SCR: (1180 + 360 + 440 + 190) / 720 = 2170 / 720 = 3.014 ≥ 2.25 ✓
+
+This is feasible with 51% synchronous share.

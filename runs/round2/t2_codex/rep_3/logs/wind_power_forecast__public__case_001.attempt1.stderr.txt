@@ -1,0 +1,300 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13af4-5c80-7101-be8d-e13e48336ada
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task files first, then compute the required answer and write only `submission.json`.
+exec
+/bin/bash -lc "pwd && rg --files -g 'instructions.md' -g 'task.json' -g 'submission.json'" in <sandbox_a1>
+ succeeded in 0ms:
+<sandbox_a1>
+task.json
+instructions.md
+
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/wind_power_forecast__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,260p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "wind_power_forecast_public_001",
+  "family": "wind_power_forecast",
+  "candidate_id": "REL-TASK-009",
+  "substrate": "executable_wind_power_curve_forecast_case",
+  "objective": "Produce a multi-step wind-power forecast from wind-speed forecasts, air-density forecasts, a turbine power curve, and recent bias history.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-009 — Multi-step wind-power forecast from weather inputs",
+      "ru": "REL-TASK-009 — Многошаговый прогноз ветровой генерации по погодным данным"
+    },
+    "objective": {
+      "en": "Forecast wind-farm output by applying the turbine power curve and a historical residual bias correction.",
+      "ru": "Спрогнозировать выдачу ветропарка, используя кривую мощности турбины и поправку по исторической ошибке."
+    },
+    "instructions": {
+      "en": "Use wind_forecast_case. Power curve convention (use exactly this): corrected speed v_c = wind_speed_m_s * (air_density_kg_m3 / reference_air_density_kg_m3)^(1/3); power = 0 if v_c < cut_in_m_s or v_c >= cut_out_m_s; power = count*rated_mw_each if v_c >= rated_m_s; otherwise power = count*rated_mw_each * ((v_c - cut_in_m_s)/(rated_m_s - cut_in_m_s))^3. Bias correction: bias = mean over history of (actual_power_mw - power-curve estimate for that record). Each forecast = clip(power-curve estimate + bias, 0, farm capacity). Report forecast_mw_by_timestamp, total_forecast_mwh (sum of hourly forecasts times forecast_step_hours), and peak_timestamp.",
+      "ru": "Используйте wind_forecast_case. Конвенция кривой мощности (используйте ровно её): скорректированная скорость v_c = wind_speed_m_s * (air_density_kg_m3 / reference_air_density_kg_m3)^(1/3); мощность = 0, если v_c < cut_in_m_s или v_c >= cut_out_m_s; мощность = count*rated_mw_each, если v_c >= rated_m_s; иначе мощность = count*rated_mw_each * ((v_c - cut_in_m_s)/(rated_m_s - cut_in_m_s))^3. Поправка: bias = среднее по history значений (actual_power_mw - оценка по кривой для этой записи). Каждый прогноз = clip(оценка по кривой + bias, 0, мощность парка). Укажите forecast_mw_by_timestamp, total_forecast_mwh (сумма прогнозов, умноженная на forecast_step_hours) и peak_timestamp."
+    }
+  },
+  "subdomain": "forecasting & uncertainty",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-009",
+    "subdomain": "forecasting & uncertainty",
+    "input_fields": [
+      "wind_forecast_case.turbine",
+      "wind_forecast_case.power_curve",
+      "wind_forecast_case.history",
+      "wind_forecast_case.weather_forecast"
+    ]
+  },
+  "wind_forecast_case": {
+    "forecast_step_hours": 1.0,
+    "reference_air_density_kg_m3": 1.225,
+    "turbine": {
+      "count": 8,
+      "rated_mw_each": 2.5
+    },
+    "power_curve": {
+      "cut_in_m_s": 3.0,
+      "rated_m_s": 12.0,
+      "cut_out_m_s": 25.0
+    },
+    "history": [
+      {
+        "timestamp": "h-4",
+        "wind_speed_m_s": 6.2,
+        "air_density_kg_m3": 1.21,
+        "actual_power_mw": 0.98
+      },
+      {
+        "timestamp": "h-3",
+        "wind_speed_m_s": 7.4,
+        "air_density_kg_m3": 1.2,
+        "actual_power_mw": 2.35
+      },
+      {
+        "timestamp": "h-2",
+        "wind_speed_m_s": 8.6,
+        "air_density_kg_m3": 1.19,
+        "actual_power_mw": 4.55
+      },
+      {
+        "timestamp": "h-1",
+        "wind_speed_m_s": 9.1,
+        "air_density_kg_m3": 1.18,
+        "actual_power_mw": 5.85
+      }
+    ],
+    "weather_forecast": [
+      {
+        "timestamp": "t01",
+        "wind_speed_m_s": 8.0,
+        "air_density_kg_m3": 1.19
+      },
+      {
+        "timestamp": "t02",
+        "wind_speed_m_s": 9.5,
+        "air_density_kg_m3": 1.18
+      },
+      {
+        "timestamp": "t03",
+        "wind_speed_m_s": 11.0,
+        "air_density_kg_m3": 1.17
+      },
+      {
+        "timestamp": "t04",
+        "wind_speed_m_s": 13.2,
+        "air_density_kg_m3": 1.16
+      }
+    ]
+  },
+  "submission_schema": {
+    "forecast_mw_by_timestamp": "object mapping forecast timestamp to MW",
+    "total_forecast_mwh": "sum of hourly forecast values in MWh",
+    "peak_timestamp": "timestamp with the largest forecast power",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Forecast values must match the independent power-curve and bias-correction calculation within 0.01 MW.",
+    "Total energy and peak timestamp must match the recomputed forecast.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the submitted forecast satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:DOI:10.1109/TPWRS.2017.2694705; RG DOI 10.13140/RG.2.2.33696.34561 was checked via DataCite/OpenAlex and is an Unpublished/ResearchGate preprint, not used as primary",
+    "checked_demoted_locator:DataCite/OpenAlex resolve DOI:10.13140/RG.2.2.33696.34561 as Unpublished ResearchGate preprint",
+    "source_card:docs/source_cards/wind_power_forecast.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "Nima Safari, C. Y. Chung, G. C. D. Price, Novel Multi-Step Short-Term Wind Power Prediction Framework Based on Chaotic Time Series Analysis and Singular Spectrum Analysis, IEEE Transactions on Power Systems, 2018",
+      "locator": "DOI:10.1109/TPWRS.2017.2694705; RG DOI 10.13140/RG.2.2.33696.34561 was checked via DataCite/OpenAlex and is an Unpublished/ResearchGate preprint, not used as primary",
+      "confidence": "medium",
+      "notes": "Replaces the weak ResearchGate DOI with a DOI-resolved peer-reviewed multi-step wind-power forecasting source; the RG locator remains only a checked/demoted breadcrumb."
+    }
+  ]
+}
+
+codex
+I have the formula and inputs. I’m calculating the bias from the four history records, then applying it to each forecast hour with capacity clipping.
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, math
+with open('task.json') as f:
+    t=json.load(f)['wind_forecast_case']
+count=t['turbine']['count']; rated=t['turbine']['rated_mw_each']; cap=count*rated
+ref=t['reference_air_density_kg_m3']; pc=t['power_curve']
+def est(ws,rho):
+    vc=ws*((rho/ref)**(1/3))
+    if vc < pc['cut_in_m_s'] or vc >= pc['cut_out_m_s']:
+        p=0.0
+    elif vc >= pc['rated_m_s']:
+        p=cap
+    else:
+        p=cap*((vc-pc['cut_in_m_s'])/(pc['rated_m_s']-pc['cut_in_m_s']))**3
+    return p, vc
+hist=[]
+for r in t['history']:
+    p,vc=est(r['wind_speed_m_s'],r['air_density_kg_m3'])
+    hist.append((r['timestamp'],vc,p,r['actual_power_mw']-p))
+bias=sum(x[3] for x in hist)/len(hist)
+print('cap',cap,'bias',bias)
+for row in hist: print(row)
+fore={}
+for r in t['weather_forecast']:
+    p,vc=est(r['wind_speed_m_s'],r['air_density_kg_m3'])
+    pf=min(max(p+bias,0.0),cap)
+    fore[r['timestamp']]=pf
+    print(r['timestamp'],vc,p,pf)
+print('total',sum(fore.values())*t['forecast_step_hours'])
+print('peak',max(fore,key=fore.get))
+print(json.dumps({\"forecast_mw_by_timestamp\":{k:round(v,4) for k,v in fore.items()},\"total_forecast_mwh\":round(sum(fore.values())*t['forecast_step_hours'],4),\"peak_timestamp\":max(fore,key=fore.get)},indent=2))
+PY" in <sandbox_a1>
+ succeeded in 0ms:
+cap 20.0 bias 0.024846536731473745
+('h-4', 6.1745898788122755, 0.8777389065387156, 0.10226109346128442)
+('h-3', 7.349313477759923, 2.257171714651432, 0.09282828534856824)
+('h-2', 8.517302570176293, 4.607685958187825, -0.05768595818782529)
+('h-1', 8.98717845070102, 5.888017273696132, -0.03801727369613239)
+t01 7.923072158303528 3.2734903982020054 3.298336934933479
+t02 9.382219261720845 7.132103358796881 7.156949895528355
+t03 10.832847004157957 13.184431207115201 13.209277743846675
+t04 12.962275012840845 20.0 20.0
+total 43.66456457430851
+peak t04
+{
+  "forecast_mw_by_timestamp": {
+    "t01": 3.2983,
+    "t02": 7.1569,
+    "t03": 13.2093,
+    "t04": 20.0
+  },
+  "total_forecast_mwh": 43.6646,
+  "peak_timestamp": "t04"
+}
+
+codex
+The computed capacity is 20 MW and the residual bias is about 0.02485 MW. I’m writing the schema-compatible JSON now.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_wind_power_forecast__public__case_001_a1_ndxrocjm/submission.json b/bench_wind_power_forecast__public__case_001_a1_ndxrocjm/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..960f45a6fcd634e97980e6e0b620c5a0c757aff9
+--- /dev/null
++++ b/bench_wind_power_forecast__public__case_001_a1_ndxrocjm/submission.json
+@@ -0,0 +1,10 @@
++{
++  "forecast_mw_by_timestamp": {
++    "t01": 3.298336934933479,
++    "t02": 7.156949895528355,
++    "t03": 13.209277743846675,
++    "t04": 20.0
++  },
++  "total_forecast_mwh": 43.66456457430851,
++  "peak_timestamp": "t04"
++}
+
+diff --git a/bench_wind_power_forecast__public__case_001_a1_ndxrocjm/submission.json b/bench_wind_power_forecast__public__case_001_a1_ndxrocjm/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..960f45a6fcd634e97980e6e0b620c5a0c757aff9
+--- /dev/null
++++ b/bench_wind_power_forecast__public__case_001_a1_ndxrocjm/submission.json
+@@ -0,0 +1,10 @@
++{
++  "forecast_mw_by_timestamp": {
++    "t01": 3.298336934933479,
++    "t02": 7.156949895528355,
++    "t03": 13.209277743846675,
++    "t04": 20.0
++  },
++  "total_forecast_mwh": 43.66456457430851,
++  "peak_timestamp": "t04"
++}
+
+codex
+Done
+diff --git a/bench_wind_power_forecast__public__case_001_a1_ndxrocjm/submission.json b/bench_wind_power_forecast__public__case_001_a1_ndxrocjm/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..960f45a6fcd634e97980e6e0b620c5a0c757aff9
+--- /dev/null
++++ b/bench_wind_power_forecast__public__case_001_a1_ndxrocjm/submission.json
+@@ -0,0 +1,10 @@
++{
++  "forecast_mw_by_timestamp": {
++    "t01": 3.298336934933479,
++    "t02": 7.156949895528355,
++    "t03": 13.209277743846675,
++    "t04": 20.0
++  },
++  "total_forecast_mwh": 43.66456457430851,
++  "peak_timestamp": "t04"
++}
+
+tokens used
+7,689

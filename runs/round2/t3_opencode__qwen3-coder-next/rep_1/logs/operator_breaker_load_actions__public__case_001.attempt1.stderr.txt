@@ -1,0 +1,116 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat << 'EOF' > solve.py
+import json
+
+# Public inputs
+max_actions = 2
+max_shed_mw = 25
+
+branches = [
+    {"branch_id": "l12", "base_flow_mw": 118, "limit_mw": 100},
+    {"branch_id": "l23", "base_flow_mw": 72, "limit_mw": 90},
+    {"branch_id": "l13", "base_flow_mw": 65, "limit_mw": 80}
+]
+
+candidate_actions = [
+    {"action_id": "open_tie_13", "type": "open_breaker", "branch_id": "l13", 
+     "flow_delta_mw": {"l12": -8, "l23": 12}},
+    {"action_id": "shed_bus3_15", "type": "shed_load", "mw": 15,
+     "flow_delta_mw": {"l12": -14, "l23": -6}},
+    {"action_id": "shed_bus2_10", "type": "shed_load", "mw": 10,
+     "flow_delta_mw": {"l12": -9, "l23": -2}}
+]
+
+def check_constraints(selected, all_branches):
+    # Calculate post-action flows
+    post_flows = {}
+    total_shed = 0
+    
+    for b in all_branches:
+        post_flows[b["branch_id"]] = b["base_flow_mw"]
+    
+    for action in selected:
+        for branch_id, delta in action["flow_delta_mw"].items():
+            post_flows[branch_id] += delta
+        if action["type"] == "shed_load":
+            total_shed += action["mw"]
+    
+    # Check all limits satisfied
+    all_satisfied = True
+    for b in all_branches:
+        if abs(post_flows[b["branch_id"]]) > b["limit_mw"]:
+            all_satisfied = False
+            break
+    
+    return post_flows, total_shed, all_satisfied
+
+# Try all combinations
+best = None
+best_shed = float('inf')
+best_count = float('inf')
+
+# Single actions
+for i in range(len(candidate_actions)):
+    action = candidate_actions[i]
+    post_flows, shed, all_satisfied = check_constraints([action], branches)
+    if all_satisfied:
+        if (shed < best_shed) or (shed == best_shed and 1 < best_count):
+            best = [action["action_id"]]
+            best_shed = shed
+            best_count = 1
+
+# Two actions
+for i in range(len(candidate_actions)):
+    for j in range(i+1, len(candidate_actions)):
+        actions = [candidate_actions[i], candidate_actions[j]]
+        post_flows, shed, all_satisfied = check_constraints(actions, branches)
+        if all_satisfied:
+            if (shed < best_shed) or (shed == best_shed and 2 < best_count):
+                best = [actions[0]["action_id"], actions[1]["action_id"]]
+                best_shed = shed
+                best_count = 2
+
+# Calculate final flows
+final_flows = {}
+for b in branches:
+    final_flows[b["branch_id"]] = b["base_flow_mw"]
+
+if best:
+    for action_id in best:
+        action = next(a for a in candidate_actions if a["action_id"] == action_id)
+        for branch_id, delta in action["flow_delta_mw"].items():
+            final_flows[branch_id] += delta
+
+result = {
+    "selected_actions": best if best else [],
+    "load_shed_mw": best_shed if best else 0,
+    "post_action_flows_mw": final_flows,
+    "all_limits_satisfied": best is not None
+}
+
+print(json.dumps(result, indent=2))
+EOF
+python3 solve.py
+{
+  "selected_actions": [
+    "open_tie_13",
+    "shed_bus3_15"
+  ],
+  "load_shed_mw": 15,
+  "post_action_flows_mw": {
+    "l12": 96,
+    "l23": 78,
+    "l13": 65
+  },
+  "all_limits_satisfied": true
+}
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/operator_breaker_load_actions__public__case_001/*); auto-rejecting

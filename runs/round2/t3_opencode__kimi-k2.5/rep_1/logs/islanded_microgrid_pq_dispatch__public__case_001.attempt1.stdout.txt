@@ -1,0 +1,78 @@
+Now I understand the task. I need to compute a joint active/reactive dispatch for an islanded microgrid with a diesel unit and grid-forming inverter. Let me analyze the constraints and solve this optimization problem.
+
+**Given data:**
+- Load: P = 34.0 MW, Q = 12.0 Mvar
+- Diesel: Pmin = 8.0 MW, Pmax = 45.0 MW, Qmin = -10.0 Mvar, Qmax = 18.0 Mvar, Q_preferred = 4.0 Mvar, Cost = 76 $/MWh, Penalty = 3 $/Mvarh
+- Inverter: P_available = 20.0 MW, S_rating = 24.0 MVA
+- Voltage: base = 0.965 pu, sensitivity = 0.0025 pu/Mvar, Vmin = 0.95 pu, Vmax = 1.05 pu
+
+**Constraints:**
+1. P_balance: p_diesel + p_inverter = 34.0
+2. Q_balance: q_diesel + q_inverter = 12.0
+3. Diesel limits: 8.0 ≤ p_diesel ≤ 45.0, -10.0 ≤ q_diesel ≤ 18.0
+4. Inverter limits: 0 ≤ p_inverter ≤ 20.0, p_inverter² + q_inverter² ≤ 24.0²
+5. Voltage: 0.95 ≤ 0.965 + 0.0025 * (q_diesel + q_inverter) ≤ 1.05
+
+Since q_diesel + q_inverter = 12.0 always (from Q_balance), the voltage is:
+voltage_pu = 0.965 + 0.0025 * 12.0 = 0.965 + 0.03 = 0.995 pu
+
+This is within [0.95, 1.05], so voltage constraint is satisfied as long as Q_balance holds.
+
+**Cost function:**
+Cost = p_diesel * 76 + |q_diesel - 4.0| * 3
+
+To minimize cost:
+- Minimize p_diesel (use more inverter power, which is "free")
+- Keep q_diesel close to 4.0 Mvar
+
+From P_balance: p_diesel = 34.0 - p_inverter
+To minimize p_diesel, maximize p_inverter within limits.
+
+Inverter P max = min(20.0, sqrt(24² - q_inverter²))
+
+From Q_balance: q_inverter = 12.0 - q_diesel
+
+So the inverter apparent power constraint becomes:
+p_inverter² + (12.0 - q_diesel)² ≤ 24² = 576
+
+And p_inverter ≤ 20.0
+
+Let's try q_diesel = 4.0 (preferred value to minimize penalty):
+Then q_inverter = 12.0 - 4.0 = 8.0 Mvar
+
+Inverter constraint: p_inverter² + 8.0² ≤ 576
+p_inverter² ≤ 576 - 64 = 512
+p_inverter ≤ sqrt(512) ≈ 22.63 MW
+
+But p_inverter ≤ 20.0 MW, so max p_inverter = 20.0 MW
+
+With p_inverter = 20.0 MW:
+p_diesel = 34.0 - 20.0 = 14.0 MW
+
+Check diesel limits: 8.0 ≤ 14.0 ≤ 45.0 ✓
+Check q_diesel = 4.0: -10.0 ≤ 4.0 ≤ 18.0 ✓
+
+Cost = 14.0 * 76 + |4.0 - 4.0| * 3 = 1064 + 0 = 1064 $/h
+
+Let me verify all constraints:
+- P_balance: 14.0 + 20.0 = 34.0 ✓
+- Q_balance: 4.0 + 8.0 = 12.0 ✓
+- Diesel P: 8.0 ≤ 14.0 ≤ 45.0 ✓
+- Diesel Q: -10.0 ≤ 4.0 ≤ 18.0 ✓
+- Inverter P: 0 ≤ 20.0 ≤ 20.0 ✓
+- Inverter S: 20.0² + 8.0² = 400 + 64 = 464 ≤ 576 ✓
+- Voltage: 0.965 + 0.0025 * 12.0 = 0.995, 0.95 ≤ 0.995 ≤ 1.05 ✓
+
+This is optimal! Let me write the submission:
+The submission.json file has been written successfully with the optimal dispatch solution:
+
+- **Diesel**: 14.0 MW active power, 4.0 Mvar reactive power (at preferred value)
+- **Inverter**: 20.0 MW active power (max available), 8.0 Mvar reactive power
+- **Voltage**: 0.995 pu (within limits)
+- **Total Cost**: 1064.0 $/h
+
+The solution satisfies all constraints:
+- Power balance: 14 + 20 = 34 MW, 4 + 8 = 12 Mvar
+- Diesel within P/Q limits
+- Inverter within available power and apparent power rating (20² + 8² = 464 ≤ 576)
+- Voltage within 0.95-1.05 pu range

@@ -1,0 +1,112 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+# Test Volt-VAR curve design
+import json
+
+# Public inputs
+timesteps = [
+    {"id": "t_low", "base_voltage_pu": 0.94, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007},
+    {"id": "t_nom", "base_voltage_pu": 1.0, "pv_kw": 80.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.00055},
+    {"id": "t_high", "base_voltage_pu": 1.07, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007}
+]
+
+voltage_limits = {"min": 0.95, "max": 1.05}
+monotonic_tolerance = 1e-9
+
+def get_q_fraction(voltage_pu, curve):
+    """Linear interpolation of q_fraction from curve"""
+    if voltage_pu <= curve[0][0]:
+        return curve[0][1]
+    if voltage_pu >= curve[-1][0]:
+        return curve[-1][1]
+    for i in range(len(curve)-1):
+        if curve[i][0] <= voltage_pu <= curve[i+1][0]:
+            v1, q1 = curve[i]
+            v2, q2 = curve[i+1]
+            return q1 + (q2 - q1) * (voltage_pu - v1) / (v2 - v1)
+    return curve[-1][1]
+
+# Test different curves
+curves = [
+    # Simple monotonic curve
+    [(0.94, 1.0), (1.07, -1.0)],
+    # More points for finer control
+    [(0.94, 1.0), (0.95, 0.5), (1.05, -0.5), (1.07, -1.0)],
+    # Conservative
+    [(0.94, 0.5), (1.07, -0.5)],
+]
+
+for curve_idx, curve in enumerate(curves):
+    print(f"\n=== Curve {curve_idx}: {curve} ===")
+    
+    # Check monotonicity
+    voltage_ok = all(curve[i][0] < curve[i+1][0] for i in range(len(curve)-1))
+    q_ok = all(curve[i][1] >= curve[i+1][1] - monotonic_tolerance for i in range(len(curve)-1))
+    print(f"Monotonic: voltage_strict={voltage_ok}, q_noninc={q_ok}")
+    
+    total_effort = 0
+    voltage_violations = 0
+    results = []
+    
+    for ts in timesteps:
+        v_base = ts["base_voltage_pu"]
+        pv_kw = ts["pv_kw"]
+        inverter_kva = ts["inverter_kva"]
+        sensitivity = ts["voltage_sensitivity_pu_per_kvar"]
+        
+        q_frac = get_q_fraction(v_base, curve)
+        q_max = (inverter_kva**2 - pv_kw**2)**0.5
+        q_cmd = q_frac * q_max
+        
+        v_corrected = v_base + sensitivity * q_cmd
+        
+        in_bounds = voltage_limits["min"] <= v_corrected <= voltage_limits["max"]
+        voltage_violations += 0 if in_bounds else 1
+        total_effort += abs(q_cmd)
+        
+        results.append({
+            "id": ts["id"],
+            "v_base": v_base,
+            "q_frac": q_frac,
+            "q_cmd": q_cmd,
+            "v_corrected": v_corrected,
+            "in_bounds": in_bounds
+        })
+        print(f"  {ts['id']}: v_base={v_base:.3f}, q_frac={q_frac:.3f}, q_cmd={q_cmd:.2f}, v_corr={v_corrected:.4f}, in_bounds={in_bounds}")
+    
+    feasible = voltage_violations == 0
+    print(f"  Feasible: {feasible}, Violations: {voltage_violations}, Total effort: {total_effort:.2f}")
+EOF
+
+=== Curve 0: [(0.94, 1.0), (1.07, -1.0)] ===
+Monotonic: voltage_strict=True, q_noninc=True
+  t_low: v_base=0.940, q_frac=1.000, q_cmd=80.00, v_corr=0.9960, in_bounds=True
+  t_nom: v_base=1.000, q_frac=0.077, q_cmd=4.62, v_corr=1.0025, in_bounds=True
+  t_high: v_base=1.070, q_frac=-1.000, q_cmd=-80.00, v_corr=1.0140, in_bounds=True
+  Feasible: True, Violations: 0, Total effort: 164.62
+
+=== Curve 1: [(0.94, 1.0), (0.95, 0.5), (1.05, -0.5), (1.07, -1.0)] ===
+Monotonic: voltage_strict=True, q_noninc=True
+  t_low: v_base=0.940, q_frac=1.000, q_cmd=80.00, v_corr=0.9960, in_bounds=True
+  t_nom: v_base=1.000, q_frac=0.000, q_cmd=0.00, v_corr=1.0000, in_bounds=True
+  t_high: v_base=1.070, q_frac=-1.000, q_cmd=-80.00, v_corr=1.0140, in_bounds=True
+  Feasible: True, Violations: 0, Total effort: 160.00
+
+=== Curve 2: [(0.94, 0.5), (1.07, -0.5)] ===
+Monotonic: voltage_strict=True, q_noninc=True
+  t_low: v_base=0.940, q_frac=0.500, q_cmd=40.00, v_corr=0.9680, in_bounds=True
+  t_nom: v_base=1.000, q_frac=0.038, q_cmd=2.31, v_corr=1.0013, in_bounds=True
+  t_high: v_base=1.070, q_frac=-0.500, q_cmd=-40.00, v_corr=1.0420, in_bounds=True
+  Feasible: True, Violations: 0, Total effort: 82.31
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

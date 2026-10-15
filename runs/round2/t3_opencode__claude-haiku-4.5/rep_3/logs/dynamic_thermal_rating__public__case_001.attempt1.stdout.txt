@@ -1,0 +1,33 @@
+I'll read the instructions and task to understand what I need to do.
+Now I understand the task. I need to compute the dynamic thermal rating of an overhead conductor using a steady-state heat balance model. Let me create a calculation script to solve this and then write the submission.
+
+The formula is:
+- R_hot = (resistance_ohm_per_km_at_20c/1000) * (1 + resistance_temp_coeff_per_c*(T_max - 20))
+- convection = convective_w_per_m_c_at_1ms * max(wind_speed_m_s, 0.05)^0.6 * (T_max - ambient_temperature_c)
+- radiation = emissivity * 5.670374419e-8 * (pi * diameter_mm/1000) * ((T_max+273.15)^4 - (ambient+273.15)^4)
+- solar gain = solar_absorptivity * solar_w_per_m2 * (diameter_mm/1000)
+- Ampacity = sqrt(max(convection + radiation - solar gain, 0) / R_hot)
+
+Let me write a Python script to calculate this:
+Perfect! Let me verify the submission was written correctly:
+Done! The submission has been completed. Here's what I calculated:
+
+**Solution Summary:**
+
+I computed the dynamic thermal rating of the overhead conductor using the steady-state heat balance model as specified:
+
+- **Conductor specs**: 22.4 mm diameter ACSR, 0.118 Ω/km @ 20°C, temp coefficient 0.00403/°C
+- **Max temperature**: 75°C
+- **Scheduled current**: 520 A
+
+**Ampacities by timestamp:**
+- t00: 810.66 A (18°C, 2.8 m/s wind, 150 W/m² solar)
+- t01: 451.47 A (31°C, 0.7 m/s wind, 850 W/m² solar) ← **Limiting case**
+- t02: 596.25 A (27°C, 1.4 m/s wind, 600 W/m² solar)
+- t03: 811.60 A (22°C, 3.2 m/s wind, 100 W/m² solar)
+
+**Results:**
+- **Minimum ampacity**: 451.47 A at timestamp **t01**
+- **Overload timestamps**: [t01] — the scheduled current of 520 A exceeds the rating only at t01
+
+The calculation accounts for convection (wind-speed dependent), Stefan-Boltzmann radiation, and solar absorption losses. The submission.json file is valid and ready for evaluation.

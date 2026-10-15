@@ -1,0 +1,34 @@
+Now I understand the task. I need to:
+1. Find the least-cost combination of units that covers demand (260 MW) + reserve (40 MW) = 300 MW
+2. Ensure N-1 security: after losing the largest committed unit, remaining capacity must still cover demand + reserve
+3. Calculate the total cost (startup + no-load costs)
+
+Let me analyze the units:
+- g1: 120 MW, startup 400, no-load 80
+- g2: 160 MW, startup 550, no-load 100
+- g3: 180 MW, startup 700, no-load 120
+- g4: 90 MW, startup 220, no-load 60
+
+I need to find the cheapest combination that:
+1. Total committed capacity ≥ 300 MW
+2. After losing the largest unit, remaining capacity ≥ 300 MW
+
+Let me write a script to enumerate all combinations and find the optimal one.
+Interesting, only one feasible solution was found. Let me verify this is correct by checking all combinations more carefully.
+The analysis confirms that only committing all 4 units (g1, g2, g3, g4) is feasible:
+- Total capacity: 550 MW
+- After losing largest unit (g3 = 180 MW): 550 - 180 = 370 MW (still ≥ 300 MW required)
+- Cost: (400+80) + (550+100) + (700+120) + (220+60) = 480 + 650 + 820 + 280 = $2230
+
+Now let me create the submission.json file:
+The submission.json file has been created successfully with the solution. Let me verify it's valid JSON:
+The task is complete. The submission.json file contains:
+
+- **committed_units**: ["g1", "g2", "g3", "g4"] - all four units must be committed
+- **available_capacity_mw**: 550 - total capacity of all units (120+160+180+90)
+- **n1_secure_capacity_mw**: 370 - capacity after losing the largest unit (550-180=370)
+- **reserve_mw**: 290 - available capacity minus demand (550-260=290)
+- **commitment_cost_usd**: 2230 - total startup + no-load costs
+- **rationale**: explanation of the calculation
+
+This is the only feasible solution that satisfies all hard constraints (meets demand, meets reserve, and survives N-1 loss of the largest committed unit).

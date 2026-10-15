@@ -1,0 +1,54 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mls -la <sandbox_a1>
+total 392
+drwx------    2 root root   4096 Oct 14 17:27 .
+drwxrwxrwt 2058 root root 380928 Oct 14 17:27 ..
+-rw-r--r--    1 root root   1169 Oct 14 17:27 instructions.md
+-rw-r--r--    1 root root   5087 Oct 14 17:27 task.json
+[0m
+[0m$ [0mpython3 - <<'EOF'
+curve=[(0.15,0.2),(0.7,0.5),(2.0,0.85)]
+trace=[(0.0,1.0,0.0,True),(0.05,0.55,0.1,True),(0.12,0.55,0.25,True),(0.55,0.9,0.22,True),(0.8,1.0,0.0,True)]
+
+def curve_min(t):
+    for d,v in curve:
+        if t<=d: return v
+    return curve[-1][1]
+
+# ride-through
+rt=True
+for t,v,iq,c in trace:
+    req=curve_min(t)
+    if v<req: rt=False
+    if not c and v>=req: pass
+print("ride_through_pass:",rt)
+
+# reactive: after deadline while V<0.9
+Vth=0.9; miniq=0.2; dl=0.1
+sag_start=None
+for t,v,iq,c in trace:
+    if sag_start is None and v<Vth: sag_start=t
+print("sag_start",sag_start,"abs_deadline",dl,"rel_deadline",sag_start+dl)
+for t,v,iq,c in trace:
+    if v<Vth:
+        print(f"t={t} V={v} iq={iq} abspast={t>dl} relpast={t>sag_start+dl}")
+EOF
+ride_through_pass: True
+sag_start 0.05 abs_deadline 0.1 rel_deadline 0.15000000000000002
+t=0.05 V=0.55 iq=0.1 abspast=False relpast=False
+t=0.12 V=0.55 iq=0.25 abspast=True relpast=False
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -c "import json;print(json.load(open('<sandbox_a1>/submission.json')))"
+{'declared_compliant': True, 'rationale': 'Ride-through passes: every trace point stays connected and its voltage is above the envelope minimum for its time (0.05s/0.55pu and 0.12s/0.55pu vs 0.2pu; 0.55s/0.9pu vs 0.5pu; 0.8s/1.0pu vs 0.85pu). Reactive current passes: the voltage drops below 0.9pu at 0.05s (iq=0.1pu, within the 0.1s response deadline), and the first sample after the deadline at 0.12s already provides iq=0.25pu >= 0.2pu; later below-voltage samples also meet it. All clause-level checks pass.'}
+[0m

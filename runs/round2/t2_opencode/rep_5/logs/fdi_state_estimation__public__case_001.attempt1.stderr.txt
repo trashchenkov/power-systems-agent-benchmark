@@ -1,0 +1,90 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m$ [0mls -la <sandbox_a1>
+total 416
+drwx------    2 root root   4096 Oct 14 18:07 .
+drwxrwxrwt 2057 root root 405504 Oct 14 18:07 ..
+-rw-r--r--    1 root root   1175 Oct 14 18:07 instructions.md
+-rw-r--r--    1 root root   7105 Oct 14 18:07 task.json
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mls -la <packets>/fdi_state_estimation__public__case_001/ 2>/dev/null || echo "EXPECTED PATH NOT PRESENT"
+total 28
+drwxr-xr-x  2 root root  4096 Oct 14 17:51 .
+drwxr-xr-x 84 root root 12288 Oct 14 17:51 ..
+-rw-r--r--  1 root root  1175 Oct 14 17:51 instructions.md
+-rw-r--r--  1 root root  7105 Oct 14 17:51 task.json
+[0m
+[0m← [0mWrite solve.py
+Wrote file successfully.
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 solve.py
+Traceback (most recent call last):
+  File "<sandbox_a1>/solve.py", line 58, in <module>
+    Ginv = np.linalg.inv(G)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/numpy/linalg/linalg.py", line 561, in inv
+    ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/numpy/linalg/linalg.py", line 112, in _raise_linalgerror_singular
+    raise LinAlgError("Singular matrix")
+numpy.linalg.LinAlgError: Singular matrix
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 -c "
+import json, numpy as np
+exec(open('solve.py').read().split('active = list')[0])
+print('H=',H)
+print('HTH=',H.T@H)
+print('det',np.linalg.det(H.T@H))
+"
+H= [[0. 0.]
+ [0. 0.]
+ [0. 0.]
+ [0. 0.]
+ [0. 0.]]
+HTH= [[0. 0.]
+ [0. 0.]]
+det 0.0
+[0m
+[0m← [0mEdit solve.py
+Index: <sandbox_a1>/solve.py
+===================================================================
+--- <sandbox_a1>/solve.py
++++ <sandbox_a1>/solve.py
+@@ -8,14 +8,16 @@
+ states = task["public_inputs"]["state_variables"]  # theta_2, theta_3
+ buses = ["b1", "b2", "b3"]
+ idx = {b: i for i, b in enumerate(buses)}
+ sv = {s: i for i, s in enumerate(states)}  # columns
++bus_of_state = {s: "b" + s.split("_")[1] for s in states}
+ 
+ def coef(bus):
+     # row (vector over state variables) for theta_bus
+     r = np.zeros(len(states))
+-    if bus in sv:
+-        r[sv[bus]] = 1.0
++    for s, b in bus_of_state.items():
++        if b == bus:
++            r[sv[s]] = 1.0
+     return r
+ 
+ def h_flow(br):
+     i, j, x = br["from_bus"], br["to_bus"], br["x_pu"]
+
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 solve.py
+active ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b2', 'inj_b3'] state [-0.03353992 -0.06895437] maxnorm 9.365854345173231 inj_b2
+active ['flow_l12', 'flow_l13', 'flow_l23', 'inj_b3'] state [-0.04005882 -0.07009804] maxnorm 0.45681273093955516 flow_l13
+FLAGGED ['inj_b2']
+FINAL STATE {'theta_2': -0.040058823529411765, 'theta_3': -0.07009803921568628}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/fdi_state_estimation__public__case_001/*); auto-rejecting

@@ -1,0 +1,36 @@
+I'll read the instructions and task files to understand what needs to be done.
+Now I understand the task. I need to:
+
+1. Schedule an EV fleet for V2G (Vehicle-to-Grid) support during a critical-load outage
+2. Maximize energy served to the critical load while respecting:
+   - EV power limits (charge/discharge max kW)
+   - Reserve SOC constraints (must maintain minimum state of charge)
+   - Efficiency losses
+   - Dispatch step limits
+3. Output a JSON with:
+   - `dispatch_kw`: dispatch commands for each timestamp and EV
+   - `served_energy_kwh`: total energy served
+   - `final_soc_kwh`: final state of charge for each EV
+   - Optional `rationale`
+
+Let me create a Python script to solve this optimization problem:
+Let me verify this solution is correct by checking the constraints:
+I can see the issue - at t3, we should try harder to serve more load. Let me optimize this further by being more careful with reserve constraints:
+Wait, this doesn't serve more load in t3. The greedy approach was better. Let me reconsider - I need to maximize served_energy_kwh, not maximize dispatch sum:
+Good - the solution is consistent. At t3, there's not enough margin above the reserve to discharge more. Let me verify the final submission:
+Perfect. The solution is valid JSON and satisfies all constraints:
+
+**Summary:**
+
+The V2G outage schedule optimization solved:
+
+- **t1**: ev_a discharges 8 kW, ev_b discharges 6 kW → serves full 10 kW load
+- **t2**: ev_a discharges 4 kW, ev_b discharges 6 kW → serves 10 kW (capped by load)  
+- **t3**: Both EVs at minimum safe discharge (can't go below reserve) → no dispatch
+
+**Results:**
+- Total energy served: 20.0 kWh
+- Final SOC: ev_a=17.33 kWh, ev_b=13.33 kWh (both above reserves: 16 kWh and 12 kWh)
+- All constraints satisfied: power limits, efficiency losses applied, dispatch steps respected, reserves maintained
+
+The submission.json file has been written with valid JSON format.

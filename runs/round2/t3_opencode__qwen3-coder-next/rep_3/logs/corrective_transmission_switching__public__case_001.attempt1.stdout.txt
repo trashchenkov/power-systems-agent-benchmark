@@ -1,0 +1,31 @@
+I'll read the instructions and task files to understand what needs to be done.
+Now I understand the task. I need to solve a DC power flow corrective transmission switching problem. Let me analyze:
+
+**Post-contingency state (l13 is out):**
+- Active branches: l12, l23, l24, l34 (all closed, x=0.1 pu each except l14 with x=0.3 pu)
+- Candidate actions: close l14, open l23, open l24, open l34
+
+**Bus injections (sum = 0):**
+- b1: +100 MW (generator)
+- b2: -20 MW (load)
+- b3: -50 MW (load)
+- b4: -30 MW (load)
+
+**Objective:** Remove post-contingency overloads without islanding.
+
+Let me calculate DC power flows for the current topology using the slack bus (b1). I'll write a helper script to compute the flows.
+The analysis shows:
+- **Current state (l13 out):** l12 has 100 MW flow, exceeding its 75 MW rating (133%)
+- **After closing l14:** All flows are within ratings - l12 has 70.71 MW (94.3% of 75 MW), all others well below 50 MW rating
+
+The closing of l14 creates an alternative path and redistribution of flows, eliminating the overload. Let me verify the other candidate actions would also work or not:
+The results are clear:
+- **Close l14**: ✓ All flows within limits (feasible)
+- **Open l23**: ✗ l12 and l24 overloaded, plus l34 becomes exactly at 100% rating (borderline but l24 still overloaded)
+- **Open l24**: ✗ l12 and l23 overloaded
+- **Open l34**: ✗ l12 still overloaded at 133%
+
+Only closing l14 resolves the overload. The solution is:
+
+- **close_branches**: ["l14"]
+- **open_branches**: []

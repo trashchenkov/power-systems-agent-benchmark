@@ -1,0 +1,29 @@
+I need to analyze the power-systems contingency screening task. Let me calculate severity based on post-contingency loading levels.
+
+The severity is determined by post-contingency flows relative to ratings. A contingency is critical if it causes:
+1. Loading ≥ 100% threshold on any branch
+2. Islanding (network split)
+
+Let me check each contingency for overload conditions:
+
+**out_l12**: l23=95/100=95%, l13=88/70=125.7% → OVERLOAD on l13
+**out_l23**: l12=91/100=91%, l13=55/70=78.6% → No overload
+**out_l13**: l12=99/100=99%, l23=80/100=80% → No overload  
+**out_l34**: l12=80/100=80%, l23=60/100=60%, l13=40/70=57.1% → No overload
+
+For islanding, I need to check if removing a branch disconnects the network:
+- Network: b1-b2 (l12), b2-b3 (l23), b1-b3 (l13), b3-b4 (l34)
+
+Removing l12: b1 connects to b3 via l13, b3 connects to b2 via l23 → not islanded
+Removing l23: b2 connects to b1 via l12, b1 connects to b3 via l13 → not islanded  
+Removing l13: b1 connects to b2 via l12, b2 connects to b3 via l23 → not islanded
+Removing l34: b4 becomes disconnected! → ISLANDING
+
+Based on severity (overload = most severe, then by loading percentage):
+1. out_l12 (causes overload on l13 at 125.7%)
+2. out_l34 (islanding - most severe after overloads)
+3. out_l23 (highest remaining loading at 91%)
+4. out_l13 (next highest at 99%)
+
+Wait, let me re-rank by severity: out_l12 has overload (most severe), out_l34 causes islanding (second severe), then by max post-contingency loading: out_l13 (99%), out_l23 (91%).
+Done.

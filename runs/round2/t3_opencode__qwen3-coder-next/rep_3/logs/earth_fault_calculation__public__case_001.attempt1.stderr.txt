@@ -1,0 +1,105 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import numpy as np
+
+# Given values
+base_mva = 50.0
+voltage_kv = 13.8
+fault_resistance_pu = 0.04
+prefault_voltage_pu = 1.0
+
+# Sequence impedances
+Z1 = complex(0.042, 0.31)
+Z2 = complex(0.045, 0.29)
+Z0 = complex(0.12, 0.82)
+
+# Fault impedance
+Zf = complex(fault_resistance_pu, 0)
+
+# Sequence currents for single-line-to-ground fault
+Z_total = Z1 + Z2 + Z0 + 3*Zf
+I_seq = prefault_voltage_pu / Z_total
+
+print(f"Z_total = {Z_total}")
+print(f"I_seq (pu) = {I_seq}")
+
+# Convert to kA
+# I_base = S_base / (sqrt(3) * V_base)
+I_base = base_mva / (np.sqrt(3) * voltage_kv)
+print(f"I_base = {I_base} kA")
+
+# Sequence currents in kA
+I1_ka = I_seq * I_base
+I2_ka = I_seq * I_base
+I0_ka = I_seq * I_base
+
+print(f"I1 (kA) = {I1_ka}")
+print(f"I2 (kA) = {I2_ka}")
+print(f"I0 (kA) = {I0_ka}")
+
+# Magnitudes and angles
+I1_mag = np.abs(I1_ka)
+I1_angle = np.angle(I1_ka, deg=True)
+I2_mag = np.abs(I2_ka)
+I2_angle = np.angle(I2_ka, deg=True)
+I0_mag = np.abs(I0_ka)
+I0_angle = np.angle(I0_ka, deg=True)
+
+print(f"I1: mag={I1_mag}, angle={I1_angle}")
+print(f"I2: mag={I2_mag}, angle={I2_angle}")
+print(f"I0: mag={I0_mag}, angle={I0_angle}")
+
+# Fault current (3*I0 for LG fault)
+I_fault = 3 * I0_ka
+I_fault_mag = np.abs(I_fault)
+I_fault_angle = np.angle(I_fault, deg=True)
+residual_mag = I_fault_mag
+
+print(f"Fault current (3*I0): {I_fault}")
+print(f"Fault current mag: {I_fault_mag}")
+print(f"Fault current angle: {I_fault_angle}")
+print(f"Residual current mag: {residual_mag}")
+
+# Output JSON
+import json
+submission = {
+    "sequence_currents_ka": {
+        "i1": {"mag_ka": round(I1_mag, 6), "angle_deg": round(I1_angle, 6)},
+        "i2": {"mag_ka": round(I2_mag, 6), "angle_deg": round(I2_angle, 6)},
+        "i0": {"mag_ka": round(I0_mag, 6), "angle_deg": round(I0_angle, 6)}
+    },
+    "fault_current_ka": {"mag_ka": round(I_fault_mag, 6), "angle_deg": round(I_fault_angle, 6)},
+    "residual_current_mag_ka": round(residual_mag, 6),
+    "rationale": "Calculated sequence currents for single-line-to-ground fault: I1=I2=I0=V/(Z1+Z2+Z0+3Zf), converted from pu to kA using I_base=S_base/(sqrt(3)*V_base)"
+}
+
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+EOF
+Z_total = (0.32699999999999996+1.42j)
+I_seq (pu) = (0.15400345401018872-0.668761176435682j)
+I_base = 2.0918488014116874 kA
+I1 (kA) = (0.3221519406844732-1.3989472653576513j)
+I2 (kA) = (0.3221519406844732-1.3989472653576513j)
+I0 (kA) = (0.3221519406844732-1.3989472653576513j)
+I1: mag=1.4355609788993373, angle=-77.03190766561038
+I2: mag=1.4355609788993373, angle=-77.03190766561038
+I0: mag=1.4355609788993373, angle=-77.03190766561038
+Fault current (3*I0): (0.9664558220534196-4.196841796072954j)
+Fault current mag: 4.306682936698012
+Fault current angle: -77.03190766561038
+Residual current mag: 4.306682936698012
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

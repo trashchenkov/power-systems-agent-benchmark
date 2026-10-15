@@ -1,0 +1,159 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Load task
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+# Extract parameters
+case = task['public_inputs']['ibr_frt_case']
+current_limit = case['current_limit_pu']
+prefault_active = case['prefault_active_current_pu']
+reactive_deadband = case['reactive_deadband_pu']
+k_reactive = case['k_reactive_current_pu_per_pu']
+frt_voltage_floor = case['frt_voltage_floor_pu']
+max_low_voltage_duration = case['max_low_voltage_duration_s']
+samples = case['samples']
+
+# Calculate current profile for each sample
+current_profile = {}
+all_iq = []
+all_total = []
+frt_compliant = True
+
+for sample in samples:
+    sample_id = sample['sample_id']
+    time_s = sample['time_s']
+    voltage_pu = sample['voltage_pu']
+    
+    # Calculate reactive current requirement
+    if voltage_pu < reactive_deadband:
+        # Reactive current needed to support voltage
+        iq_required = k_reactive * (reactive_deadband - voltage_pu)
+        iq_pu = min(iq_required, current_limit)
+    else:
+        iq_pu = 0.0
+    
+    # Calculate remaining current capability for active current
+    apparent_current_available = current_limit
+    active_current_available = math.sqrt(max(0, apparent_current_available**2 - iq_pu**2))
+    
+    # Active current is limited by available capability and prefault value
+    # During fault, active current may be reduced to support reactive
+    id_pu = min(prefault_active, active_current_available)
+    
+    # Total current magnitude
+    total_current_pu = math.sqrt(id_pu**2 + iq_pu**2)
+    
+    # Store results
+    current_profile[sample_id] = {
+        'id_pu': round(id_pu, 6),
+        'iq_pu': round(iq_pu, 6),
+        'total_current_pu': round(total_current_pu, 6)
+    }
+    
+    all_iq.append(iq_pu)
+    all_total.append(total_current_pu)
+    
+    # Check FRT compliance:
+    # 1. Voltage must stay above floor or time must be short
+    # 2. Reactive current requirement must be met
+    if voltage_pu < frt_voltage_floor:
+        # Check if we're within the max low voltage duration
+        if time_s > max_low_voltage_duration:
+            frt_compliant = False
+    
+    print(f"{sample_id}: V={voltage_pu:.3f}pu, t={time_s:.3f}s")
+    print(f"  iq_required={k_reactive * max(0, reactive_deadband - voltage_pu):.6f}, iq_pu={iq_pu:.6f}")
+    print(f"  id_pu={id_pu:.6f}, total={total_current_pu:.6f}")
+    print()
+
+# Calculate metrics
+min_reactive = min(all_iq) if all_iq else 0
+max_total = max(all_total) if all_total else 0
+
+print(f"Min reactive current: {min_reactive:.6f} pu")
+print(f"Max total current: {max_total:.6f} pu")
+print(f"FRT compliant: {frt_compliant}")
+
+# Create submission
+submission = {
+    'current_profile_pu': current_profile,
+    'min_reactive_current_pu': round(min_reactive, 6),
+    'max_total_current_pu': round(max_total, 6),
+    'frt_compliant': frt_compliant
+}
+
+print("\nSubmission:")
+print(json.dumps(submission, indent=2))
+
+# Write submission
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+EOF
+
+t000: V=0.880pu, t=0.000s
+  iq_required=0.040000, iq_pu=0.040000
+  id_pu=0.920000, total=0.920869
+
+t080: V=0.520pu, t=0.080s
+  iq_required=0.760000, iq_pu=0.760000
+  id_pu=0.920000, total=1.193315
+
+t160: V=0.480pu, t=0.160s
+  iq_required=0.840000, iq_pu=0.840000
+  id_pu=0.856971, total=1.200000
+
+t240: V=0.740pu, t=0.240s
+  iq_required=0.320000, iq_pu=0.320000
+  id_pu=0.920000, total=0.974064
+
+Min reactive current: 0.040000 pu
+Max total current: 1.200000 pu
+FRT compliant: True
+
+Submission:
+{
+  "current_profile_pu": {
+    "t000": {
+      "id_pu": 0.92,
+      "iq_pu": 0.04,
+      "total_current_pu": 0.920869
+    },
+    "t080": {
+      "id_pu": 0.92,
+      "iq_pu": 0.76,
+      "total_current_pu": 1.193315
+    },
+    "t160": {
+      "id_pu": 0.856971,
+      "iq_pu": 0.84,
+      "total_current_pu": 1.2
+    },
+    "t240": {
+      "id_pu": 0.92,
+      "iq_pu": 0.32,
+      "total_current_pu": 0.974064
+    }
+  },
+  "min_reactive_current_pu": 0.04,
+  "max_total_current_pu": 1.2,
+  "frt_compliant": true
+}
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

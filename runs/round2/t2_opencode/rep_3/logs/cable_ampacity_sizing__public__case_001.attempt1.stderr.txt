@@ -1,0 +1,35 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+I=180.0; pf=0.9; V=400.0; L=250.0; maxv=5.0
+amb=0.96; grp=0.8
+If=12.0; t=0.4; k=143.0
+sinp=math.sqrt(1-pf*pf)
+print('min_thermal', If*1000*math.sqrt(t)/k)
+for c in [(50,192,0.387,0.085),(70,246,0.268,0.082),(95,298,0.193,0.082),(120,346,0.153,0.08),(150,399,0.124,0.08),(185,456,0.0991,0.08)]:
+    s,base,r,x=c
+    da=base*amb*grp
+    dU=math.sqrt(3)*I*(L/1000)*(r*pf+x*sinp)
+    pct=dU/V*100
+    print(s, round(da,6), round(pct,6), 'pass' if (da>=I and pct<=maxv and s>=If*1000*math.sqrt(t)/k) else 'fail')
+"
+
+min_thermal 53.07319149932945
+50 147.456 7.508778 fail
+70 188.928 5.396392 fail
+95 228.864 4.081116 pass
+120 265.728 3.362648 pass
+150 306.432 2.854075 pass
+185 350.208 2.417403 pass
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

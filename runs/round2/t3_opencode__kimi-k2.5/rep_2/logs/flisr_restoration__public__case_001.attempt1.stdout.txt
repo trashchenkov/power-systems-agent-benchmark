@@ -1,0 +1,65 @@
+Let me analyze this power systems restoration task:
+
+**Network Topology:**
+- Source bus: `s`
+- Buses: s → b1 → b2 → b3 → b4 (linear chain)
+- Branches: l_s1 (s-b1), l12 (b1-b2), l23 (b2-b3), l34 (b3-b4)
+- Tie switch: tie_24 (b2-b4), normally open
+
+**Fault:** Branch `l23` (between b2 and b3) is faulted
+
+**Loads and Priorities:**
+- b1: 0 kW, priority 0
+- b2: 50 kW, priority 3
+- b3: 80 kW, priority 5
+- b4: 40 kW, priority 2
+
+**Constraints:**
+- Must isolate faulted branch `l23` (must be open)
+- Network must remain radial (no loops)
+- Must restore at least `min_priority_restored = 10` priority
+
+**Analysis:**
+
+The fault is on l23 (b2-b3). To isolate it:
+- l23 must be OPEN
+
+With l23 open, the network splits:
+- Side 1: s → b1 → b2 (energized from source)
+- Side 2: b3 → b4 (isolated from source)
+
+To restore b3 and b4, we need to use the tie switch tie_24 (b2-b4):
+- Close tie_24 to connect b4 (and b3 through l34) to b2
+
+But we must check radiality:
+- If we close tie_24 while l23 is open, we get: s → b1 → b2 → b4 → b3 (via l34)
+- This is a radial path, no loops formed
+
+**Switching Plan:**
+- Open: l23 (fault isolation)
+- Close: tie_24 (restoration)
+
+**Restored loads:**
+- b1: 0 kW, priority 0
+- b2: 50 kW, priority 3
+- b4: 40 kW, priority 2 (via tie_24)
+- b3: 80 kW, priority 5 (via b4 → l34)
+
+Total restored priority: 3 + 2 + 5 = 10 ✓ (meets min_priority_restored = 10)
+Total restored load: 50 + 40 + 80 = 170 kW
+
+**Switch count:** 2 (1 open + 1 close)
+
+Let me verify this is correct and write the submission:
+The submission has been written. Let me verify it's valid JSON:
+The task is complete. I've written the `submission.json` file with:
+
+- **open_switches**: `["l23"]` - The faulted branch must be opened to isolate the fault
+- **close_switches**: `["tie_24"]` - The tie switch between b2 and b4 is closed to restore power to b4 and b3
+- **rationale**: Explanation of the switching plan
+
+The solution:
+1. Isolates the fault on l23 by opening it
+2. Keeps the network radial (s → b1 → b2 → b4 → b3)
+3. Restores total priority of 10 (b2: 3 + b4: 2 + b3: 5), meeting the minimum requirement of 10
+4. Uses 2 switching actions (1 open + 1 close)

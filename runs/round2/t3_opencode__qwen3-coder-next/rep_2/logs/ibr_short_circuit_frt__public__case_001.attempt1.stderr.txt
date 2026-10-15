@@ -1,0 +1,93 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat > /tmp/calc.py << 'EOF'
+import math
+
+# Constants
+current_limit_pu = 1.2
+prefault_active_current_pu = 0.92
+reactive_deadband_pu = 0.9
+k_reactive_current_pu_per_pu = 2.0
+frt_voltage_floor_pu = 0.45
+
+samples = [
+    {"sample_id": "t000", "time_s": 0.0, "voltage_pu": 0.88},
+    {"sample_id": "t080", "time_s": 0.08, "voltage_pu": 0.52},
+    {"sample_id": "t160", "time_s": 0.16, "voltage_pu": 0.48},
+    {"sample_id": "t240", "time_s": 0.24, "voltage_pu": 0.74}
+]
+
+result = {}
+min_iq = float('inf')
+max_total = float('-inf')
+
+for s in samples:
+    sid = s["sample_id"]
+    v = s["voltage_pu"]
+    
+    # Reactive current calculation
+    if v < reactive_deadband_pu:
+        iq = k_reactive_current_pu_per_pu * (reactive_deadband_pu - v)
+    else:
+        iq = 0.0
+    
+    # Clip by current limit
+    iq = min(iq, current_limit_pu)
+    
+    # Active current: limited by remaining apparent current after reactive priority
+    # ip + iq <= current_limit (in apparent power terms)
+    # ip = sqrt(current_limit^2 - iq^2)
+    ip = math.sqrt(max(0, current_limit_pu**2 - iq**2))
+    
+    # But we also have prefault active current to consider
+    # The active current should be limited by the remaining capability
+    # ip cannot exceed what's available after reactive current
+    ip = min(prefault_active_current_pu, math.sqrt(current_limit_pu**2 - iq**2))
+    
+    total = math.sqrt(ip**2 + iq**2)
+    
+    result[sid] = {
+        "id_pu": round(ip, 6),
+        "iq_pu": round(iq, 6),
+        "total_current_pu": round(total, 6)
+    }
+    
+    min_iq = min(min_iq, iq)
+    max_total = max(max_total, total)
+    print(f"{sid}: v={v}, iq={iq:.4f}, ip={ip:.4f}, total={total:.4f}")
+
+# FRT compliance: ride-through for all samples and meet reactive requirement
+# All voltages are above 0.45 floor, and we're computing reactive current correctly
+frt_compliant = True
+
+submission = {
+    "current_profile_pu": result,
+    "min_reactive_current_pu": round(min_iq, 6),
+    "max_total_current_pu": round(max_total, 6),
+    "frt_compliant": frt_compliant
+}
+
+print("\nSubmission:")
+print(submission)
+
+import json
+with open("submission.json", "w") as f:
+    json.dump(submission, f, indent=2)
+EOF
+python3 /tmp/calc.py
+t000: v=0.88, iq=0.0400, ip=0.9200, total=0.9209
+t080: v=0.52, iq=0.7600, ip=0.9200, total=1.1933
+t160: v=0.48, iq=0.8400, ip=0.8570, total=1.2000
+t240: v=0.74, iq=0.3200, ip=0.9200, total=0.9741
+
+Submission:
+{'current_profile_pu': {'t000': {'id_pu': 0.92, 'iq_pu': 0.04, 'total_current_pu': 0.920869}, 't080': {'id_pu': 0.92, 'iq_pu': 0.76, 'total_current_pu': 1.193315}, 't160': {'id_pu': 0.856971, 'iq_pu': 0.84, 'total_current_pu': 1.2}, 't240': {'id_pu': 0.92, 'iq_pu': 0.32, 'total_current_pu': 0.974064}}, 'min_reactive_current_pu': 0.04, 'max_total_current_pu': 1.2, 'frt_compliant': True}
+[0m
+[93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting

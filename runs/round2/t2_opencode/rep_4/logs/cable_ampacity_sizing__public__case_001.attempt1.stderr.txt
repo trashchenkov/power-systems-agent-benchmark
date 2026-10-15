@@ -1,0 +1,50 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m$ [0mls -la <sandbox_a1>
+total 408
+drwx------    2 root root   4096 Oct 14 17:52 .
+drwxrwxrwt 2058 root root 397312 Oct 14 17:52 ..
+-rw-r--r--    1 root root   1176 Oct 14 17:52 instructions.md
+-rw-r--r--    1 root root   7172 Oct 14 17:52 task.json
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+I=180.0; pf=0.9; V=400.0; L=250.0; maxdU=5.0
+af=0.96; gf=0.8; der=af*gf
+sinphi=math.sqrt(1-pf**2)
+If=12000.0; t=0.4; k=143.0
+thermal=If*math.sqrt(t)/k
+print('thermal',thermal)
+cat=[(50,192,0.387,0.085),(70,246,0.268,0.082),(95,298,0.193,0.082),(120,346,0.153,0.08),(150,399,0.124,0.08),(185,456,0.0991,0.08)]
+for cs,base,r,x in cat:
+    amp=base*der
+    dU=math.sqrt(3)*I*(L/1000)*(r*pf+x*sinphi)
+    pct=dU/V*100
+    print(cs, 'deramp',amp, 'amp_ok',amp>=I, 'pct',pct, 'du_ok',pct<=maxdU, 'th_ok',cs>=thermal)
+"
+thermal 53.07319149932945
+50 deramp 147.45600000000002 amp_ok False pct 7.508777500980464 du_ok False th_ok False
+70 deramp 188.928 amp_ok True pct 5.396392092991876 du_ok False th_ok True
+95 deramp 228.864 amp_ok True pct 4.0811160109942595 du_ok True th_ok True
+120 deramp 265.728 amp_ok True pct 3.362648306449504 du_ok True th_ok True
+150 deramp 306.432 amp_ok True pct 2.854074888077093 du_ok True th_ok True
+185 deramp 350.208 amp_ok True pct 2.417403228853884 du_ok True th_ok True
+[0m
+[0m$ [0mls -la <packets>/cable_ampacity_sizing__public__case_001/ 2>&1 | head
+total 28
+drwxr-xr-x  2 root root  4096 Oct 14 17:50 .
+drwxr-xr-x 84 root root 12288 Oct 14 17:50 ..
+-rw-r--r--  1 root root  1176 Oct 14 17:50 instructions.md
+-rw-r--r--  1 root root  7172 Oct 14 17:50 task.json
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/cable_ampacity_sizing__public__case_001/*); auto-rejecting

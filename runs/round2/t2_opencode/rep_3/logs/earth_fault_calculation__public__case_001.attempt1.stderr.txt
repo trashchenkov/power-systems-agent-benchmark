@@ -1,0 +1,53 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m$ [0mls -la <sandbox_a1>
+total 392
+drwx------    2 root root   4096 Oct 14 17:16 .
+drwxrwxrwt 2058 root root 380928 Oct 14 17:16 ..
+-rw-r--r--    1 root root   1178 Oct 14 17:16 instructions.md
+-rw-r--r--    1 root root   4586 Oct 14 17:16 task.json
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 -c "
+import cmath, math
+Z1=complex(0.042,0.31); Z2=complex(0.045,0.29); Z0=complex(0.12,0.82); Zf=0.04
+Ztot=Z1+Z2+Z0+3*Zf
+I=1.0/Ztot
+Ibase=50.0/(math.sqrt(3)*13.8)
+def out(z):
+    return z*Ibase, abs(z*Ibase), math.degrees(cmath.phase(z*Ibase))
+print('Ztot',Ztot)
+print('Ibase',Ibase)
+for n,v in [('i1',I),('i2',I),('i0',I)]:
+    c,m,a=out(v); print(n,m,a)
+c,m,a=out(3*I); print('3I0',m,a)
+print('residual',abs(3*I*Ibase))
+"
+Ztot (0.32699999999999996+1.42j)
+Ibase 2.0918488014116874
+i1 1.4355609788993373 -77.03190766561038
+i2 1.4355609788993373 -77.03190766561038
+i0 1.4355609788993373 -77.03190766561038
+3I0 4.306682936698012 -77.03190766561038
+residual 4.306682936698012
+[0m
+[0m$ [0mls -d <packets>/earth_fault_calculation__public__case_001/ 2>/dev/null && echo EXISTS || echo NO
+<packets>/earth_fault_calculation__public__case_001/
+EXISTS
+[0m
+[0m$ [0mstat -c '%i %n' <sandbox_a1> <packets>/earth_fault_calculation__public__case_001; ls <packets>/earth_fault_calculation__public__case_001
+1222261 <sandbox_a1>
+6325498 <packets>/earth_fault_calculation__public__case_001
+instructions.md
+task.json
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/earth_fault_calculation__public__case_001/*); auto-rejecting

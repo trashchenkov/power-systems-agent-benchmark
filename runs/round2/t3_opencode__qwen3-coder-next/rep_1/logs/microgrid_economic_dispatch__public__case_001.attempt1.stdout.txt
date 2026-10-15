@@ -1,0 +1,675 @@
+I need to solve a microgrid economic dispatch problem. Let me analyze the task and create an optimal dispatch plan.
+
+**Given:**
+- 3 time periods (t1, t2, t3), 1 hour each
+- Load: t1=45, t2=62, t3=50 MW
+- PV: t1=10, t2=8, t3=18 MW
+- Diesel generator: pmin=15, pmax=70, cost=85 $/MWh
+- Battery: initial SOC=18, SOC min=6, SOC max=30, charge pmax=8, discharge pmax=12, charge eff=0.95, discharge eff=0.9
+
+**Strategy:** Use PV first, then battery discharge when PV is insufficient, use diesel for remaining load. Battery charges when there's excess PV/diesel.
+
+Let me compute the optimal dispatch:
+
+- **T1:** Load=45, PV=10 → need 35 more from diesel+battery. Diesel min=15, so set diesel=15, battery discharge=20 (but battery discharge pmax=12). So: diesel=15, battery_discharge=12, remaining=18 from PV (curtail PV to 10). Actually PV=10 can serve part of load directly. Need diesel+battery to cover 45-10=35. With diesel min 15 and battery discharge max 12, that's only 27. Need diesel=23 (15+8 more). Wait, I can adjust diesel continuously.
+
+Optimal: minimize diesel cost, so maximize battery use (free energy from initial charge).
+
+**T1:** Need 45 MW. PV=10. Diesel min=15, max=70. Battery discharge max=12.
+- Best: diesel=15 (min), battery_discharge=12, total=27, plus PV=10 → only 37, need 8 more. So diesel must be 23.
+
+**T2:** Load=62, PV=8. Need 54 more.
+- Diesel=15, battery_discharge=12 → 27, need 35 more from diesel (47 total). Diesel 47 is within range.
+
+**T3:** Load=50, PV=18. Need 32 more.
+- Diesel=15, battery_discharge=12 → 27, need 5 more from diesel (20 total).
+
+But battery has limited energy (18 MWh initial). Let me check if battery has enough:
+- T1 discharge: 12 MWh → SOC=6
+- T2: battery can't discharge more (SOC at min)
+- T3: battery can't discharge
+
+That's 12 MWh from battery. Need to check if we can use charge-discharge strategically.
+
+Actually, better strategy: charge battery during low-load periods (if diesel produces excess) and discharge during high-load periods.
+
+**T1:** Load=45, PV=10
+- Option: diesel=35, PV fully used, battery charge/discharge
+- To minimize cost, use battery discharge (uses stored energy "for free")
+- Battery discharge max 12 → need diesel=45-10-12=23
+
+**T2:** Load=62, PV=8
+- Battery is now at 18-12=6 (min). Can't discharge more.
+- Need diesel=62-8=54 (PV fully used)
+
+**T3:** Load=50, PV=18
+- Battery still at 6. Need diesel=50-18=32
+
+Total diesel energy: 23+54+32=109 MWh
+Cost: 109 * 85 = $9265
+
+But battery SOC ended at 6, which is below initial 18. We could potentially do better by charging the battery when diesel output is efficient.
+
+Wait - we should end with SOC ≥ initial or at least feasible. The constraint is SOC must stay between 6 and 30, starting from 18.
+
+Actually, let me reconsider. The battery can both charge and discharge. We should use it strategically.
+
+**Better approach:** Since battery energy is finite (12 MWh net available from initial 18 to final at least 6), use it during the period with highest marginal diesel need.
+
+All periods have similar load patterns. Let me compute more carefully.
+
+**Power balance:** diesel + battery_discharge + pv_used = load
+where battery_discharge positive (discharging), pv_used ≤ pv_mw, pv_curtailment = pv_mw - pv_used
+
+**Battery SOC update:** soc[t+1] = soc[t] - discharge_eff * battery_discharge[t] + charge_eff * battery_charge[t]
+with battery_mw = battery_discharge[t] - battery_charge[t] (positive = net discharge)
+
+Given battery_mw in submission is net (positive=discharge), and we need to track charge/discharge separately for efficiency.
+
+With discharge_eff=0.9 and charge_eff=0.95, there's a round-trip loss. So net energy loss when using battery = 1 - 0.9*0.95 = 1 - 0.855 = 0.145 (14.5% loss).
+
+**Optimal strategy:** Use battery during highest load periods to avoid high diesel use.
+
+Let's compute minimum diesel needed per period if battery could perfectly compensate:
+
+- **T1:** 45 - 10 - 12 = 23 (using battery discharge max)
+- **T2:** 62 - 8 - 12 = 42  
+- **T3:** 50 - 18 - 12 = 20
+
+But battery only has 12 MWh net available (from SOC 18 to 6, accounting for losses it's about 12 MWh discharge ≈ 10.2 MWh effective net).
+
+ Actually battery has 12 MWh usable (18-6=12), but due to efficiency:
+- To discharge 12 MWh (actual), SOC decreases by 12/0.9 = 13.33 MWh
+- To charge 8 MWh (actual), SOC increases by 8*0.95 = 7.6 MWh
+
+So maximum net discharge while respecting SOC bounds: starting at 18, ending at ≥6.
+Max discharge: 18-6=12 MWh decrease in SOC.
+If we discharge D and charge C (actual energy), then D/0.9 - C*0.95 = 12 (SOC decrease).
+To maximize net energy delivered: D - C = net, with D/0.9 - C*0.95 = 12.
+Net = D - C = D - (D/0.9 - 12)/0.95 = D - D/(0.9*0.95) + 12/0.95 = D*(1 - 1/0.855) + 12.63
+= D*(-0.1696) + 12.63
+
+This is maximized when D is minimized (D≥0). If D=0, net=12.63 (charging only, which doesn't help).
+If we only discharge (C=0), D/0.9=12, D=10.8 MWh actual discharge, SOC goes from 18 to 6.
+
+So maximum battery energy contribution is 10.8 MWh (discharge) with SOC going from 18 to 6.
+
+Wait, let me reconsider the SOC calculation:
+- When discharging X MWh (to the grid), SOC decreases by X/discharge_eff = X/0.9
+- When charging Y MWh (from the grid), SOC increases by Y*charge_eff = Y*0.95
+
+So if we discharge D and charge C:
+SOC_final = 18 - D/0.9 + C*0.95 ≥ 6
+D/0.9 - C*0.95 ≤ 12
+
+The net energy delivered to grid is D - C (since charging consumes energy).
+
+We want to maximize D - C subject to D/0.9 - C*0.95 ≤ 12, D ≤ 12*3=36 (over 3 periods), C ≤ 8*3=24.
+
+From D/0.9 - C*0.95 ≤ 12:
+D ≤ 10.8 + 0.855*C
+
+Net = D - C ≤ 10.8 + 0.855*C - C = 10.8 - 0.145*C
+
+This is maximized when C=0 (no charging), giving Net ≤ 10.8.
+
+So maximum battery contribution is 10.8 MWh (all discharge, no charging).
+
+Now, to minimize diesel cost, use battery during periods with highest load (where it saves the most diesel).
+
+Loads: T1=45, T2=62, T3=50. PV: T1=10, T2=8, T3=18.
+
+**Unmet load without battery:** 
+- T1: 45-10=35
+- T2: 62-8=54
+- T3: 50-18=32
+
+With 10.8 MWh battery, we should use it where it saves the most diesel.
+
+**Effective need after PV:**
+- T1: 35 MW for 1 hour = 35 MWh
+- T2: 54 MWh
+- T3: 32 MWh
+
+T2 has highest need, so use battery there.
+
+**T2 with battery:** 54 - 10.8 = 43.2 (but battery discharge pmax is 12 per period, so we can only discharge 12 MWh max in T2).
+
+Actually, battery discharge rate limit is 12 MW (12 MWh per period). Over 3 periods, max discharge is 36 MWh, but SOC constraint limits to 10.8 MWh total.
+
+Since SOC constraint binds first (10.8 < 36), we can use up to 10.8 MWh total from battery.
+
+**Use battery in T2 (highest load):**
+- T2: diesel = 62 - 8 - 10.8 = 43.2, but battery discharge pmax is 12 MW, so we can only discharge 12 MWh in T2.
+
+With rate limit: max 12 MWh in any one period.
+
+So we use 12 MWh in T2 (the period with highest load).
+
+**Dispatch:**
+- **T1:** Load=45, PV=10, need 35. Diesel min=15. Use battery? SOC=18, can discharge.
+  - If battery discharge=12 (max): diesel=45-10-12=23
+  - SOC after T1: 18 - 12/0.9 = 18 - 13.33 = 4.67 (below min 6!) ❌
+  
+  Need to ensure SOC stays ≥6. After discharge D, SOC = 18 - D/0.9 ≥ 6, so D ≤ 10.8.
+
+  So max discharge in T1 is 10.8 MW if we discharge all in T1.
+
+- **T2:** SOC starts at 18 - D1/0.9. Max discharge D2 s.t. 18 - D1/0.9 - D2/0.9 ≥ 6, so D1 + D2 ≤ 10.8.
+  If D1=0, D2 ≤ 10.8. But rate limit D2 ≤ 12, so D2 ≤ 10.8.
+
+- **T3:** Similar constraints.
+
+Actually, the easiest is to discharge 10.8 MWh in T2 (highest load).
+
+**T1:** diesel=45-10=35 (no battery), SOC=18
+**T2:** diesel=62-8-10.8=43.2, battery_discharge=10.8, SOC after = 18 - 10.8/0.9 = 18 - 12 = 6
+**T3:** diesel=50-18=32, battery=0, SOC=6
+
+But T2 battery discharge is 10.8 MW for 1 hour (rate limit 12 MW is satisfied).
+
+Total diesel: 35 + 43.2 + 32 = 110.2 MWh
+Cost: 110.2 * 85 = $9367
+
+But wait, we could use battery across multiple periods. Let's check if spreading is better.
+
+**Alternate:** Discharge 10.8 MWh in T2 only.
+- T1: diesel=35, battery=0, SOC=18
+- T2: diesel=43.2, battery=10.8, SOC=6
+- T3: diesel=32, battery=0, SOC=6
+
+**Another option:** Use battery in T3 (second highest load).
+
+**T1:** diesel=35, battery=0, SOC=18
+**T2:** diesel=54, battery=0, SOC=18
+**T3:** diesel=50-18-10.8=21.2, battery=10.8, SOC=6
+
+Total diesel: 35 + 54 + 21.2 = 110.2 MWh (same cost)
+
+Since PV is lowest in T2, using battery there saves the most diesel fuel.
+
+Wait, let me recalculate: PV is 8 in T2 (lowest), so using battery in T2 saves 10.8 MWh of diesel (assuming diesel fully replaces the needed power). 
+
+Actually, the saving is exactly the battery energy delivered (10.8 MWh) since dieselcost per MWh is constant.
+
+So any schedule that delivers 10.8 MWh from battery saves 10.8 * 85 = $918.
+
+Without battery: diesel = (45-10) + (62-8) + (50-18) = 35 + 54 + 32 = 121 MWh
+Cost without battery: 121 * 85 = $10285
+
+With battery: 121 - 10.8 = 110.2 MWh diesel
+Cost: 110.2 * 85 = $9367
+
+But wait, can we really achieve 10.8 MWh battery discharge?
+
+T2: load=62, PV=8, need diesel+battery=54. Battery max discharge is 12 MW, so 10.8 is feasible.
+
+What about battery charging? Could we charge during low-load and discharge during high-load?
+
+**T1:** Load=45, PV=10. If diesel=15 (min), then 30 MW excess. Battery can charge up to 8 MW.
+- Charge 8 MWh, SOC becomes 18 + 8*0.95 = 18 + 7.6 = 25.6
+
+**T2:** Load=62, PV=8, need 54. Battery can discharge 12 MW max.
+- Discharge 12 MWh, SOC becomes 25.6 - 12/0.9 = 25.6 - 13.33 = 12.27
+- Diesel = 54 - 12 = 42
+
+**T3:** Load=50, PV=18, need 32. Battery has room.
+- Discharge 10.27 MWh (to go SOC from 12.27 to 6: decrease of 6.27, so discharge = 6.27*0.9 = 5.64 MWh... wait)
+
+Let me recalculate:
+SOC after T2: 12.27
+SOC final ≥ 6, so max decrease = 12.27 - 6 = 6.27
+Max discharge = 6.27 * 0.9 = 5.64 MWh
+
+T3 diesel = 32 - 5.64 = 26.36
+
+Total diesel: 15 + 42 + 26.36 = 83.36 MWh
+Cost: 83.36 * 85 = $7085.6
+
+That's much better! But wait, did I satisfy power balance?
+
+**T1:** diesel=15, pv_used=10, battery_charge=8 (in), total supply=15+10+8=33, load=45. Deficit! ❌
+
+Power balance: diesel + pv_used + battery_discharge = load
+where battery_discharge is positive for discharge, negative for charge (net).
+
+Or: diesel + pv_used = load - battery_discharge (with battery_discharge positive when discharging)
+
+For charging: battery_discharge is negative, so load - (-|battery|) = load + |battery|, meaning we need more supply to charge the battery.
+
+**T1 power balance:** diesel + pv_used + (battery charging power) = load + charging power... this is confusing.
+
+Let me think differently. The grid must balance:
+diesel_generation + pv_used + battery_discharge = load
+where battery_discharge > 0 means discharging (supplying), battery_discharge < 0 means charging (consuming).
+
+For charging: if battery is charged at rate C (MW), then battery_discharge = -C, and the power consumed for charging is C (plus losses... no, the charging power comes from the grid).
+
+Actually, for battery charging, the grid supplies power that goes into the battery. Due to efficiency, if battery stores energy at rate C (MWh), the grid must supply C/charge_eff energy.
+
+So: diesel + pv_used + (battery_discharge if discharge, or 0 if charge) = load + (charging power)
+
+More precisely:
+- If battery_discharge = D > 0 (discharging): diesel + pv_used + D = load
+- If battery_discharge = -C < 0 (charging): diesel + pv_used = load + C/charge_eff (because charging consumes C/charge_eff from grid to store C in battery)
+
+This is complex. Let me use the net battery_mw approach.
+
+The submission asks for battery_mw (positive=discharge). The SOC update is:
+soc[t+1] = soc[t] - discharge_eff * max(0, battery_mw[t]) + charge_eff * max(0, -battery_mw[t])
+
+And power balance:
+diesel[t] + pv_used[t] + max(0, battery_mw[t]) = load[t] + max(0, -battery_mw[t]) / charge_eff ??
+
+No wait, for charging: if battery_mw is negative (charging), that means power is flowing into the battery. The grid must supply this power plus losses.
+
+Actually, looking at standard battery modeling:
+- When discharging: battery supplies power to grid. If battery_mw = D > 0, then D goes to grid, SOC decreases by D/discharge_eff.
+- When charging: power goes to battery from grid. If battery_mw = -C < 0, then C comes from grid to battery, SOC increases by C*charge_eff.
+
+Power balance: diesel + pv_used + (battery_discharge component) = load
+
+For discharge: diesel + pv_used + D = load
+For charge: diesel + pv_used = load + C (where C is charging power)
+
+So in both cases: diesel + pv_used + max(0, battery_mw) = load + max(0, -battery_mw)
+
+SOC update: soc[t+1] = soc[t] - max(0, battery_mw[t])/discharge_eff + max(0, -battery_mw[t])*charge_eff
+
+**Let's redo the Alternate strategy:**
+
+**T1:** Load=45
+- Set diesel=15 (min), pv_used=10 (all PV), battery charge C such that power balances.
+- Power balance: 15 + 10 = 45 + C → C = -20. But battery charge pmax is 8 MW.
+- So max charge C=8. Then: 15 + 10 = 45 + 8? No, 25 ≠ 53. ❌
+
+The power balance equation for charging is wrong.
+
+Let me reconsider. When battery charges:
+- Power from grid goes to battery. Some is stored, some is loss.
+- If charging power (from grid) is C_grid, then energy stored is C_grid * charge_eff.
+- Battery_mw = -C_grid (negative because power is flowing into battery).
+
+Power balance: diesel + pv_used = load + C_grid = load + |battery_mw| (when charging)
+
+So: diesel + pv_used = load + |battery_mw| when battery_mw < 0.
+And: diesel + pv_used + battery_mw = load when battery_mw > 0.
+
+Combined: diesel + pv_used + max(0, battery_mw) = load + max(0, -battery_mw)
+
+**T1:** Load=45, diesel=15, pv_used=10
+15 + 10 + max(0, battery_mw) = 45 + max(0, -battery_mw)
+25 + max(0, battery_mw) = 45 + max(0, -battery_mw)
+
+If battery_mw ≥ 0 (discharge):
+25 + battery_mw = 45 → battery_mw = 20. But discharge pmax is 12. ❌
+
+If battery_mw < 0 (charge):
+25 = 45 + (-battery_mw) → -battery_mw = -20 → battery_mw = 20. Contradiction (should be negative). ❌
+
+So with diesel=15 and pv=10, we can't balance the load of 45 even with battery help. We need more diesel.
+
+If battery_discharge=12 (max):
+15 + 10 + 12 = 37 < 45. Still not enough.
+
+We need diesel such that diesel + 10 + 12 ≥ 45 → diesel ≥ 23.
+
+**Back to basic:**
+
+**T1:** diesel + pv_used + battery_discharge = 45, with 15 ≤ diesel ≤ 70, 0 ≤ battery_discharge ≤ 12 (or battery_charge ≤ 8 if negative).
+Since load > diesel_min + pv_max + battery_discharge_max = 15 + 10 + 12 = 37, we must have diesel > 15.
+
+Minimum diesel in T1: 45 - 10 - 12 = 23.
+
+**T2:** Load=62. Min diesel = 62 - 8 - 12 = 42.
+**T3:** Load=50. Min diesel = 50 - 18 - 12 = 20.
+
+**Without battery optimization (just max discharge when needed):**
+
+Since battery has only 10.8 MWh net available (SOC 18 to 6), and we want to minimize diesel cost, use battery in the period with highest load after subtracting PV (i.e., highest "diesel need").
+
+**Diesel need without battery:**
+- T1: 45 - 10 = 35
+- T2: 62 - 8 = 54
+- T3: 50 - 18 = 32
+
+T2 has highest need. Use all 10.8 MWh battery discharge in T2.
+
+**T2 dispatch:**
+- Load=62, PV=8, battery_discharge=10.8 (net, for 1 hour)
+- Power balance: diesel + 8 + 10.8 = 62 → diesel = 43.2
+- SOC after T2: 18 - 10.8/0.9 = 18 - 12 = 6
+
+**T1 and T3 (no battery):**
+- T1: diesel + pv_used = 45. Use all PV, diesel = 35.
+- T3: diesel + pv_used = 50. Use all PV, diesel = 32.
+
+**Total diesel:** 35 + 43.2 + 32 = 110.2 MWh
+**Cost:** 110.2 * 85 = $9367
+
+But wait, can we do better by charging battery at some point?
+
+**With charging strategy:**
+If we charge battery during a period, we consume extra diesel-generated power to store energy for later.
+
+For example, in T3 with lower load, we could charge battery using excess diesel, then discharge in T2.
+
+But T2 comes before T3, so we can't charge in T3 for use in T2.
+
+What about T1 → T2 or T1 → T3?
+
+**T1 charge, T2 discharge:**
+- T1: Charge battery with C. Power balance: diesel + pv_used = 45 + C. To minimize cost, use min diesel=15, all PV=10.
+  So: 15 + 10 = 45 + C → C = -20 (impossible, need diesel more).
+  With max charge C=8: 15 + 10 = 45 + 8 = 53? No.
+  
+  We need: diesel = 45 + C - 10 = 35 + C. With C≤8, diesel≤43.
+  
+  Let's charge C=8 (max). Diesel = 43. SOC after T1: 18 + 8*0.95 = 25.6.
+  
+- T2: Load=62, PV=8, SOC=25.6. Discharge battery. SOC must stay ≥6, so max discharge D such that 25.6 - D/0.9 ≥ 6 → D ≤ 17.64. But rate limit D≤12.
+  So D=12. Power balance: diesel + 8 + 12 = 62 → diesel = 42.
+  SOC after T2: 25.6 - 12/0.9 = 25.6 - 13.33 = 12.27.
+  
+- T3: Load=50, PV=18, SOC=12.27. Can discharge more: max D such that 12.27 - D/0.9 ≥ 6 → D ≤ 5.64.
+  Power balance with D=5.64: diesel + 18 + 5.64 = 50 → diesel = 26.36.
+  SOC after T3: 12.27 - 5.64/0.9 = 12.27 - 6.27 = 6.
+
+**Total diesel:** 43 + 42 + 26.36 = 111.36 MWh
+**Cost:** 111.36 * 85 = $9465.6
+
+This is worse than not charging! Because charging uses diesel energy with loss (charge_eff=0.95), and discharging gives less energy back (discharge_eff=0.9), the round-trip efficiency is 0.855. So for every 1 MWh charged, we get only 0.855 MWh back. It's better to directly use diesel.
+
+**What if we charge with excess PV?**
+
+T1: PV=10, load=45, diesel=23 (min with battery). No excess.
+T2: PV=8, load=62, if battery discharges 12, diesel=42. No excess.
+T3: PV=18, load=50, if battery discharges 12, diesel=20. No excess.
+
+Actually, there's never excess generation after meeting load with min diesel and max battery discharge. So no opportunity to charge with excess.
+
+**Conclusion:** Optimal is to use battery discharge in T2 (highest load period) without charging.
+
+**Final dispatch:**
+- T1: diesel=23, battery_mw=0, pv_curtailment=0, soc_mwh=18, shed_mw=0
+  Wait, power balance: 23 + 10 + 0 = 33 ≠ 45. Need diesel=35 if no battery.
+
+Let me recalculate:
+
+**T1:** Load=45, PV=10. Want to use battery? 
+- If battery_discharge=0: diesel=35
+- If battery_discharge=12: diesel=23
+
+We have 10.8 MWh battery capacity. Use it in T2 (highest load).
+
+But battery discharge in T1 would reduce T1 diesel, and we'd have less for T2.
+
+Let's compare:
+
+**Option A:** Battery in T2 only (no charge, discharge 10.8 in T2)
+- T1: diesel=35, battery=0, SOC=18
+- T2: diesel=43.2, battery=10.8, SOC=6
+- T3: diesel=32, battery=0, SOC=6
+- Total diesel: 110.2, cost: $9367
+
+**Option B:** Battery in T1 only (discharge 10.8 in T1)
+- T1: diesel=23, battery=10.8, SOC=6
+- T2: diesel=54, battery=0, SOC=6 (can't discharge more)
+- T3: diesel=32, battery=0, SOC=6
+- Total diesel: 109, cost: $9265
+
+**Option C:** Battery in T3 only (discharge 10.8 in T3)
+- T1: diesel=35, battery=0, SOC=18
+- T2: diesel=54, battery=0, SOC=18
+- T3: diesel=21.2, battery=10.8, SOC=6
+- Total diesel: 110.2, cost: $9367
+
+Option B is best! Discharge battery in T1, where load is lower, but the diesel saved (12 MW for 1 hour = 12 MWh) is the same regardless of period (since diesel cost is constant). Wait, but diesel must meet pmin.
+
+In T1 with battery discharge 10.8: diesel=23, which is ≥ pmin=15. ✓
+In T2 with battery discharge 10.8: diesel=43.2, which is ≥ pmin=15. ✓
+In T3 with battery discharge 10.8:柴油=21.2, which is ≥ pmin=15. ✓
+
+All feasible. Total diesel energy saved by battery = 10.8 MWh in all cases.
+
+But in Option B, diesel = 23 + 54 + 32 = 109 MWh
+In Option A, diesel = 35 + 43.2 + 32 = 110.2 MWh
+In Option C, diesel = 35 + 54 + 21.2 = 110.2 MWh
+
+Option B saves more because by using battery in T1, diesel can be at or near pmin for all periods.
+
+Let's double-check Option B:
+- T1: diesel=23, battery_discharge=10.8, PV=10
+  Power: 23 + 10 + 10.8 = 43.8 ≠ 45. ❌
+
+Wait, power balance is wrong again.
+
+diesel + pv_used + battery_discharge = load
+23 + 10 + 10.8 = 43.8 < 45. Need 1.2 more.
+
+So diesel must be 23 + 1.2 = 24.2.
+
+Or, battery discharge limited by rate: 12 MW max, but SOC limits to 10.8.
+
+With battery discharge 10.8: diesel = 45 - 10 - 10.8 = 24.2
+
+**Option B corrected:**
+- T1: diesel=24.2, battery=10.8, SOC=18-10.8/0.9=6
+- T2: diesel=54, battery=0, SOC=6
+- T3: diesel=32, battery=0, SOC=6
+- Total diesel: 110.2, cost: $9367
+
+Ah, so all options give the same total diesel of 110.2 MWh!
+
+Let me verify Option A and C again:
+
+**Option A (battery in T2):**
+- T2: diesel = 62 - 8 - 10.8 = 43.2
+- Total: 35 + 43.2 + 32 = 110.2 ✓
+
+**Option B (battery in T1):**
+- T1: diesel = 45 - 10 - 10.8 = 24.2
+- Total: 24.2 + 54 + 32 = 110.2 ✓
+
+**Option C (battery in T3):**
+- T3: diesel = 50 - 18 - 10.8 = 21.2
+- Total: 35 + 54 + 21.2 = 110.2 ✓
+
+All are equivalent! The battery provides 10.8 MWh, saving 10.8 MWh of diesel.
+
+Now, the question is which period to discharge. Since T2 has higher load, discharging there might seem better, but mathematically all are equivalent.
+
+However, there's another constraint: battery discharge rate is 12 MW, and SOC limits are 6-30.
+
+If we discharge 10.8 in T1, SOC goes to 6 (min). Then T2 and T3 have no battery help.
+
+If we discharge 10.8 in T2, same SOC profile.
+
+Actually, the exact timing within SOC constraints doesn't matter for total cost. But let's be precise about battery_mw in the submission.
+
+The task says battery_mw is positive for discharge. So in the period we discharge, battery_mw = 10.8 (or up to 12, but SOC limits to 10.8).
+
+Wait, the battery has `dispatch_step_mw: 2.0`. This might mean battery values must be in steps of 2 MW.
+
+Looking at the constraints: `charge_pmax_mw: 8.0, discharge_pmax_mw: 12.0`. And `dispatch_step_mw: 2.0`.
+
+This likely means battery_mw values should be multiples of 2 MW (for computational simplicity).
+
+So possible battery_mw: -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 12 (and negative for charge).
+
+With SOC initial=18, min=6, max=30, max discharge = 12 MWh (but SOC constraint says 18-6=12, and discharge of D reduces SOC by D/0.9, so max D such that D/0.9 ≤ 12 → D ≤ 10.8).
+
+Actually, if we discharge 10 MW (step of 2), SOC decreases by 10/0.9 = 11.11, ending at 6.89.
+
+If we discharge 12 MW, SOC decreases by 12/0.9 = 13.33, ending at 4.67 < 6. Not allowed.
+
+So max discharge per period with discrete steps:
+- 10 MW: SOC change = -11.11, final SOC = 6.89 ≥ 6 ✓
+- 12 MW: SOC change = -13.33, final SOC = 4.67 < 6 ❌
+
+So max is 10 MW per period.
+
+With 10 MW discharge in one period:
+- Diesel saved = 10 MWh
+- Total diesel = 121 - 10 = 111 MWh
+- Cost = 111 * 85 = $9435
+
+**Final plan: Discharge 10 MW in T1 (so battery_mw=10 for T1).**
+
+- T1: Load=45, PV=10, battery_discharge=10
+  - Diesel = 45 - 10 - 10 = 25
+  - SOC after = 18 - 10/0.9 = 18 - 11.11 = 6.89
+  
+- T2: Load=62, PV=8, battery=0
+  - Diesel = 62 - 8 = 54
+  - SOC = 6.89
+  
+- T3: Load=50, PV=18, battery=0
+  - Diesel = 50 - 18 = 32
+  - SOC = 6.89
+
+Total diesel: 25 + 54 + 32 = 111 MWh
+Cost: $9435
+
+But wait, could we charge and discharge for net gain?
+
+T1: Charge battery with 8 MW (max charge). Power: diesel + 10 = 45 + 8 = 53, so diesel=43.
+SOC after = 18 + 8*0.95 = 25.6.
+
+T2: Discharge battery with 10 MW. Power: diesel + 8 + 10 = 62, so diesel=44.
+SOC after = 25.6 - 10/0.9 = 25.6 - 11.11 = 14.49.
+
+T3: Discharge battery with 8.49 MW (to get to SOC=6). But must be step of 2, so 8 or 10.
+With 8 MW: SOC after = 14.49 - 8/0.9 = 14.49 - 8.89 = 5.6 < 6. ❌
+With 6 MW: SOC after = 14.49 - 6/0.9 = 14.49 - 6.67 = 7.82 ≥ 6. ✓
+Power: diesel + 18 + 6 = 50, diesel=26.
+
+Total diesel: 43 + 44 + 26 = 113 MWh
+Cost: $9605. Worse than not charging.
+
+So the optimal is no charging, just discharge 10 MW in one period.
+
+Let me use T1 for simplicity.
+
+**Submission:**
+```json
+{
+  "dispatch": {
+    "t1": {"diesel_mw": 25, "battery_mw": 10, "pv_curtailment_mw": 0, "soc_mwh": 6.89, "shed_mw": 0},
+    "t2": {"diesel_mw": 54, "battery_mw": 0, "pv_curtailment_mw": 0, "soc_mwh": 6.89, "shed_mw": 0},
+    "t3": {"diesel_mw": 32, "battery_mw": 0, "pv_curtailment_mw": 0, "soc_mwh": 6.89, "shed_mw": 0}
+  },
+  "total_cost": 9435
+}
+```
+
+Wait, the SOC in t2 and t3 should reflect the actual values after T1. After T1 discharge of 10 MW, SOC = 18 - 10/0.9 = 6.89. Then no change in T2 and T3.
+
+But typically, SOC is reported at the end of each period. So:
+- t1 SOC: end of period, = 6.89
+- t2 SOC: still 6.89 (no change)
+- t3 SOC: still 6.89
+
+Actually, the SOC in the submission is likely the state at the end of each period. Let me double-check if the solver needs SOC at start or end.
+
+Given the constraints, SOC must be within bounds throughout. With initial SOC=18 and discharge in T1, end of T1 SOC=6.89 which is ≥6. ✓
+
+Let me double-check the SOC calculation more precisely:
+- Discharge 10 MW for 1 hour = 10 MWh delivered.
+- SOC decrease = 10 / discharge_eff = 10 / 0.9 = 11.111... MWh.
+- SOC after T1 = 18 - 11.111... = 6.888... ≈ 6.89.
+
+Actually, let me use exact fractions: 18 - 10/0.9 = 18 - 100/9 = 18 - 11.111... = 6.888... = 62/9.
+
+But for practical purposes, 6.89 is fine.
+
+Now, is there a way to do better? What if we partially use battery in multiple periods?
+
+**Alternative: 10 MW in T1, 0 in T2, 0 in T3** (already computed: cost $9435)
+
+**Alternative: 0 in T1, 10 MW in T2, 0 in T3**
+- T1: diesel=35, battery=0, SOC=18
+- T2: diesel=62-8-10=44, battery=10, SOC=18-10/0.9=6.89
+- T3: diesel=32, battery=0, SOC=6.89
+- Total: 111, cost: $9435 (same)
+
+**Alternative: 0 in T1, 0 in T2, 10 MW in T3**
+- T1: diesel=35, battery=0, SOC=18
+- T2: diesel=54, battery=0, SOC=18
+- T3: diesel=50-18-10=22, battery=10, SOC=18-10/0.9=6.89
+- Total: 111, cost: $9435 (same)
+
+All equivalent. I'll choose T1.
+
+Actually, let me check if battery can discharge less than 10 MW in T1 and use the rest in T2 or T3.
+
+**T1: 8 MW discharge, T2: 2 MW discharge**
+- T1: diesel = 45 - 10 - 8 = 27, SOC = 18 - 8/0.9 = 18 - 8.89 = 9.11
+- T2: diesel = 62 - 8 - 2 = 52, SOC = 9.11 - 2/0.9 = 9.11 - 2.22 = 6.89
+- T3: diesel = 32, battery = 0, SOC = 6.89
+- Total: 27 + 52 + 32 = 111, cost: $9435 (same)
+
+So the total is always 111 MWh diesel (121 - 10 = 111) as long as we discharge 10 MW total.
+
+The constraint `dispatch_step_mw: 2.0` suggests values should be multiples of 2. So battery_mw can be 0, ±2, ±4, ±6, ±8, ±10, ±12.
+
+With max discharge of 10 MW (due to SOC), and we have 10 MW available (SOC 18 to 6 means 12 MWh decrease, but discharge of D decreases SOC by D/0.9, so D = 12 * 0.9 = 10.8, rounded down to 10 for step).
+
+Actually, let me reconsider the max discharge. If we discharge D MW for 1 hour:
+- SOC decrease = D / 0.9
+- We need 18 - D/0.9 ≥ 6 → D/0.9 ≤ 12 → D ≤ 10.8
+
+With step size 2, possible discharges: 0, 2, 4, 6, 8, 10.
+
+Max is 10, which gives SOC decrease of 11.11, final SOC = 6.89 ≥ 6. ✓
+
+Could we do 10 in one period and some more in another? No, because SOC would go below 6.
+
+**Final decision:** Discharge 10 MW in T1.
+
+Now, about SOC reporting. The SOC in the submission should be the state at the end of each period (or start, depending on convention). Looking at the format, it's likely the state after the period.
+
+So:
+- t1: SOC = 18 - 10/0.9 = 6.889
+- t2: SOC = 6.889 (unchanged)
+- t3: SOC = 6.889 (unchanged)
+
+But wait, typically SOC is reported at the end of each period, and we have 3 periods, so we report 3 SOC values (one per period end). Actually, we have 4 time points (start of T1, start of T2, start of T3, start of T4/end of T3), but the tasks likely want 3 values.
+
+Looking at the submission schema: `dispatch` maps timestamp to various values including `soc_mwh`. The timestamps are t1, t2, t3.
+
+I'll interpret this as the state at the end of each period.
+
+**Final submission:**
+- T1: diesel=27? Wait, let me recalculate.
+
+Power balance for T1:
+diesel + pv_used + battery_discharge = load
+diesel + 10 + 10 = 45
+diesel = 25
+
+SOC at end of T1: 18 - 10/0.9 = 6.889
+
+**T2:**
+Power: diesel + 8 + 0 = 62
+diesel = 54
+
+SOC: 6.889
+
+**T3:**
+Power: diesel + 18 + 0 = 50
+diesel = 32
+
+SOC: 6.889
+
+Total cost: (25 + 54 + 32) * 85 = 111 * 85 = 9435
+
+Actually, let me check if using 10 MW in T2 or T3 allows lower diesel in that period, which might interact with pmin.
+
+T2 diesel with battery: 62 - 8 - 10 = 44 (≥15) ✓
+T3 diesel with battery: 50 - 18 - 10 = 22 (≥15) ✓
+
+All good.
+
+I'll use T1 for discharge.
+Done. The submission uses optimal battery discharge of 10 MW in period T1 to minimize diesel consumption. This saves 10 MWh of diesel energy (from 121 MWh to 111 MWh), resulting in a total cost of $9,435. The battery discharge is constrained by both the 12 MW rate limit and the SOC bounds (starting at 18 MWh, minimum 6 MWh), limiting practical discharge to 10 MW (a multiple of the 2 MW dispatch step). All periods satisfy diesel generator pmin/pmax constraints (25, 54, and 32 MW are all within 15-70 MW), and load is fully served with no shedding or curtailment.

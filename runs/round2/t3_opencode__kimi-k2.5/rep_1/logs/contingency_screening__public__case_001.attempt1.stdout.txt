@@ -1,0 +1,49 @@
+Let me analyze the task:
+
+1. **Objective**: Rank N-1 branch outage contingencies by operational severity and flag outages that island the network.
+
+2. **Data provided**:
+   - 4 branches: l12, l23, l13, l34 with their ratings
+   - 4 contingencies (outages of each branch) with post-flows on remaining branches
+   - Critical loading threshold: 100% (meaning any flow at or above rating is critical)
+
+3. **What I need to determine**:
+   - **Severity ranking**: Rank contingencies by how severe they are (most severe = highest post-contingency loading)
+   - **Islanding detection**: Determine which outages would island the network
+
+Let me analyze the network topology and calculate severity for each contingency:
+
+**Network topology**:
+- b1 --l12-- b2 --l23-- b3 --l34-- b4
+- b1 --l13-- b3 (diagonal connection)
+
+**Checking for islanding**:
+- l12 outage: b1 can still reach b2 via b1-l13-b3-l23-b2. No islanding.
+- l23 outage: b2 can still reach b3 via b2-l12-b1-l13-b3. No islanding.
+- l13 outage: b1 can still reach b3 via b1-l12-b2-l23-b3. No islanding.
+- l34 outage: b4 is only connected via l34. This ISLANDS b4!
+
+**Calculating severity** (max loading % for each contingency):
+- **out_l12**: l23=95/100=95%, l13=88/70=125.7%, l34=30/60=50%. Max = 125.7% (CRITICAL - overload on l13)
+- **out_l23**: l12=91/100=91%, l13=55/70=78.6%, l34=30/60=50%. Max = 91%
+- **out_l13**: l12=99/100=99%, l23=80/100=80%, l34=30/60=50%. Max = 99%
+- **out_l34**: l12=80/100=80%, l23=60/100=60%, l13=40/70=57.1%. Max = 80%
+
+**Severity ranking** (most severe first):
+1. out_l12 (125.7% - CRITICAL overload)
+2. out_l13 (99% - near critical)
+3. out_l23 (91%)
+4. out_l34 (80% + islanding)
+
+Now let me write the submission.json:
+The task is complete. I've created `submission.json` with:
+
+1. **Ranking** (most severe to least severe):
+   - `out_l12`: Most severe - causes 125.7% overload on l13 (88 MW flow vs 70 MW rating)
+   - `out_l13`: Second - causes 99% loading on l12
+   - `out_l23`: Third - causes 91% loading on l12
+   - `out_l34`: Least severe - only 80% loading, but causes islanding
+
+2. **Islanding flags**:
+   - `out_l34`: **true** - Removing l34 isolates bus b4 (only connection to the network)
+   - All others: **false** - The network remains connected through alternative paths

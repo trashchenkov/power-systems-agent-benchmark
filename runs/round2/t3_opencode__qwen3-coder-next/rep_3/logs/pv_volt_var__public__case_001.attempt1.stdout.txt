@@ -1,0 +1,24 @@
+I need to solve this PV Volt-VAR control benchmark task. Let me analyze the requirements:
+
+**Goal**: Choose a monotonic Volt-VAR curve that:
+1. Voltage breakpoints must be strictly increasing
+2. q_fraction values must be monotonic non-increasing as voltage rises
+3. Reactive power command must stay within inverter capability: sqrt(kVA² - kW²)
+4. Corrected voltage must stay within [0.95, 1.05] pu
+
+**Analysis of timesteps**:
+- t_low: base=0.94, PV=60kW, kVA=100 → needs to RAISE voltage (inject Q+)
+- t_nom: base=1.0, PV=80kW, kVA=100 → nominal
+- t_high: base=1.07, PV=60kW, kVA=100 → needs to LOWER voltage (absorb Q-, inject Q-)
+
+**Inverter reactive capability**: Q_max = sqrt(100² - kW²)
+- t_low: sqrt(10000 - 3600) = sqrt(6400) = 80 kvar
+- t_nom: sqrt(10000 - 6400) = sqrt(3600) = 60 kvar
+- t_high: sqrt(10000 - 3600) = 80 kvar
+
+**Voltage correction**: ΔV = sensitivity × Q (where Q is in kvar)
+- To raise voltage: inject positive Q
+- To lower voltage: inject negative Q (absorb reactive power)
+
+Let me create a helper script to compute the optimal curve:
+The curve works. Now let me create the submission.json file:

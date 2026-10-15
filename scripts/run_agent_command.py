@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import shutil
+import signal
 import subprocess
 import tempfile
 import sys
@@ -50,7 +51,15 @@ TRANSIENT_PATTERNS = (
     "billing",
 )
 RETRYABLE_CLASSES = {"provider_transient", "early_transport_abort"}
+PACKET_FILES = ("task.json", "instructions.md")
 EARLY_ABORT_S = 30.0
+
+
+def _kill_process_group(proc: subprocess.Popen) -> None:
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
 
 
 def classify_failure(returncode: int, stdout: str, stderr: str, elapsed_s: float, timeout_s: int) -> str:
@@ -120,9 +129,12 @@ def run_agent_command(
             # self-evaluated against the leaked oracle). This is relocation,
             # not a jail: adversarial agents need containers.
             sandbox = Path(tempfile.mkdtemp(prefix=f"bench_{packet_name}_a{attempt}_"))
-            for item in packet_dir.iterdir():
-                if item.is_file():
-                    shutil.copyfile(item, sandbox / item.name)
+            # Copy only the packet's protocol files. A stray submission.json that an
+            # agent wrote into the source packet (e.g. via the absolute path in
+            # instructions.md) must never reach a later attempt or run.
+            for name in PACKET_FILES:
+                if (packet_dir / name).is_file():
+                    shutil.copyfile(packet_dir / name, sandbox / name)
             sandbox_submission = sandbox / "submission.json"
             env = os.environ.copy()
             env.pop("BENCH_ROOT", None)
@@ -140,30 +152,31 @@ def run_agent_command(
                 }
             )
             started = time.time()
+            # The agent runs in its own process group so that a budget timeout
+            # terminates the whole agent, not only the shell wrapper; surviving
+            # agents would otherwise keep consuming the host's resources.
+            proc = subprocess.Popen(
+                command,
+                shell=True,
+                cwd=sandbox,
+                env=env,
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdin=subprocess.DEVNULL,
+                start_new_session=True,
+            )
             try:
-                completed = subprocess.run(
-                    command,
-                    shell=True,
-                    cwd=sandbox,
-                    env=env,
-                    text=True,
-                    capture_output=True,
-                    stdin=subprocess.DEVNULL,
-                    timeout=timeout_s,
-                    check=False,
-                )
-                stdout = completed.stdout
-                stderr = completed.stderr
-                returncode = completed.returncode
-            except subprocess.TimeoutExpired as exc:
-                stdout = exc.stdout or ""
-                stderr = exc.stderr or ""
-                if isinstance(stdout, bytes):
-                    stdout = stdout.decode("utf-8", errors="replace")
-                if isinstance(stderr, bytes):
-                    stderr = stderr.decode("utf-8", errors="replace")
-                stderr = stderr + f"\nTIMEOUT: command exceeded {timeout_s} seconds\n"
+                stdout, stderr = proc.communicate(timeout=timeout_s)
+                returncode = proc.returncode
+            except subprocess.TimeoutExpired:
+                _kill_process_group(proc)
+                stdout, stderr = proc.communicate()
+                stderr = (stderr or "") + f"\nTIMEOUT: command exceeded {timeout_s} seconds\n"
                 returncode = 124
+            finally:
+                # Background children of an agent that exited normally are cleaned up too.
+                _kill_process_group(proc)
             elapsed_s = round(time.time() - started, 6)
             suffix = f".attempt{attempt}" if max_attempts > 1 else ""
             (logs_dir / f"{packet_name}{suffix}.stdout.txt").write_text(stdout, encoding="utf-8")
@@ -234,6 +247,9 @@ def run_agent_command(
             }
         )
         rows.append(row)
+        # Progress log: rows survive an interrupted run (results.jsonl is written at the end).
+        with (out_dir / "results.partial.jsonl").open("a", encoding="utf-8") as f:
+            f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     results_path = out_dir / "results.jsonl"
     with results_path.open("w", encoding="utf-8") as f:

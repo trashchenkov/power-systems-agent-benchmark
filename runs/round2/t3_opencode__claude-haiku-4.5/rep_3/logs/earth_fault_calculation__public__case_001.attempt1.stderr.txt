@@ -1,0 +1,169 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+import cmath
+
+# Read task.json
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+# Extract input values
+case = task['earth_fault_case']
+base_mva = case['base_mva']
+voltage_kv = case['voltage_kv']
+fault_resistance_pu = case['fault_resistance_pu']
+prefault_voltage_pu = case['prefault_phase_voltage_pu']
+
+# Extract sequence impedances (complex)
+z1_r = case['sequence_impedances_pu']['positive']['r_pu']
+z1_x = case['sequence_impedances_pu']['positive']['x_pu']
+z1 = complex(z1_r, z1_x)
+
+z2_r = case['sequence_impedances_pu']['negative']['r_pu']
+z2_x = case['sequence_impedances_pu']['negative']['x_pu']
+z2 = complex(z2_r, z2_x)
+
+z0_r = case['sequence_impedances_pu']['zero']['r_pu']
+z0_x = case['sequence_impedances_pu']['zero']['x_pu']
+z0 = complex(z0_r, z0_x)
+
+zf = complex(fault_resistance_pu, 0)
+
+# For single-line-to-ground fault (A-phase to ground):
+# I1 = I2 = I0 = Vfault / (Z1 + Z2 + Z0 + 3*Zf)
+# Where Vfault = prefault_phase_voltage_pu = 1.0 pu
+
+vfault = prefault_voltage_pu  # 1.0 pu
+z_total = z1 + z2 + z0 + 3 * zf
+
+i_seq_pu = vfault / z_total  # I1 = I2 = I0 in per-unit
+
+print(f"Z1 = {z1}")
+print(f"Z2 = {z2}")
+print(f"Z0 = {z0}")
+print(f"Zf = {zf}")
+print(f"Z_total = Z1 + Z2 + Z0 + 3*Zf = {z_total}")
+print(f"I_sequence (pu) = {i_seq_pu}")
+
+# Convert per-unit current to kA
+# Ibase = Sbase / (sqrt(3) * Vbase)
+# where Sbase is in MVA and Vbase is in kV
+ibase_ka = base_mva / (math.sqrt(3) * voltage_kv)
+print(f"Ibase = {base_mva} / (sqrt(3) * {voltage_kv}) = {ibase_ka:.6f} kA")
+
+# Convert sequence currents to kA
+i1_ka = i_seq_pu * ibase_ka
+i2_ka = i_seq_pu * ibase_ka
+i0_ka = i_seq_pu * ibase_ka
+
+# Fault current is 3*I0
+i_fault_ka = 3 * i0_ka
+
+# Extract magnitudes and angles
+i1_mag_ka = abs(i1_ka)
+i1_angle_deg = math.degrees(cmath.phase(i1_ka))
+
+i2_mag_ka = abs(i2_ka)
+i2_angle_deg = math.degrees(cmath.phase(i2_ka))
+
+i0_mag_ka = abs(i0_ka)
+i0_angle_deg = math.degrees(cmath.phase(i0_ka))
+
+i_fault_mag_ka = abs(i_fault_ka)
+i_fault_angle_deg = math.degrees(cmath.phase(i_fault_ka))
+
+# Residual current magnitude
+residual_current_mag_ka = i_fault_mag_ka
+
+print(f"\nSequence Currents (kA):")
+print(f"I1 = {i1_mag_ka:.6f} ∠ {i1_angle_deg:.4f}°")
+print(f"I2 = {i2_mag_ka:.6f} ∠ {i2_angle_deg:.4f}°")
+print(f"I0 = {i0_mag_ka:.6f} ∠ {i0_angle_deg:.4f}°")
+print(f"\nFault Current (3*I0):")
+print(f"I_fault = {i_fault_mag_ka:.6f} ∠ {i_fault_angle_deg:.4f}°")
+print(f"Residual Current Magnitude = {residual_current_mag_ka:.6f} kA")
+
+# Create submission JSON
+submission = {
+    "sequence_currents_ka": {
+        "i1": {
+            "mag_ka": round(i1_mag_ka, 6),
+            "angle_deg": round(i1_angle_deg, 4)
+        },
+        "i2": {
+            "mag_ka": round(i2_mag_ka, 6),
+            "angle_deg": round(i2_angle_deg, 4)
+        },
+        "i0": {
+            "mag_ka": round(i0_mag_ka, 6),
+            "angle_deg": round(i0_angle_deg, 4)
+        }
+    },
+    "fault_current_ka": {
+        "mag_ka": round(i_fault_mag_ka, 6),
+        "angle_deg": round(i_fault_angle_deg, 4)
+    },
+    "residual_current_mag_ka": round(residual_current_mag_ka, 6),
+    "rationale": "Calculated using sequence-network analysis for single-line-to-ground fault on phase A with prefault voltage 1.0 pu. I1=I2=I0=Vfault/(Z1+Z2+Z0+3*Zf). Converted from pu to kA using Ibase=Sbase/(sqrt(3)*Vbase). Fault current is 3*I0."
+}
+
+# Write submission.json
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission JSON written to submission.json")
+print(json.dumps(submission, indent=2))
+EOF
+
+Z1 = (0.042+0.31j)
+Z2 = (0.045+0.29j)
+Z0 = (0.12+0.82j)
+Zf = (0.04+0j)
+Z_total = Z1 + Z2 + Z0 + 3*Zf = (0.32699999999999996+1.42j)
+I_sequence (pu) = (0.15400345401018872-0.668761176435682j)
+Ibase = 50.0 / (sqrt(3) * 13.8) = 2.091849 kA
+
+Sequence Currents (kA):
+I1 = 1.435561 ∠ -77.0319°
+I2 = 1.435561 ∠ -77.0319°
+I0 = 1.435561 ∠ -77.0319°
+
+Fault Current (3*I0):
+I_fault = 4.306683 ∠ -77.0319°
+Residual Current Magnitude = 4.306683 kA
+
+Submission JSON written to submission.json
+{
+  "sequence_currents_ka": {
+    "i1": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.0319
+    },
+    "i2": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.0319
+    },
+    "i0": {
+      "mag_ka": 1.435561,
+      "angle_deg": -77.0319
+    }
+  },
+  "fault_current_ka": {
+    "mag_ka": 4.306683,
+    "angle_deg": -77.0319
+  },
+  "residual_current_mag_ka": 4.306683,
+  "rationale": "Calculated using sequence-network analysis for single-line-to-ground fault on phase A with prefault voltage 1.0 pu. I1=I2=I0=Vfault/(Z1+Z2+Z0+3*Zf). Converted from pu to kA using Ibase=Sbase/(sqrt(3)*Vbase). Fault current is 3*I0."
+}
+[0m
+[0m→ [0mRead submission.json

@@ -1,0 +1,146 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Load the task.json to get parameters
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['transformer_thermal_case']
+initial_top_oil_rise_k = case['initial_top_oil_rise_k']
+rated = case['rated']
+limits = case['limits']
+ageing = case['ageing']
+load_steps = case['load_steps']
+
+# Constants
+top_oil_rise_rated_k = rated['top_oil_rise_rated_k']
+loss_ratio_r = rated['loss_ratio_r']
+oil_exponent_x = rated['oil_exponent_x']
+winding_exponent_y = rated['winding_exponent_y']
+hot_spot_gradient_rated_k = rated['hot_spot_gradient_rated_k']
+oil_time_constant_h = rated['oil_time_constant_h']
+max_hot_spot_c = limits['max_hot_spot_c']
+reference_hot_spot_c = ageing['reference_hot_spot_c']
+doubling_interval_k = ageing['doubling_interval_k']
+
+# Initialize results
+top_oil_c = {}
+hot_spot_c = {}
+ageing_rate = {}
+total_ageing_hours = 0.0
+max_hot_spot = -float('inf')
+
+# Current state (starts with initial rise)
+current_top_oil_rise_k = initial_top_oil_rise_k
+
+# Process each load step
+for step in load_steps:
+    step_id = step['id']
+    duration_h = step['duration_h']
+    ambient_c = step['ambient_c']
+    load_factor_k = step['load_factor_pu']
+    
+    # Calculate steady-state top-oil rise for this step
+    # Formula: top_oil_rise_rated_k * ((1 + R*K^2)/(1 + R))^x
+    numerator = 1 + loss_ratio_r * (load_factor_k ** 2)
+    denominator = 1 + loss_ratio_r
+    steady_state_rise_k = top_oil_rise_rated_k * ((numerator / denominator) ** oil_exponent_x)
+    
+    # Exponential approach to steady state with time constant
+    # At time t: rise(t) = steady_state_rise + (current_rise - steady_state_rise) * exp(-t/tau)
+    # At end of step (t = duration_h):
+    tau = oil_time_constant_h
+    exp_term = math.exp(-duration_h / tau)
+    end_of_step_rise_k = steady_state_rise_k + (current_top_oil_rise_k - steady_state_rise_k) * exp_term
+    
+    # Top-oil temperature at end of step
+    top_oil_temp_c = ambient_c + end_of_step_rise_k
+    top_oil_c[step_id] = round(top_oil_temp_c, 4)
+    
+    # Hot-spot temperature
+    # hot_spot = top_oil + hot_spot_gradient_rated_k * K^y
+    hot_spot_temp_c = top_oil_temp_c + hot_spot_gradient_rated_k * (load_factor_k ** winding_exponent_y)
+    hot_spot_c[step_id] = round(hot_spot_temp_c, 4)
+    
+    # Track maximum hot-spot
+    max_hot_spot = max(max_hot_spot, hot_spot_temp_c)
+    
+    # Relative ageing rate at end of step
+    # 2^((hot_spot - reference_hot_spot_c) / doubling_interval_k)
+    relative_ageing_rate = 2 ** ((hot_spot_temp_c - reference_hot_spot_c) / doubling_interval_k)
+    ageing_rate[step_id] = round(relative_ageing_rate, 4)
+    
+    # Equivalent ageing for this step
+    equivalent_ageing_h = relative_ageing_rate * duration_h
+    total_ageing_hours += equivalent_ageing_h
+    
+    # Update current top-oil rise for next step
+    current_top_oil_rise_k = end_of_step_rise_k
+
+# Round total ageing hours
+total_ageing_hours = round(total_ageing_hours, 4)
+max_hot_spot = round(max_hot_spot, 4)
+
+# Check if overload is admissible
+overload_admissible = max_hot_spot <= max_hot_spot_c
+
+# Build submission
+submission = {
+    "top_oil_c": top_oil_c,
+    "hot_spot_c": hot_spot_c,
+    "ageing_rate": ageing_rate,
+    "total_ageing_hours": total_ageing_hours,
+    "max_hot_spot_c": max_hot_spot,
+    "overload_admissible": overload_admissible,
+    "rationale": "Computed using IEC 60076-7 exponential thermal model with step-by-step temperature and ageing calculations."
+}
+
+# Print for verification
+print(json.dumps(submission, indent=2))
+
+# Write to submission.json
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+EOF
+
+{
+  "top_oil_c": {
+    "s1": 66.3227,
+    "s2": 76.4702,
+    "s3": 81.6475,
+    "s4": 74.0209
+  },
+  "hot_spot_c": {
+    "s1": 83.5313,
+    "s2": 104.0528,
+    "s3": 104.6475,
+    "s4": 88.4871
+  },
+  "ageing_rate": {
+    "s1": 0.188,
+    "s2": 2.0122,
+    "s3": 2.1553,
+    "s4": 0.3332
+  },
+  "total_ageing_hours": 7.0321,
+  "max_hot_spot_c": 104.6475,
+  "overload_admissible": true,
+  "rationale": "Computed using IEC 60076-7 exponential thermal model with step-by-step temperature and ageing calculations."
+}
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

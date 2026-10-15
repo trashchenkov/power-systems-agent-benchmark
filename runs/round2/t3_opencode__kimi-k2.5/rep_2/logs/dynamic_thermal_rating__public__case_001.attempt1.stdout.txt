@@ -1,0 +1,26 @@
+Now I need to compute the ampacity for each timestamp using the heat-balance equations provided. Let me write a Python script to calculate this.
+The calculation is complete. Let me verify the submission.json file was created correctly:
+The task is complete. I have:
+
+1. Read the task.json file which contains the thermal rating case with:
+   - Conductor properties (diameter, resistance, emissivity, solar absorptivity)
+   - Thermal limit (T_max = 75°C)
+   - Weather series with 4 timestamps
+   - Scheduled current of 520 A
+
+2. Computed the ampacity for each timestamp using the steady-state heat-balance equations:
+   - R_hot = (resistance_ohm_per_km_at_20c/1000) * (1 + resistance_temp_coeff_per_c*(T_max - 20))
+   - Convection = convective_w_per_m_c_at_1ms * max(wind_speed, 0.05)^0.6 * (T_max - ambient)
+   - Radiation = emissivity * 5.670374419e-8 * (pi * diameter_mm/1000) * ((T_max+273.15)^4 - (ambient+273.15)^4)
+   - Solar gain = solar_absorptivity * solar_w_per_m2 * (diameter_mm/1000)
+   - Ampacity = sqrt(max(convection + radiation - solar_gain, 0) / R_hot)
+
+3. Results:
+   - t00: 810.66 A
+   - t01: 451.47 A (minimum - limiting condition)
+   - t02: 596.25 A
+   - t03: 811.60 A
+
+4. The scheduled current (520 A) exceeds the rating only at t01 (451.47 A), so overload_timestamps = ["t01"]
+
+5. Written submission.json with the required fields matching the submission_schema.

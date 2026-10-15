@@ -1,0 +1,191 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13ad3-81f5-7093-9e5d-e44e0ef817bd
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+exec
+/bin/bash -lc "sed -n '1,240p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/earth_fault_calculation__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,240p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "earth_fault_calculation_public_001",
+  "family": "earth_fault_calculation",
+  "candidate_id": "REL-TASK-034",
+  "substrate": "executable_sequence_network_earth_fault_case",
+  "objective": "Calculate the sequence currents and residual current for a single-line-to-ground fault using sequence-network impedances.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-034 — Unsymmetrical and earth-fault calculation",
+      "ru": "REL-TASK-034 — Расчёт однофазного замыкания на землю методом симметричных составляющих"
+    },
+    "objective": {
+      "en": "Calculate the sequence currents and residual current for a single-line-to-ground fault using sequence-network impedances.",
+      "ru": "Рассчитать токи прямой, обратной и нулевой последовательности, а также остаточный ток при однофазном замыкании на землю по сопротивлениям последовательностей."
+    },
+    "instructions": {
+      "en": "Use the public per-unit sequence impedances. For an A-phase-to-ground fault with prefault voltage 1.0 pu, compute I1=I2=I0=1/(Z1+Z2+Z0+3Zf). Convert per-unit currents to kA using Ibase=Sbase/(sqrt(3)*Vbase), then report sequence current magnitudes/angles and fault current 3*I0.",
+      "ru": "Используйте открытые сопротивления последовательностей в относительных единицах. Для замыкания фазы A на землю при предаварийном напряжении 1,0 о.е. вычислите I1=I2=I0=1/(Z1+Z2+Z0+3Zf). Переведите токи из о.е. в кА через Iб=Sб/(sqrt(3)*Uб), затем укажите модули и углы токов последовательностей и ток повреждения 3*I0."
+    }
+  },
+  "subdomain": "protection, faults & relay engineering",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-034",
+    "subdomain": "protection, faults & relay engineering",
+    "input_fields": [
+      "earth_fault_case.base_mva",
+      "earth_fault_case.voltage_kv",
+      "earth_fault_case.sequence_impedances_pu",
+      "earth_fault_case.fault_resistance_pu"
+    ]
+  },
+  "earth_fault_case": {
+    "base_mva": 50.0,
+    "voltage_kv": 13.8,
+    "fault_type": "single_line_to_ground_phase_a",
+    "prefault_phase_voltage_pu": 1.0,
+    "fault_resistance_pu": 0.04,
+    "sequence_impedances_pu": {
+      "positive": {
+        "r_pu": 0.042,
+        "x_pu": 0.31
+      },
+      "negative": {
+        "r_pu": 0.045,
+        "x_pu": 0.29
+      },
+      "zero": {
+        "r_pu": 0.12,
+        "x_pu": 0.82
+      }
+    }
+  },
+  "submission_schema": {
+    "sequence_currents_ka": "object with i1, i2, i0; each contains mag_ka and angle_deg",
+    "fault_current_ka": "object with mag_ka and angle_deg for 3*I0",
+    "residual_current_mag_ka": "magnitude of 3I0 in kA",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Submission must contain sequence_currents_ka.i1/i2/i0 with mag_ka and angle_deg fields.",
+    "Submission must contain fault_current_ka.mag_ka, fault_current_ka.angle_deg, and residual_current_mag_ka.",
+    "The values must match the independent sequence-network calculation within tolerance.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether the sequence and residual currents satisfy all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "tolerances": {
+    "absolute": 0.001,
+    "relative": 0.0001,
+    "angle_deg": 0.01
+  },
+  "source_evidence": [
+    "primary:Anderson, Analysis of Faulted Power Systems (Wiley-IEEE Press, 1995): symmetrical-components / single-line-to-ground fault analysis",
+    "source_card:docs/source_cards/earth_fault_calculation.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "Anderson, P. M. Analysis of Faulted Power Systems. Wiley-IEEE Press, 1995",
+      "locator": "Symmetrical components; single-line-to-ground fault sequence and residual current derivation",
+      "confidence": "medium",
+      "notes": "Standard symmetrical-components method for single-line-to-ground fault currents; the executable case is a compact instance. Equivalent worked examples appear in standard relay-protection texts."
+    }
+  ]
+}
+
+exec
+/bin/bash -lc "python3 - <<'PY'
+import json, math, cmath
+base_mva=50.0
+voltage_kv=13.8
+z=complex(0.042+0.045+0.12+3*0.04, 0.31+0.29+0.82)
+i_pu=1/z
+ibase_ka=base_mva/(math.sqrt(3)*voltage_kv)
+i_ka=i_pu*ibase_ka
+fault=3*i_ka
+out={
+  \"sequence_currents_ka\": {
+    \"i1\": {\"mag_ka\": abs(i_ka), \"angle_deg\": math.degrees(cmath.phase(i_ka))},
+    \"i2\": {\"mag_ka\": abs(i_ka), \"angle_deg\": math.degrees(cmath.phase(i_ka))},
+    \"i0\": {\"mag_ka\": abs(i_ka), \"angle_deg\": math.degrees(cmath.phase(i_ka))}
+  },
+  \"fault_current_ka\": {\"mag_ka\": abs(fault), \"angle_deg\": math.degrees(cmath.phase(fault))},
+  \"residual_current_mag_ka\": abs(fault),
+  \"rationale\": \"For an A-phase-to-ground fault, I1=I2=I0=1/(Z1+Z2+Z0+3Zf), converted from pu using Ibase=Sbase/(sqrt(3)*Vbase); residual/fault current is 3*I0.\"
+}
+with open('submission.json','w') as f:
+    json.dump(out,f,indent=2)
+    f.write('\\n')
+print(json.dumps(out, indent=2))
+PY" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "sequence_currents_ka": {
+    "i1": {
+      "mag_ka": 1.4355609788993373,
+      "angle_deg": -77.03190766561038
+    },
+    "i2": {
+      "mag_ka": 1.4355609788993373,
+      "angle_deg": -77.03190766561038
+    },
+    "i0": {
+      "mag_ka": 1.4355609788993373,
+      "angle_deg": -77.03190766561038
+    }
+  },
+  "fault_current_ka": {
+    "mag_ka": 4.306682936698012,
+    "angle_deg": -77.03190766561038
+  },
+  "residual_current_mag_ka": 4.306682936698012,
+  "rationale": "For an A-phase-to-ground fault, I1=I2=I0=1/(Z1+Z2+Z0+3Zf), converted from pu using Ibase=Sbase/(sqrt(3)*Vbase); residual/fault current is 3*I0."
+}
+
+codex
+Done
+tokens used
+21,576

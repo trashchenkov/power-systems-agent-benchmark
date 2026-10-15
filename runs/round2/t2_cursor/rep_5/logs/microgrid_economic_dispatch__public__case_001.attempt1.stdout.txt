@@ -1,0 +1,16 @@
+Wrote **`submission.json`** with the least-cost feasible dispatch for the case in `task.json`.
+
+**Approach**
+- Power balance each hour: `diesel + (pv − curtailment) + battery_discharge − battery_charge = load` (no shedding).
+- SOC with efficiencies: `Δsoc = charge_mw × η_ch × Δt − discharge_mw / η_dis × Δt`.
+- Battery power on **2 MW** steps (−8 … 12 MW); diesel within **15–70 MW**; PV curtailment only when needed for diesel limits.
+- Exhaustive search over discrete battery schedules (11³ combinations), minimum diesel variable cost per feasible schedule.
+
+**Optimum (total diesel cost $9,435)**
+| Period | Diesel (MW) | Battery (MW) | SOC (MWh) |
+|--------|-------------|--------------|-----------|
+| t1 | 39 | −4 (charge) | 21.8 |
+| t2 | 52 | +2 (discharge) | 19.58 |
+| t3 | 20 | +12 (discharge) | 6.24 |
+
+Charge in t1, light discharge in t2, heavy discharge in t3 shifts energy to cover the peak at t2 while respecting SOC limits (6–30 MWh).

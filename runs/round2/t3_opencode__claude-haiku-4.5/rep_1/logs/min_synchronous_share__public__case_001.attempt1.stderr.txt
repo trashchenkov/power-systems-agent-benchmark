@@ -1,0 +1,142 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+from itertools import combinations
+
+# Load task
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+inputs = task['public_inputs']['synchronous_share_case']
+
+# Extract parameters
+demand_mw = inputs['demand_mw']
+ibr_capacity_mva = inputs['ibr_capacity_mva']
+nominal_frequency_hz = inputs['nominal_frequency_hz']
+largest_loss_mw = inputs['largest_loss_mw']
+max_rocof_hz_per_s = inputs['max_rocof_hz_per_s']
+min_scr = inputs['min_scr']
+grid_short_circuit_mva_base = inputs['grid_short_circuit_mva_base']
+sync_units = inputs['sync_units']
+
+# All possible units
+all_units = [(u['unit_id'], u['p_mw'], u['h_s'], u['short_circuit_mva']) for u in sync_units]
+
+# Generate all possible non-empty subsets and check feasibility
+best_solution = None
+best_share = float('inf')
+
+for r in range(1, len(all_units) + 1):
+    for combo in combinations(all_units, r):
+        unit_ids = [c[0] for c in combo]
+        total_p_mw = sum(c[1] for c in combo)
+        
+        # Calculate inertia
+        total_h_p = sum(c[1] * c[2] for c in combo)
+        inertia_gws = total_h_p / 1000.0
+        
+        # Calculate RoCoF
+        rocof_hz_per_s = (largest_loss_mw * nominal_frequency_hz) / (2 * inertia_gws * 1000)
+        
+        # Calculate SCR
+        total_scr_mva = grid_short_circuit_mva_base + sum(c[3] for c in combo)
+        scr = total_scr_mva / ibr_capacity_mva
+        
+        # Check constraints
+        rocof_ok = rocof_hz_per_s <= max_rocof_hz_per_s
+        scr_ok = scr >= min_scr
+        
+        if rocof_ok and scr_ok:
+            share = total_p_mw / demand_mw
+            if share < best_share:
+                best_share = share
+                best_solution = {
+                    'online_units': unit_ids,
+                    'p_mw': total_p_mw,
+                    'inertia_gws': inertia_gws,
+                    'rocof_hz_per_s': rocof_hz_per_s,
+                    'scr': scr,
+                    'share_pct': share * 100
+                }
+
+if best_solution:
+    print("Best solution found:")
+    print(f"  Units: {best_solution['online_units']}")
+    print(f"  Total P: {best_solution['p_mw']} MW")
+    print(f"  Inertia: {best_solution['inertia_gws']} GWs")
+    print(f"  RoCoF: {best_solution['rocof_hz_per_s']} Hz/s")
+    print(f"  SCR: {best_solution['scr']}")
+    print(f"  Share: {best_solution['share_pct']}%")
+else:
+    print("No feasible solution found!")
+EOF
+
+Best solution found:
+  Units: ['g2', 'g3', 'g4']
+  Total P: 510.0 MW
+  Inertia: 2.352 GWs
+  RoCoF: 1.913265306122449 Hz/s
+  SCR: 3.013888888888889
+  Share: 51.0%
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+
+# Verify the solution
+# Units: g2, g3, g4
+# g2: P=180MW, H=5.0s, SCR=360MVA
+# g3: P=240MW, H=3.8s, SCR=440MVA  
+# g4: P=90MW, H=6.0s, SCR=190MVA
+
+total_p = 180 + 240 + 90  # 510 MW
+total_h_p = (180 * 5.0) + (240 * 3.8) + (90 * 6.0)
+inertia_gws = total_h_p / 1000.0
+
+print(f"Total P: {total_p} MW")
+print(f"Total H*P: {total_h_p} MWs")
+print(f"Inertia: {inertia_gws} GWs")
+
+# RoCoF = 180 * 50 / (2 * 2.352 * 1000)
+rocof = (180 * 50) / (2 * inertia_gws * 1000)
+print(f"RoCoF: {rocof} Hz/s")
+
+# SCR = (1180 + 360 + 440 + 190) / 720
+total_scr_mva = 1180 + 360 + 440 + 190
+scr = total_scr_mva / 720
+print(f"Total SCR MVA: {total_scr_mva}")
+print(f"SCR: {scr}")
+
+# Share
+share_pct = (total_p / 1000.0) * 100
+print(f"Share: {share_pct}%")
+
+# Check constraints
+print(f"\nConstraint checks:")
+print(f"  RoCoF {rocof} <= 2.0: {rocof <= 2.0}")
+print(f"  SCR {scr} >= 2.25: {scr >= 2.25}")
+EOF
+
+Total P: 510 MW
+Total H*P: 2352.0 MWs
+Inertia: 2.352 GWs
+RoCoF: 1.913265306122449 Hz/s
+Total SCR MVA: 2170
+SCR: 3.013888888888889
+Share: 51.0%
+
+Constraint checks:
+  RoCoF 1.913265306122449 <= 2.0: True
+  SCR 3.013888888888889 >= 2.25: True
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

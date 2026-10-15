@@ -1,0 +1,27 @@
+I need to solve a DC power flow corrective transmission switching problem. Let me analyze the task:
+
+**Given:**
+- 4 buses with injections: b1=100MW, b2=-20MW, b3=-50MW, b4=-30MW (sum=0 ✓)
+- Branch l13 is out of service (contingency)
+- 4 candidate switches: close l14, open l23, open l24, open l34
+- All active branches have x_pu=0.1 except l14 with x_pu=0.3
+- Need to find switching action that removes overloads without islanding
+
+**Current post-contingency topology (l13 out):**
+- l12: closed (b1-b2)
+- l23: closed (b2-b3)
+- l24: closed (b2-b4)
+- l34: closed (b3-b4)
+- l14: open (candidate)
+
+Let me compute flows with current拓扑. Using DC power flow with slack at b1:
+
+I'll write a helper script to compute the DC power flows and check which switch action resolves overloads.
+After closing l14, l12 is still overloaded at 70.71 MW (just under 75 MW limit, actually it's OK). Let me verify all branches are under their ratings:
+- l12: 70.71 MW < 75 MW ✓
+- l23: 33.57 MW < 50 MW ✓
+- l24: 17.14 MW < 50 MW ✓
+- l34: 16.43 MW < 50 MW ✓
+- l14: 29.29 MW < 50 MW ✓
+
+All flows are under rating. Closing l14 is the correct action. The network remains connected.

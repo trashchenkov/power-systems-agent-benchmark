@@ -1,0 +1,62 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mls -la; ls -la <packets>/cable_ampacity_sizing__public__case_001/ 2>/dev/null || echo "root path missing"
+total 392
+drwx------    2 root root   4096 Oct 14 17:09 .
+drwxrwxrwt 2058 root root 380928 Oct 14 17:09 ..
+-rw-r--r--    1 root root   1176 Oct 14 17:09 instructions.md
+-rw-r--r--    1 root root   7172 Oct 14 17:09 task.json
+total 28
+drwxr-xr-x  2 root root  4096 Oct 14 17:07 .
+drwxr-xr-x 84 root root 12288 Oct 14 17:07 ..
+-rw-r--r--  1 root root  1176 Oct 14 17:07 instructions.md
+-rw-r--r--  1 root root  7172 Oct 14 17:07 task.json
+[0m
+[0m$ [0mpython3 - <<'EOF'
+import math, json
+c=json.load(open('task.json'))
+d=c['cable_sizing_case']
+I=d['design_current_a']; pf=d['power_factor']; V=d['system_voltage_v']; L=d['length_m']
+dmax=d['max_voltage_drop_pct']; kder=d['derating']['ambient_factor']*d['derating']['grouping_factor']
+f=d['fault']; If=f['fault_current_ka']*1000; t=f['clearing_time_s']; k=f['k_adiabatic_a_sqrt_s_per_mm2']
+sin=math.sqrt(1-pf**2)
+thermal=If*math.sqrt(t)/k
+print("derate",kder,"thermal",thermal,"sin",sin)
+sel=None
+for e in d['catalog']:
+    da=e['base_ampacity_a']*kder
+    dU=math.sqrt(3)*I*(L/1000)*(e['r_ohm_per_km']*pf+e['x_ohm_per_km']*sin)
+    dUp=dU/V*100
+    ok = da>=I and dUp<=dmax and e['cross_section_mm2']>=thermal
+    print(e['cross_section_mm2'], round(da,4), round(dUp,4), ok)
+    if ok and sel is None:
+        sel=(e['cross_section_mm2'],da,dUp)
+print("SEL",sel)
+out={"selected_cross_section_mm2":sel[0],"selected_derated_ampacity_a":round(sel[1],6),"selected_voltage_drop_pct":round(sel[2],6),"min_thermal_section_mm2":round(thermal,6),"rationale":"Smallest catalog section passing derated ampacity, voltage drop, and adiabatic checks."}
+print(json.dumps(out,indent=2))
+open('submission.json','w').write(json.dumps(out,indent=2))
+EOF
+derate 0.768 thermal 53.07319149932945 sin 0.4358898943540673
+50 147.456 7.5088 False
+70 188.928 5.3964 False
+95 228.864 4.0811 True
+120 265.728 3.3626 True
+150 306.432 2.8541 True
+185 350.208 2.4174 True
+SEL (95, 228.864, 4.0811160109942595)
+{
+  "selected_cross_section_mm2": 95,
+  "selected_derated_ampacity_a": 228.864,
+  "selected_voltage_drop_pct": 4.081116,
+  "min_thermal_section_mm2": 53.073191,
+  "rationale": "Smallest catalog section passing derated ampacity, voltage drop, and adiabatic checks."
+}
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/cable_ampacity_sizing__public__case_001/*); auto-rejecting

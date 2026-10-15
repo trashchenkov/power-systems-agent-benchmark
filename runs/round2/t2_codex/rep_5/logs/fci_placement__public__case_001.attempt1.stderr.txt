@@ -1,0 +1,235 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13adc-c728-7032-be8f-be0bcbe4f003
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+exec
+/bin/bash -lc "pwd && printf '%s\\n' '--- instructions.md ---' && sed -n '1,240p' instructions.md && printf '%s\\n' '--- task.json ---' && sed -n '1,260p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+<sandbox_a1>
+--- instructions.md ---
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/fci_placement__public__case_001/submission.json`
+--- task.json ---
+{
+  "task_id": "fci_placement_public_001",
+  "family": "fci_placement",
+  "candidate_id": "REL-TASK-051",
+  "substrate": "executable_fci_placement_expected_patrol_savings_case",
+  "objective": "Choose FCI locations that maximize expected customer-weighted patrol-time savings.",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-051 — FCI placement for patrol-time reduction",
+      "ru": "REL-TASK-051 — Размещение FCI для сокращения времени обхода"
+    },
+    "objective": {
+      "en": "Select a budgeted set of fault-current-indicator locations to reduce expected customer interruption minutes caused by patrol time.",
+      "ru": "Выбрать ограниченное бюджетом множество мест установки индикаторов повреждения, чтобы снизить ожидаемые клиент-минуты отключений из-за времени обхода."
+    },
+    "instructions": {
+      "en": "Use fci_placement_case. Select exactly budget candidate locations. For each fault section, use the best patrol-time reduction among selected locations, then maximize the annual fault-rate × interrupted-customers weighted saved minutes. Report selected_locations, expected_customer_minutes_saved, and section_patrol_time_reduction_min.",
+      "ru": "Используйте fci_placement_case. Выберите ровно budget кандидатных мест. Для каждого повреждаемого участка используйте максимальное сокращение времени обхода среди выбранных мест, затем максимизируйте годовую величину fault-rate × interrupted-customers × saved minutes. Укажите selected_locations, expected_customer_minutes_saved и section_patrol_time_reduction_min."
+    }
+  },
+  "subdomain": "distribution reliability & outage management",
+  "public_inputs": {
+    "candidate_id": "REL-TASK-051",
+    "subdomain": "distribution reliability & outage management",
+    "input_fields": [
+      "fci_placement_case.budget",
+      "fci_placement_case.fault_sections",
+      "fci_placement_case.candidate_locations"
+    ],
+    "calculation_spec": "Enumerate candidate sets of size budget. For each fault section, take the maximum section_gain_minutes among selected candidate locations. Objective is sum over sections of annual_fault_rate * customers_interrupted * selected_gain_minutes."
+  },
+  "fci_placement_case": {
+    "budget": 2,
+    "fault_sections": {
+      "s12": {
+        "annual_fault_rate": 0.18,
+        "customers_interrupted": 120
+      },
+      "s23": {
+        "annual_fault_rate": 0.14,
+        "customers_interrupted": 70
+      },
+      "s24": {
+        "annual_fault_rate": 0.12,
+        "customers_interrupted": 90
+      },
+      "s45": {
+        "annual_fault_rate": 0.09,
+        "customers_interrupted": 40
+      }
+    },
+    "candidate_locations": {
+      "n1": {
+        "section_gain_minutes": {
+          "s12": 18,
+          "s23": 16,
+          "s24": 15,
+          "s45": 14
+        }
+      },
+      "n2": {
+        "section_gain_minutes": {
+          "s12": 6,
+          "s23": 28,
+          "s24": 26,
+          "s45": 23
+        }
+      },
+      "n4": {
+        "section_gain_minutes": {
+          "s12": 0,
+          "s23": 4,
+          "s24": 18,
+          "s45": 34
+        }
+      },
+      "n3": {
+        "section_gain_minutes": {
+          "s12": 0,
+          "s23": 24,
+          "s24": 2,
+          "s45": 2
+        }
+      }
+    }
+  },
+  "submission_schema": {
+    "selected_locations": "list of selected FCI location IDs",
+    "expected_customer_minutes_saved": "annual customer-minutes saved",
+    "section_patrol_time_reduction_min": "object mapping section ID to selected patrol-time reduction",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "Selected locations must be the optimal budgeted set under the public objective.",
+    "Expected customer-minutes saved and per-section reductions must match the independent calculation.",
+    "Unknown extra answer keys are infeasible."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether submitted FCI placement satisfies all hard constraints."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "Normalized [0,1] score: 1 when feasible, else 0."
+    }
+  ],
+  "source_evidence": [
+    "primary:DOI:10.1109/REPCON.2000.848037",
+    "source_card:docs/source_cards/fci_placement.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "Brown, Faulted Circuit Indicators and System Reliability",
+      "locator": "DOI:10.1109/REPCON.2000.848037",
+      "confidence": "medium",
+      "notes": "Grounds placement of FCIs to reduce patrol time; the case implements a small budgeted placement problem."
+    }
+  ]
+}
+
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_fci_placement__public__case_001_a1_p_qseahg/submission.json b/bench_fci_placement__public__case_001_a1_p_qseahg/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ba6d1beb3313e001a8fbd6bd2980d1002f277c0
+--- /dev/null
++++ b/bench_fci_placement__public__case_001_a1_p_qseahg/submission.json
+@@ -0,0 +1,14 @@
++{
++  "selected_locations": [
++    "n1",
++    "n2"
++  ],
++  "expected_customer_minutes_saved": 1026.8,
++  "section_patrol_time_reduction_min": {
++    "s12": 18,
++    "s23": 28,
++    "s24": 26,
++    "s45": 23
++  },
++  "rationale": "Selected n1 and n2. Per section reductions are the maximum gains from the selected locations; weighted sum is 0.18*120*18 + 0.14*70*28 + 0.12*90*26 + 0.09*40*23 = 1026.8."
++}
+
+diff --git a/bench_fci_placement__public__case_001_a1_p_qseahg/submission.json b/bench_fci_placement__public__case_001_a1_p_qseahg/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ba6d1beb3313e001a8fbd6bd2980d1002f277c0
+--- /dev/null
++++ b/bench_fci_placement__public__case_001_a1_p_qseahg/submission.json
+@@ -0,0 +1,14 @@
++{
++  "selected_locations": [
++    "n1",
++    "n2"
++  ],
++  "expected_customer_minutes_saved": 1026.8,
++  "section_patrol_time_reduction_min": {
++    "s12": 18,
++    "s23": 28,
++    "s24": 26,
++    "s45": 23
++  },
++  "rationale": "Selected n1 and n2. Per section reductions are the maximum gains from the selected locations; weighted sum is 0.18*120*18 + 0.14*70*28 + 0.12*90*26 + 0.09*40*23 = 1026.8."
++}
+
+codex
+
+diff --git a/bench_fci_placement__public__case_001_a1_p_qseahg/submission.json b/bench_fci_placement__public__case_001_a1_p_qseahg/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ba6d1beb3313e001a8fbd6bd2980d1002f277c0
+--- /dev/null
++++ b/bench_fci_placement__public__case_001_a1_p_qseahg/submission.json
+@@ -0,0 +1,14 @@
++{
++  "selected_locations": [
++    "n1",
++    "n2"
++  ],
++  "expected_customer_minutes_saved": 1026.8,
++  "section_patrol_time_reduction_min": {
++    "s12": 18,
++    "s23": 28,
++    "s24": 26,
++    "s45": 23
++  },
++  "rationale": "Selected n1 and n2. Per section reductions are the maximum gains from the selected locations; weighted sum is 0.18*120*18 + 0.14*70*28 + 0.12*90*26 + 0.09*40*23 = 1026.8."
++}
+
+tokens used
+17,052

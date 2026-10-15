@@ -1,0 +1,39 @@
+Now I understand the task. I need to compute the current-limited IBR (Inverter-Based Resource) short-circuit response under FRT (Fault Ride Through) control based on the given parameters.
+
+Let me analyze the inputs:
+- `current_limit_pu`: 1.2 pu (maximum total current)
+- `prefault_active_current_pu`: 0.92 pu
+- `reactive_deadband_pu`: 0.9 pu (voltage threshold below which reactive current is required)
+- `k_reactive_current_pu_per_pu`: 2.0 (reactive current gain)
+- `frt_voltage_floor_pu`: 0.45 pu (minimum voltage for FRT compliance)
+- `max_low_voltage_duration_s`: 0.2 s (maximum time below floor voltage)
+
+Samples:
+- t000: time=0.0s, voltage=0.88 pu
+- t080: time=0.08s, voltage=0.52 pu
+- t160: time=0.16s, voltage=0.48 pu
+- t240: time=0.24s, voltage=0.74 pu
+
+Calculation rules:
+1. For voltage below `reactive_deadband_pu` (0.9), reactive current requirement is `k * (deadband - voltage)`, clipped by `current_limit_pu` (1.2)
+2. Active current is limited by remaining apparent-current capability after reactive priority
+3. Total current magnitude = sqrt(id² + iq²)
+
+Let me write a Python script to calculate this:
+The calculation is complete. Let me verify the results and write the submission.json file:
+Done. I've computed the IBR short-circuit response under FRT control and written the results to `submission.json`.
+
+**Summary of calculations:**
+- For each time sample, I calculated the reactive current requirement when voltage is below the deadband (0.9 pu): `iq = k × (deadband - voltage)`, clipped at the current limit (1.2 pu)
+- Active current is limited by remaining apparent power capability: `id = min(prefault_active_current, sqrt(current_limit² - iq²))`
+- Total current is the magnitude: `sqrt(id² + iq²)`
+
+**Results:**
+- **t000** (V=0.88): iq=0.04, id=0.92, total=0.921
+- **t080** (V=0.52): iq=0.76, id=0.92, total=1.193
+- **t160** (V=0.48): iq=0.84, id=0.857, total=1.2 (capped at limit)
+- **t240** (V=0.74): iq=0.32, id=0.92, total=0.974
+
+- **min_reactive_current_pu**: 0.04
+- **max_total_current_pu**: 1.2
+- **frt_compliant**: true (reactive current requirements met, no low-voltage duration violations)

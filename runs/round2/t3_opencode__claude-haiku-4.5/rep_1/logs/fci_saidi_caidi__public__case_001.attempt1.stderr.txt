@@ -1,0 +1,138 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['fci_reliability_case']
+total_customers = case['total_customers']
+minimum_restoration_minutes = case['minimum_restoration_minutes']
+deployed_fci_locations = case['deployed_fci_locations']
+fault_sections = case['fault_sections']
+fci_locations = case['fci_locations']
+
+# Calculate baseline metrics
+baseline_customer_minutes = 0
+baseline_customer_interruptions = 0
+
+for section_id, section_data in fault_sections.items():
+    annual_fault_rate = section_data['annual_fault_rate']
+    customers_interrupted = section_data['customers_interrupted']
+    base_restoration_minutes = section_data['base_restoration_minutes']
+    
+    customer_minutes = annual_fault_rate * customers_interrupted * base_restoration_minutes
+    customer_interruptions = annual_fault_rate * customers_interrupted
+    
+    baseline_customer_minutes += customer_minutes
+    baseline_customer_interruptions += customer_interruptions
+
+baseline_saidi = baseline_customer_minutes / total_customers
+baseline_caidi = baseline_customer_minutes / baseline_customer_interruptions if baseline_customer_interruptions > 0 else 0
+baseline_saifi = baseline_customer_interruptions / total_customers
+
+print(f"Baseline SAIDI: {baseline_saidi}")
+print(f"Baseline CAIDI: {baseline_caidi}")
+print(f"Baseline SAIFI: {baseline_saifi}")
+
+# Calculate with FCI metrics
+with_fci_customer_minutes = 0
+with_fci_customer_interruptions = baseline_customer_interruptions  # Same as baseline
+
+for section_id, section_data in fault_sections.items():
+    annual_fault_rate = section_data['annual_fault_rate']
+    customers_interrupted = section_data['customers_interrupted']
+    base_restoration_minutes = section_data['base_restoration_minutes']
+    
+    # Find the best (maximum) restoration time reduction from deployed FCI locations
+    max_reduction = 0
+    for fci_location in deployed_fci_locations:
+        if fci_location in fci_locations:
+            reduction = fci_locations[fci_location]['restoration_time_reduction_min'].get(section_id, 0)
+            max_reduction = max(max_reduction, reduction)
+    
+    # Apply reduction but respect minimum restoration time
+    reduced_restoration_minutes = max(base_restoration_minutes - max_reduction, minimum_restoration_minutes)
+    
+    customer_minutes = annual_fault_rate * customers_interrupted * reduced_restoration_minutes
+    with_fci_customer_minutes += customer_minutes
+
+with_fci_saidi = with_fci_customer_minutes / total_customers
+with_fci_caidi = with_fci_customer_minutes / with_fci_customer_interruptions if with_fci_customer_interruptions > 0 else 0
+with_fci_saifi = with_fci_customer_interruptions / total_customers
+
+print(f"With FCI SAIDI: {with_fci_saidi}")
+print(f"With FCI CAIDI: {with_fci_caidi}")
+print(f"With FCI SAIFI: {with_fci_saifi}")
+
+# Calculate improvements
+saidi_improvement = baseline_saidi - with_fci_saidi
+caidi_improvement = baseline_caidi - with_fci_caidi
+
+print(f"SAIDI Improvement: {saidi_improvement}")
+print(f"CAIDI Improvement: {caidi_improvement}")
+
+# Build submission
+submission = {
+    "baseline": {
+        "saidi_min_per_customer_year": baseline_saidi,
+        "caidi_min_per_interruption": baseline_caidi,
+        "saifi_interruptions_per_customer_year": baseline_saifi
+    },
+    "with_fci": {
+        "saidi_min_per_customer_year": with_fci_saidi,
+        "caidi_min_per_interruption": with_fci_caidi,
+        "saifi_interruptions_per_customer_year": with_fci_saifi
+    },
+    "saidi_improvement_min_per_customer_year": saidi_improvement,
+    "caidi_improvement_min_per_interruption": caidi_improvement
+}
+
+print("\nFinal submission:")
+print(json.dumps(submission, indent=2))
+
+# Write submission file
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission written to submission.json")
+EOF
+
+Baseline SAIDI: 12.575
+Baseline CAIDI: 87.86026200873363
+Baseline SAIFI: 0.143125
+With FCI SAIDI: 10.052499999999998
+With FCI CAIDI: 70.23580786026201
+With FCI SAIFI: 0.143125
+SAIDI Improvement: 2.522500000000001
+CAIDI Improvement: 17.624454148471614
+
+Final submission:
+{
+  "baseline": {
+    "saidi_min_per_customer_year": 12.575,
+    "caidi_min_per_interruption": 87.86026200873363,
+    "saifi_interruptions_per_customer_year": 0.143125
+  },
+  "with_fci": {
+    "saidi_min_per_customer_year": 10.052499999999998,
+    "caidi_min_per_interruption": 70.23580786026201,
+    "saifi_interruptions_per_customer_year": 0.143125
+  },
+  "saidi_improvement_min_per_customer_year": 2.522500000000001,
+  "caidi_improvement_min_per_interruption": 17.624454148471614
+}
+
+Submission written to submission.json
+[0m
+[0m→ [0mRead submission.json

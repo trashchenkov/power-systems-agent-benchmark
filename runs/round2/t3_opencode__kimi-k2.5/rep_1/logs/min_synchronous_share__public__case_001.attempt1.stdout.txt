@@ -1,0 +1,63 @@
+Now I understand the task. I need to find the minimum synchronous-machine share that satisfies both inertia (RoCoF) and SCR constraints.
+
+Let me analyze the problem:
+
+**Given:**
+- Demand: 1000 MW
+- IBR capacity: 720 MVA
+- Nominal frequency: 50 Hz
+- Largest loss: 180 MW
+- Max RoCoF: 2.0 Hz/s
+- Min SCR: 2.25
+- Grid short-circuit MVA base: 1180 MVA
+
+**Synchronous units:**
+- g1: 120 MW, H=4.5 s, SC MVA=280
+- g2: 180 MW, H=5.0 s, SC MVA=360
+- g3: 240 MW, H=3.8 s, SC MVA=440
+- g4: 90 MW, H=6.0 s, SC MVA=190
+
+**Constraints:**
+1. RoCoF <= 2.0 Hz/s: `rocof = largest_loss_mw * nominal_frequency_hz / (2 * inertia_GWs * 1000)`
+2. SCR >= 2.25: `scr = (grid_base + online_unit_sc_mva) / ibr_capacity_mva`
+
+Let me write a script to enumerate all combinations and find the minimum feasible one.
+The minimum feasible solution is:
+- Online units: g2, g3, g4
+- Synchronous share: 51.00%
+- System inertia: 2.352 GWs
+- RoCoF: 1.913265 Hz/s
+- SCR: 3.013889
+
+Let me verify the calculations and write the submission.json:
+Let me verify the calculations are correct by checking the formulas:
+
+**System inertia (GWs):**
+- g2: 5.0 * 180 = 900
+- g3: 3.8 * 240 = 912
+- g4: 6.0 * 90 = 540
+- Total: (900 + 912 + 540) / 1000 = 2.352 GWs ✓
+
+**RoCoF:**
+- 180 * 50 / (2 * 2.352 * 1000) = 9000 / 4704 = 1.913265... Hz/s ✓
+
+**SCR:**
+- Grid base: 1180 MVA
+- Online units SC MVA: 360 + 440 + 190 = 990 MVA
+- Total: (1180 + 990) / 720 = 2170 / 720 = 3.013888... ✓
+
+**Synchronous share:**
+- (180 + 240 + 90) / 1000 * 100 = 510 / 1000 * 100 = 51.0% ✓
+
+All constraints satisfied:
+- RoCoF 1.913265 <= 2.0 ✓
+- SCR 3.013889 >= 2.25 ✓
+
+The submission is complete.
+The `submission.json` file has been written with the solution:
+
+- **online_units**: `["g2", "g3", "g4"]` - the combination of synchronous units with minimum share that satisfies all constraints
+- **min_synchronous_share_pct**: `51.0` - (180+240+90)/1000 * 100 = 51%
+- **system_inertia_gws**: `2.352` - (5.0×180 + 3.8×240 + 6.0×90)/1000 = 2.352 GWs
+- **rocof_hz_per_s**: `1.913265` - 180×50/(2×2.352×1000) = 1.913 Hz/s ≤ 2.0 (feasible)
+- **short_circuit_ratio**: `3.013889` - (1180+360+440+190)/720 = 3.014 ≥ 2.25 (feasible)

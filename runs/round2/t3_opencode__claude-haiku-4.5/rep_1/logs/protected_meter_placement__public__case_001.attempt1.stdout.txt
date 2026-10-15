@@ -1,0 +1,30 @@
+I'll read the instructions and task files first to understand what needs to be done.
+Now I understand the task. This is a protected meter placement optimization problem where I need to:
+
+1. Select exactly 2 meters (budget=2) from the candidates: m12, m23, m31, pinj2
+2. Maximize the total risk weight of covered attack vectors
+3. Break ties using lexicographic order of meter IDs
+
+Let me analyze the attack vectors and which meters can detect them:
+
+**Attack vectors:**
+- a_theta2: risk_weight=7, detectable by [m12, pinj2]
+- a_theta3: risk_weight=6, detectable by [m31]
+- a_load_shift: risk_weight=4, detectable by [m23, pinj2]
+- a_stealth_pair: risk_weight=9, detectable by [m12, m31]
+
+**All possible combinations of 2 meters:**
+1. m12, m23: covers a_theta2(7), a_stealth_pair(9), a_load_shift(4) = 20
+2. m12, m31: covers a_theta2(7), a_theta3(6), a_stealth_pair(9) = 22
+3. m12, pinj2: covers a_theta2(7), a_load_shift(4), a_stealth_pair(9) = 20
+4. m23, m31: covers a_theta3(6), a_load_shift(4), a_stealth_pair(9) = 19
+5. m23, pinj2: covers a_theta2(7), a_load_shift(4) = 11
+6. m31, pinj2: covers a_theta2(7), a_theta3(6), a_load_shift(4), a_stealth_pair(9) = 26
+
+The maximum covered risk weight is **26** with meters [m31, pinj2].
+
+Let me verify and create the submission:
+Done. I've written `submission.json` with the optimal solution:
+- **Protected meters:** m31, m31 (lexicographic order)
+- **Covered attacks:** all 4 vectors (a_theta2, a_theta3, a_load_shift, a_stealth_pair)
+- **Total risk weight:** 26 (maximum possible with budget=2)

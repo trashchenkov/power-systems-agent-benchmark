@@ -1,0 +1,89 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import math
+import json
+
+# Case parameters
+f0 = 50.0  # Hz
+H = 4.0    # s
+Pm = 0.9   # pu
+prefault_pmax = 2.0  # pu
+postfault_pmax = 1.5  # pu
+
+# Step 1: Calculate delta0 (pre-fault rotor angle)
+delta0_rad = math.asin(Pm / prefault_pmax)
+delta0_deg = math.degrees(delta0_rad)
+
+# Step 2: Calculate delta_max (maximum post-fault angle)
+delta_max_rad = math.pi - math.asin(Pm / postfault_pmax)
+delta_max_deg = math.degrees(delta_max_rad)
+
+# Step 3: Calculate delta_cr (critical clearing angle) using equal-area criterion
+# cos(delta_cr) = (Pm*(delta_max - delta0) + postfault_pmax*cos(delta_max)) / postfault_pmax
+cos_delta_cr = (Pm * (delta_max_rad - delta0_rad) + postfault_pmax * math.cos(delta_max_rad)) / postfault_pmax
+delta_cr_rad = math.acos(cos_delta_cr)
+delta_cr_deg = math.degrees(delta_cr_rad)
+
+# Step 4: Calculate t_cr (critical clearing time)
+# t_cr = sqrt(4*H*(delta_cr - delta0) / (2*pi*f0*Pm))
+t_cr = math.sqrt(4 * H * (delta_cr_rad - delta0_rad) / (2 * math.pi * f0 * Pm))
+
+print(f"delta0 (radians): {delta0_rad}")
+print(f"delta0 (degrees): {delta0_deg}")
+print()
+print(f"delta_max (radians): {delta_max_rad}")
+print(f"delta_max (degrees): {delta_max_deg}")
+print()
+print(f"cos(delta_cr): {cos_delta_cr}")
+print(f"delta_cr (radians): {delta_cr_rad}")
+print(f"delta_cr (degrees): {delta_cr_deg}")
+print()
+print(f"t_cr (seconds): {t_cr}")
+
+# Create submission
+submission = {
+    "delta0_deg": round(delta0_deg, 2),
+    "delta_max_deg": round(delta_max_deg, 2),
+    "delta_critical_deg": round(delta_cr_deg, 2),
+    "critical_clearing_time_s": round(t_cr, 3)
+}
+
+print("\n" + "="*50)
+print("Submission JSON:")
+print(json.dumps(submission, indent=2))
+
+EOF
+
+delta0 (radians): 0.4667653390472964
+delta0 (degrees): 26.74368395040301
+
+delta_max (radians): 2.498091544796509
+delta_max (degrees): 143.13010235415598
+
+cos(delta_cr): 0.41879572344952737
+delta_cr (radians): 1.1386775911477733
+delta_cr (degrees): 65.24142019889052
+
+t_cr (seconds): 0.19499347567049966
+
+==================================================
+Submission JSON:
+{
+  "delta0_deg": 26.74,
+  "delta_max_deg": 143.13,
+  "delta_critical_deg": 65.24,
+  "critical_clearing_time_s": 0.195
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

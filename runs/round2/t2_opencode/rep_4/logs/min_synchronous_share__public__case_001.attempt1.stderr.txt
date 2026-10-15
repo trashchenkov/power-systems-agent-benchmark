@@ -1,0 +1,48 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+from itertools import combinations
+units={'g1':(120.0,4.5,280.0),'g2':(180.0,5.0,360.0),'g3':(240.0,3.8,440.0),'g4':(90.0,6.0,190.0)}
+demand=1000.0; ibr=720.0; base=1180.0; loss=180.0; f0=50.0; maxrocof=2.0; minscr=2.25
+best=None
+for r in range(1,5):
+  for c in combinations(units,r):
+    P=sum(units[u][0] for u in c)
+    HP=sum(units[u][0]*units[u][1] for u in c)
+    SC=sum(units[u][2] for u in c)
+    inertia=HP/1000.0
+    rocof=loss*f0/(2*inertia*1000)
+    scr=(base+SC)/ibr
+    share=P/demand*100
+    if rocof<=maxrocof and scr>=minscr:
+      if best is None or P<best[0]:
+        best=(P,c,inertia,rocof,scr,share)
+print(best)
+"
+
+(510.0, ('g2', 'g3', 'g4'), 2.352, 1.913265306122449, 3.013888888888889, 51.0)
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m$ [0mpython3 -m json.tool submission.json
+{
+    "online_units": [
+        "g2",
+        "g3",
+        "g4"
+    ],
+    "min_synchronous_share_pct": 51.0,
+    "system_inertia_gws": 2.352,
+    "rocof_hz_per_s": 1.913265306122449,
+    "short_circuit_ratio": 3.013888888888889,
+    "rationale": "Enumerating all synchronous commitments, {g2,g3,g4} is the minimum-share feasible set (510 MW, 51%). Inertia = (180*5.0 + 240*3.8 + 90*6.0)/1000 = 2352/1000 = 2.352 GWs, giving RoCoF = 180*50/(2*2352) = 1.9133 Hz/s <= 2.0. SCR = (1180 + 360 + 440 + 190)/720 = 2170/720 = 3.0139 >= 2.25."
+}
+[0m

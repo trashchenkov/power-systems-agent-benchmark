@@ -1,0 +1,24 @@
+**`submission.json`** is in the packet directory.
+
+### Analysis
+- **4-bus network:** `l12`, `l23`, `l13`, `l34` (ratings 100, 100, 70, 60 MW).
+- **Islanding:** Removing `l34` isolates `b4` → `out_l34` flagged `true`.
+- **Overload (≥100% of rating):** Only `out_l12` — `l13` at 88/70 ≈ **125.7%**; others stay at or below rating.
+- **Ranking (most → least severe):** By max post-contingency loading from the given flows:
+  1. `out_l12` (125.7%)
+  2. `out_l13` (99%)
+  3. `out_l23` (91%)
+  4. `out_l34` (80% on the main island; islanding flagged separately)
+
+### Output
+```json
+{
+  "ranking": ["out_l12", "out_l13", "out_l23", "out_l34"],
+  "islanding_flags": {
+    "out_l12": false,
+    "out_l23": false,
+    "out_l13": false,
+    "out_l34": true
+  }
+}
+```

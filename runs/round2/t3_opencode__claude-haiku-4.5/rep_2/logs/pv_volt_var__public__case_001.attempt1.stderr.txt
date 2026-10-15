@@ -1,0 +1,512 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import math
+import json
+
+# Parse inputs
+timesteps = [
+    {"id": "t_low", "base_voltage_pu": 0.94, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007},
+    {"id": "t_nom", "base_voltage_pu": 1.0, "pv_kw": 80.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.00055},
+    {"id": "t_high", "base_voltage_pu": 1.07, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007}
+]
+
+voltage_min = 0.95
+voltage_max = 1.05
+
+# Calculate maximum reactive power for each timestep
+for ts in timesteps:
+    # sqrt(kVA^2 - kW^2) = maximum kvar
+    max_kvar = math.sqrt(ts["inverter_kva"]**2 - ts["pv_kw"]**2)
+    ts["max_kvar"] = max_kvar
+    ts["max_q_fraction"] = max_kvar / ts["inverter_kva"]
+    print(f"{ts['id']}: base_voltage={ts['base_voltage_pu']}, max_kvar={max_kvar:.2f}, max_q_fraction={ts['max_q_fraction']:.4f}")
+
+# Design volt-var curve using binary search to find optimal control
+# Start with a simple curve: absorb reactive power at low voltage, inject at high voltage
+# We need monotonic non-increasing q_fraction with increasing voltage
+
+# Key design points:
+# At low voltage (0.94): need to absorb reactive power (negative q_fraction) to raise voltage
+# At nominal voltage (1.0): can be neutral or slightly absorb
+# At high voltage (1.07): need to inject reactive power (positive q_fraction) to lower voltage
+
+# Linear Volt-VAR control is common:
+# V < V_min: absorb max reactive power
+# V in [V_min, V_max]: linear transition
+# V > V_max: inject max reactive power
+
+# But we need to be within inverter capability at each point
+# Let's define curve points based on voltage breakpoints
+
+# Approach: Define curve at standard voltage points
+# We'll use a piecewise linear curve
+
+# For this case, let's design a curve that:
+# - At 0.92: absorb reactive power (negative q_fraction)
+# - At 0.95 (lower limit): slightly absorb
+# - At 1.0 (nominal): zero or near zero
+# - At 1.05 (upper limit): slightly inject
+# - At 1.08: inject reactive power (positive q_fraction)
+
+# But we must ensure monotonic non-increasing! So higher voltage → lower (or equal) q_fraction
+
+# Let's try:
+volt_var_curve = [
+    {"voltage_pu": 0.92, "q_fraction": -0.8},  # absorb at low voltage
+    {"voltage_pu": 0.95, "q_fraction": -0.4},  # reduce absorption at min limit
+    {"voltage_pu": 1.0, "q_fraction": 0.0},    # neutral at nominal
+    {"voltage_pu": 1.05, "q_fraction": 0.4},   # inject at max limit
+    {"voltage_pu": 1.08, "q_fraction": 0.8}    # inject more at high voltage
+]
+
+print("\nInitial curve (monotonic non-increasing check):")
+for i, point in enumerate(volt_var_curve):
+    print(f"  V={point['voltage_pu']}, Q={point['q_fraction']:.2f}", end="")
+    if i > 0:
+        if point['q_fraction'] <= volt_var_curve[i-1]['q_fraction']:
+            print(" ✓")
+        else:
+            print(" ✗ NOT monotonic!")
+    else:
+        print()
+
+# Evaluate at each timestep
+print("\nEvaluation at timesteps:")
+feasible = True
+for ts in timesteps:
+    # Interpolate q_fraction from curve at base_voltage_pu
+    v = ts['base_voltage_pu']
+    
+    # Find surrounding points
+    q_frac = None
+    for i in range(len(volt_var_curve) - 1):
+        if volt_var_curve[i]['voltage_pu'] <= v <= volt_var_curve[i+1]['voltage_pu']:
+            # Linear interpolation
+            v1, q1 = volt_var_curve[i]['voltage_pu'], volt_var_curve[i]['q_fraction']
+            v2, q2 = volt_var_curve[i+1]['voltage_pu'], volt_var_curve[i+1]['q_fraction']
+            q_frac = q1 + (q2 - q1) * (v - v1) / (v2 - v1)
+            break
+    
+    if q_frac is None:
+        # Outside curve range, use closest point
+        if v < volt_var_curve[0]['voltage_pu']:
+            q_frac = volt_var_curve[0]['q_fraction']
+        else:
+            q_frac = volt_var_curve[-1]['q_fraction']
+    
+    # Calculate reactive power in kvar
+    q_kvar = q_frac * ts['inverter_kva']
+    
+    # Check inverter capability
+    max_kvar = ts['max_kvar']
+    if abs(q_kvar) > max_kvar * 1.001:  # small tolerance
+        print(f"{ts['id']}: Q={q_kvar:.2f} kvar exceeds limit {max_kvar:.2f} ✗")
+        feasible = False
+    
+    # Corrected voltage
+    voltage_corrected = ts['base_voltage_pu'] + ts['voltage_sensitivity_pu_per_kvar'] * q_kvar
+    
+    # Check voltage limits
+    within_limits = voltage_min <= voltage_corrected <= voltage_max
+    status = "✓" if within_limits else "✗"
+    print(f"{ts['id']}: V_base={ts['base_voltage_pu']}, Q={q_kvar:.2f}, V_corrected={voltage_corrected:.4f} [{voltage_min}, {voltage_max}] {status}")
+    
+    if not within_limits:
+        feasible = False
+
+print(f"\nFeasible: {feasible}")
+
+# If not feasible, adjust curve
+if not feasible:
+    print("\nAdjusting curve for feasibility...")
+    
+    # For t_low (V=0.94, below min): need to absorb reactive power to raise voltage
+    # V_corrected = 0.94 + 0.0007 * Q
+    # Target: V_corrected >= 0.95
+    # 0.95 = 0.94 + 0.0007 * Q
+    # Q = 1/0.0007 ≈ 142.86 kvar
+    # But max available is ~78 kvar at t_low, so we can reach at most 0.94 + 0.0007*78 = 0.9446 < 0.95
+    # This violates the constraint - we cannot get t_low within limits!
+    
+    # Wait, let me recalculate: to RAISE voltage, we need to INJECT reactive power (positive Q)
+    # V_corrected = 0.94 + 0.0007 * Q
+    # To reach 0.95: Q = (0.95 - 0.94) / 0.0007 = 142.86 kvar
+    # But max Q at t_low = sqrt(100^2 - 60^2) = 80 kvar
+    # So best we can do: V_corrected = 0.94 + 0.0007 * 80 = 0.946 < 0.95
+    
+    # Actually, let me check if absorbing reactive power (negative Q) lowers or raises voltage
+    # The formula is: V_corrected = V_base + sensitivity * Q
+    # If Q is negative (absorbing): V_corrected = V_base - |sensitivity * Q| (voltage drops)
+    # If Q is positive (injecting): V_corrected = V_base + |sensitivity * Q| (voltage rises)
+    
+    # So at t_low (V_base=0.94 < 0.95): we MUST inject reactive power to raise voltage
+    # At t_high (V_base=1.07 > 1.05): we MUST absorb reactive power to lower voltage
+    
+    # Recalculate with positive Q for t_low:
+    q_for_t_low = (0.95 - 0.94) / 0.0007  # = 142.86 kvar needed
+    print(f"t_low needs {q_for_t_low:.2f} kvar to reach 0.95, but has max {timesteps[0]['max_kvar']:.2f}")
+    
+    # This is infeasible! Let me check if any voltage compliance is possible
+    # Best case at t_low with full Q injection:
+    v_best_t_low = 0.94 + 0.0007 * 80
+    print(f"Best voltage at t_low: {v_best_t_low:.4f} (still below 0.95 limit)")
+    
+    # Check t_high with full Q absorption:
+    # Need V_corrected <= 1.05
+    # 1.05 >= 1.07 + 0.0007 * Q
+    # Q <= (1.05 - 1.07) / 0.0007 = -28.57 kvar (absorb)
+    q_for_t_high = (1.05 - 1.07) / 0.0007
+    print(f"t_high needs to absorb {abs(q_for_t_high):.2f} kvar to reach 1.05, has max {timesteps[2]['max_kvar']:.2f}")
+    
+    # This seems achievable. Let me verify t_nom is OK:
+    # V_base = 1.0 (already within [0.95, 1.05])
+    # With any reasonable Q command, it should stay within limits
+    
+    # So the issue is t_low cannot be brought within limits!
+    # But wait - maybe I misunderstood the constraint. Let me re-read...
+    # "Corrected voltage at each timestep must remain within voltage_limits_pu"
+    # Maybe this is a best-effort problem and we minimize violations?
+
+print("\n" + "="*60)
+print("Problem Analysis:")
+print("="*60)
+print(f"t_low: base=0.94, max achievable V with full Q_inject={0.94 + 0.0007*timesteps[0]['max_kvar']:.4f}")
+print(f"  -> Cannot reach minimum 0.95 pu (need {(0.95-0.94)/0.0007:.0f} kvar, have {timesteps[0]['max_kvar']:.0f})")
+print(f"\nThis suggests the problem may have NO feasible solution.")
+print(f"OR I may have misunderstood the physics/formula application.")
+
+EOF
+
+t_low: base_voltage=0.94, max_kvar=80.00, max_q_fraction=0.8000
+t_nom: base_voltage=1.0, max_kvar=60.00, max_q_fraction=0.6000
+t_high: base_voltage=1.07, max_kvar=80.00, max_q_fraction=0.8000
+
+Initial curve (monotonic non-increasing check):
+  V=0.92, Q=-0.80
+  V=0.95, Q=-0.40 ✗ NOT monotonic!
+  V=1.0, Q=0.00 ✗ NOT monotonic!
+  V=1.05, Q=0.40 ✗ NOT monotonic!
+  V=1.08, Q=0.80 ✗ NOT monotonic!
+
+Evaluation at timesteps:
+t_low: V_base=0.94, Q=-53.33, V_corrected=0.9027 [0.95, 1.05] ✗
+t_nom: V_base=1.0, Q=0.00, V_corrected=1.0000 [0.95, 1.05] ✓
+t_high: V_base=1.07, Q=66.67, V_corrected=1.1167 [0.95, 1.05] ✗
+
+Feasible: False
+
+Adjusting curve for feasibility...
+t_low needs 14.29 kvar to reach 0.95, but has max 80.00
+Best voltage at t_low: 0.9960 (still below 0.95 limit)
+t_high needs to absorb 28.57 kvar to reach 1.05, has max 80.00
+
+============================================================
+Problem Analysis:
+============================================================
+t_low: base=0.94, max achievable V with full Q_inject=0.9960
+  -> Cannot reach minimum 0.95 pu (need 14 kvar, have 80)
+
+This suggests the problem may have NO feasible solution.
+OR I may have misunderstood the physics/formula application.
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import math
+
+timesteps = [
+    {"id": "t_low", "base_voltage_pu": 0.94, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007},
+    {"id": "t_nom", "base_voltage_pu": 1.0, "pv_kw": 80.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.00055},
+    {"id": "t_high", "base_voltage_pu": 1.07, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007}
+]
+
+# Monotonic non-increasing means: as voltage goes UP, q_fraction goes DOWN or STAYS SAME
+# Example: V=[0.9, 1.0, 1.1], Q=[0.8, 0.5, -0.2] ✓ (decreasing)
+# Example: V=[0.9, 1.0, 1.1], Q=[0.8, 0.5, 0.6] ✗ (not monotonic at end)
+
+# For volt-var control:
+# - Low voltage (sag): need to INJECT reactive power (raise voltage) → POSITIVE Q
+# - High voltage (swell): need to ABSORB reactive power (lower voltage) → NEGATIVE Q
+# So curve should be: V_low → Q_positive, V_high → Q_negative (monotonic non-increasing) ✓
+
+# This is correct! My example curve was right.
+
+# Let me recheck my calculation of Q for t_low:
+print("Rechecking t_low:")
+print(f"  Base voltage: 0.94 pu (below limit 0.95)")
+print(f"  To raise to 0.95: need ΔV = 0.01 pu")
+print(f"  Sensitivity: 0.0007 pu/kvar")
+print(f"  Required Q = ΔV / sensitivity = 0.01 / 0.0007 = {0.01 / 0.0007:.2f} kvar")
+print(f"  Max available Q = sqrt(100² - 60²) = {math.sqrt(100**2 - 60**2):.2f} kvar")
+print(f"  → CAN provide 80 kvar > 14.29 kvar ✓")
+print(f"  Achieved voltage: 0.94 + 0.0007 * 80 = {0.94 + 0.0007 * 80:.4f} pu")
+
+# Wait! 80 > 14.29, so we CAN reach it! Let me recalculate:
+# V_achieved = 0.94 + 0.0007 * 80 = 0.94 + 0.056 = 0.996
+# That's STILL below 0.95!
+
+# Oh! I see my error: 0.01 / 0.0007 = 14.29 kvar to raise by 0.01
+# So with 80 kvar, we can raise by: 80 * 0.0007 = 0.056 pu
+# Final V = 0.94 + 0.056 = 0.996 pu
+
+# But 0.996 > 0.95, so we DO exceed the lower limit!
+print(f"\nActually: 0.94 + 0.056 = 0.996 > 0.95 ✓")
+
+# Let me redo this more carefully:
+# t_low can reach 0.996 pu with full Q injection → violates upper limit? No, 0.996 < 1.05 ✓
+# t_nom is at 1.0 pu → already within [0.95, 1.05] ✓
+# t_high is at 1.07 pu > 1.05 pu → need to lower voltage by 0.02 pu
+#   Need: Q_absorb = -0.02 / 0.0007 = -28.57 kvar (negative = absorb)
+#   Can achieve: √(100² - 60²) = 80 kvar absorption ✓
+#   Final V = 1.07 - 0.0007 * 28.57 = 1.07 - 0.02 = 1.05 pu ✓
+
+print("\nRevised analysis:")
+print("t_low: 0.94 → +0.056 = 0.996 pu ✓ (within 0.95-1.05)")
+print("t_nom: 1.0 pu ✓ (within 0.95-1.05)")
+print("t_high: 1.07 → -0.02 = 1.05 pu ✓ (within 0.95-1.05)")
+
+print("\nSo this SHOULD be feasible! Let me design the curve properly...")
+
+# For a simple monotonic volt-var curve:
+# At V=0.92: inject 0.8 pu (0.8 * 100 = 80 kvar)
+# At V=0.95: inject ~0.3 pu (0.3 * 100 = 30 kvar) 
+# At V=1.0: neutral 0.0 pu
+# At V=1.05: absorb -0.3 pu (-0.3 * 100 = -30 kvar)
+# At V=1.08: absorb -0.8 pu (-0.8 * 100 = -80 kvar)
+
+# Check monotonicity: 0.8 > 0.3 > 0 > -0.3 > -0.8 ✓ (strictly decreasing)
+
+volt_var_curve = [
+    {"voltage_pu": 0.92, "q_fraction": 0.8},
+    {"voltage_pu": 0.95, "q_fraction": 0.3},
+    {"voltage_pu": 1.0, "q_fraction": 0.0},
+    {"voltage_pu": 1.05, "q_fraction": -0.3},
+    {"voltage_pu": 1.08, "q_fraction": -0.8}
+]
+
+print("\nMonotonic Volt-VAR Curve:")
+for i, p in enumerate(volt_var_curve):
+    print(f"  V={p['voltage_pu']}, Q={p['q_fraction']:+.1f}", end="")
+    if i > 0 and p['q_fraction'] > volt_var_curve[i-1]['q_fraction']:
+        print(" ✗ NOT monotonic!")
+    else:
+        print(" ✓")
+
+# Evaluate
+print("\nEvaluation at timesteps:")
+all_feasible = True
+
+for ts in timesteps:
+    v_base = ts['base_voltage_pu']
+    
+    # Interpolate q_fraction
+    q_frac = None
+    for i in range(len(volt_var_curve) - 1):
+        v1 = volt_var_curve[i]['voltage_pu']
+        v2 = volt_var_curve[i+1]['voltage_pu']
+        if v1 <= v_base <= v2:
+            q1 = volt_var_curve[i]['q_fraction']
+            q2 = volt_var_curve[i+1]['q_fraction']
+            q_frac = q1 + (q2 - q1) * (v_base - v1) / (v2 - v1)
+            break
+    
+    if q_frac is None:
+        if v_base < volt_var_curve[0]['voltage_pu']:
+            q_frac = volt_var_curve[0]['q_fraction']
+        else:
+            q_frac = volt_var_curve[-1]['q_fraction']
+    
+    # Convert to kvar
+    q_kvar = q_frac * ts['inverter_kva']
+    
+    # Check capability
+    max_kvar = math.sqrt(ts['inverter_kva']**2 - ts['pv_kw']**2)
+    capable = abs(q_kvar) <= max_kvar * 1.0001
+    
+    # Corrected voltage
+    v_corrected = v_base + ts['voltage_sensitivity_pu_per_kvar'] * q_kvar
+    
+    # Check limits
+    in_limits = 0.95 <= v_corrected <= 1.05
+    
+    status = "✓" if (capable and in_limits) else "✗"
+    print(f"{ts['id']}: V_base={v_base:.2f}, Q={q_frac:+.2f}*100={q_kvar:+.1f}kvar, "
+          f"max={max_kvar:.1f}, V_corrected={v_corrected:.4f} {status}")
+    
+    if not (capable and in_limits):
+        all_feasible = False
+
+print(f"\nAll constraints satisfied: {all_feasible}")
+
+EOF
+
+Rechecking t_low:
+  Base voltage: 0.94 pu (below limit 0.95)
+  To raise to 0.95: need ΔV = 0.01 pu
+  Sensitivity: 0.0007 pu/kvar
+  Required Q = ΔV / sensitivity = 0.01 / 0.0007 = 14.29 kvar
+  Max available Q = sqrt(100² - 60²) = 80.00 kvar
+  → CAN provide 80 kvar > 14.29 kvar ✓
+  Achieved voltage: 0.94 + 0.0007 * 80 = 0.9960 pu
+
+Actually: 0.94 + 0.056 = 0.996 > 0.95 ✓
+
+Revised analysis:
+t_low: 0.94 → +0.056 = 0.996 pu ✓ (within 0.95-1.05)
+t_nom: 1.0 pu ✓ (within 0.95-1.05)
+t_high: 1.07 → -0.02 = 1.05 pu ✓ (within 0.95-1.05)
+
+So this SHOULD be feasible! Let me design the curve properly...
+
+Monotonic Volt-VAR Curve:
+  V=0.92, Q=+0.8 ✓
+  V=0.95, Q=+0.3 ✓
+  V=1.0, Q=+0.0 ✓
+  V=1.05, Q=-0.3 ✓
+  V=1.08, Q=-0.8 ✓
+
+Evaluation at timesteps:
+t_low: V_base=0.94, Q=+0.47*100=+46.7kvar, max=80.0, V_corrected=0.9727 ✓
+t_nom: V_base=1.00, Q=+0.00*100=+0.0kvar, max=60.0, V_corrected=1.0000 ✓
+t_high: V_base=1.07, Q=-0.63*100=-63.3kvar, max=80.0, V_corrected=1.0257 ✓
+
+All constraints satisfied: True
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Design the monotonic volt-var curve
+volt_var_curve = [
+    {"voltage_pu": 0.92, "q_fraction": 0.8},
+    {"voltage_pu": 0.95, "q_fraction": 0.3},
+    {"voltage_pu": 1.0, "q_fraction": 0.0},
+    {"voltage_pu": 1.05, "q_fraction": -0.3},
+    {"voltage_pu": 1.08, "q_fraction": -0.8}
+]
+
+# Compute metrics
+timesteps = [
+    {"id": "t_low", "base_voltage_pu": 0.94, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007},
+    {"id": "t_nom", "base_voltage_pu": 1.0, "pv_kw": 80.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.00055},
+    {"id": "t_high", "base_voltage_pu": 1.07, "pv_kw": 60.0, "inverter_kva": 100.0, "voltage_sensitivity_pu_per_kvar": 0.0007}
+]
+
+voltage_min = 0.95
+voltage_max = 1.05
+
+voltage_violations = 0
+control_effort = 0.0
+
+for ts in timesteps:
+    v_base = ts['base_voltage_pu']
+    
+    # Interpolate q_fraction from curve
+    q_frac = None
+    for i in range(len(volt_var_curve) - 1):
+        v1 = volt_var_curve[i]['voltage_pu']
+        v2 = volt_var_curve[i+1]['voltage_pu']
+        if v1 <= v_base <= v2:
+            q1 = volt_var_curve[i]['q_fraction']
+            q2 = volt_var_curve[i+1]['q_fraction']
+            q_frac = q1 + (q2 - q1) * (v_base - v1) / (v2 - v1)
+            break
+    
+    if q_frac is None:
+        if v_base < volt_var_curve[0]['voltage_pu']:
+            q_frac = volt_var_curve[0]['q_fraction']
+        else:
+            q_frac = volt_var_curve[-1]['q_fraction']
+    
+    # Reactive power
+    q_kvar = q_frac * ts['inverter_kva']
+    control_effort += abs(q_kvar)
+    
+    # Corrected voltage
+    v_corrected = v_base + ts['voltage_sensitivity_pu_per_kvar'] * q_kvar
+    
+    if v_corrected < voltage_min or v_corrected > voltage_max:
+        voltage_violations += 1
+
+# Create submission
+submission = {
+    "volt_var_curve": volt_var_curve,
+    "rationale": "Monotonic volt-var curve designed to mitigate voltage violations. "
+                 "At low voltage (0.92 pu): inject 80% reactive power to raise voltage. "
+                 "At nominal (1.0 pu): neutral response. "
+                 "At high voltage (1.08 pu): absorb 80% reactive power to lower voltage. "
+                 "Curve is strictly monotonic non-increasing in q_fraction as voltage rises. "
+                 "All reactive power commands stay within inverter capability limits. "
+                 "All corrected voltages remain within [0.95, 1.05] pu band."
+}
+
+print(json.dumps(submission, indent=2))
+
+# Validate submission
+print("\n# Validation:")
+
+# Check 1: Strictly increasing voltage_pu
+voltages_increasing = all(volt_var_curve[i]['voltage_pu'] < volt_var_curve[i+1]['voltage_pu'] 
+                          for i in range(len(volt_var_curve)-1))
+print(f"Strictly increasing voltage_pu: {voltages_increasing}")
+
+# Check 2: Monotonic non-increasing q_fraction
+q_monotonic = all(volt_var_curve[i]['q_fraction'] >= volt_var_curve[i+1]['q_fraction'] 
+                  for i in range(len(volt_var_curve)-1))
+print(f"Monotonic non-increasing q_fraction: {q_monotonic}")
+
+# Check 3: All q_fractions in [-1, 1]
+q_in_range = all(-1 <= p['q_fraction'] <= 1 for p in volt_var_curve)
+print(f"All q_fraction values in [-1, 1]: {q_in_range}")
+
+# Check 4: Inverter capability and voltage limits at each timestep
+print(f"Voltage violations: {voltage_violations}")
+print(f"Control effort (sum kvar): {control_effort:.2f}")
+print(f"Feasible: {voltages_increasing and q_monotonic and q_in_range and voltage_violations == 0}")
+
+EOF
+
+{
+  "volt_var_curve": [
+    {
+      "voltage_pu": 0.92,
+      "q_fraction": 0.8
+    },
+    {
+      "voltage_pu": 0.95,
+      "q_fraction": 0.3
+    },
+    {
+      "voltage_pu": 1.0,
+      "q_fraction": 0.0
+    },
+    {
+      "voltage_pu": 1.05,
+      "q_fraction": -0.3
+    },
+    {
+      "voltage_pu": 1.08,
+      "q_fraction": -0.8
+    }
+  ],
+  "rationale": "Monotonic volt-var curve designed to mitigate voltage violations. At low voltage (0.92 pu): inject 80% reactive power to raise voltage. At nominal (1.0 pu): neutral response. At high voltage (1.08 pu): absorb 80% reactive power to lower voltage. Curve is strictly monotonic non-increasing in q_fraction as voltage rises. All reactive power commands stay within inverter capability limits. All corrected voltages remain within [0.95, 1.05] pu band."
+}
+
+# Validation:
+Strictly increasing voltage_pu: True
+Monotonic non-increasing q_fraction: True
+All q_fraction values in [-1, 1]: True
+Voltage violations: 0
+Control effort (sum kvar): 110.00
+Feasible: True
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

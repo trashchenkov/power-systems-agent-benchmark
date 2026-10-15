@@ -1,0 +1,193 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat > /tmp/opencode/dc.py << 'EOF'
+import numpy as np, itertools
+
+buses=['b1','b2','b3','b4']
+idx={b:i for i,b in enumerate(buses)}
+P=np.array([100.,-20.,-50.,-30.])
+branches={
+'l12':('b1','b2',0.1,75.,True),
+'l13':('b1','b3',0.1,40.,False),
+'l23':('b2','b3',0.1,50.,True),
+'l24':('b2','b4',0.1,50.,True),
+'l34':('b3','b4',0.1,50.,True),
+'l14':('b1','b4',0.3,50.,False),
+}
+
+def solve(closed):
+    n=4
+    B=np.zeros((n,n))
+    for bid,br in branches.items():
+        if bid not in closed: continue
+        f,t,x,r,_=br
+        i,j=idx[f],idx[t]
+        b=1/x
+        B[i,i]+=b; B[j,j]+=b; B[i,j]-=b; B[j,i]-=b
+    # slack bus 0
+    Bred=B[1:,1:]
+    Pred=P[1:]
+    th=np.zeros(n)
+    th[1:]=np.linalg.solve(Bred,Pred)
+    # connectivity via closed branches
+    parent=list(range(n))
+    def find(a):
+        while parent[a]!=a:
+            parent[a]=parent[parent[a]]; a=parent[a]
+        return a
+    for bid in closed:
+        f,t,_,_,_=branches[bid]
+        a,bb=find(idx[f]),find(idx[t])
+        if a!=bb: parent[a]=bb
+    roots={find(i) for i in range(n)}
+    connected=len(roots)==1
+    lf={}
+    for bid in closed:
+        f,t,x,r,_=branches[bid]
+        flow=(th[idx[f]]-th[idx[t]])/x
+        lf[bid]=flow
+    maxload=max(abs(v)/branches[b][3]*100 for b,v in lf.items())
+    return connected,maxload,lf,th
+
+base={'l12','l23','l24','l34'}
+print("base",solve(base))
+
+cands={'l14':'close','l23':'open','l24':'open','l34':'open'}
+for c in cands:
+    closed=set(base)
+    if c=='l14': closed.add('l14')
+    else: closed.discard(c)
+    print(c,cands[c],solve(closed)[:2])
+EOF
+python3 /tmp/opencode/dc.py
+ev_a [-4.0, 0.0, 4.0, 8.0]
+ev_b [-3.0, 0.0, 3.0, 6.0]
+best served 12.0 num opt 10
+{'ev_a': [0.0, 4.0, 8.0], 'ev_b': [6.0, 6.0, 0.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+{'ev_a': [0.0, 8.0, 4.0], 'ev_b': [6.0, 3.0, 3.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+{'ev_a': [4.0, 0.0, 8.0], 'ev_b': [6.0, 6.0, 0.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+{'ev_a': [4.0, 4.0, 4.0], 'ev_b': [3.0, 6.0, 3.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+{'ev_a': [4.0, 4.0, 4.0], 'ev_b': [6.0, 3.0, 3.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+{'ev_a': [4.0, 4.0, 4.0], 'ev_b': [6.0, 6.0, 0.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+{'ev_a': [4.0, 8.0, 0.0], 'ev_b': [3.0, 3.0, 6.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+{'ev_a': [4.0, 8.0, 0.0], 'ev_b': [6.0, 0.0, 6.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+{'ev_a': [4.0, 8.0, 0.0], 'ev_b': [6.0, 3.0, 3.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+{'ev_a': [8.0, 4.0, 0.0], 'ev_b': [0.0, 6.0, 6.0]} {'ev_a': 17.3333, 'ev_b': 13.3333}
+Traceback (most recent call last):
+  File "/tmp/opencode/dc.py", line 1, in <module>
+    import numpy as np, itertools
+  File "/usr/lib/python3/dist-packages/numpy/__init__.py", line 105, in <module>
+    from ._globals import _NoValue, _CopyMode
+  File "/usr/lib/python3/dist-packages/numpy/_globals.py", line 66, in <module>
+    class _CopyMode(enum.Enum):
+                    ^^^^^^^^^
+AttributeError: module 'enum' has no attribute 'Enum'
+Error in sys.excepthook:
+Traceback (most recent call last):
+  File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 228, in partial_apport_excepthook
+    return apport_excepthook(binary, exc_type, exc_obj, exc_tb)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 56, in apport_excepthook
+    if not enabled():
+           ^^^^^^^^^
+  File "/usr/lib/python3/dist-packages/apport_python_hook.py", line 24, in enabled
+    import re
+  File "/usr/lib/python3.12/re/__init__.py", line 141, in <module>
+    @enum.global_enum
+     ^^^^^^^^^^^^^^^^
+AttributeError: module 'enum' has no attribute 'global_enum'
+
+Original exception was:
+Traceback (most recent call last):
+  File "/tmp/opencode/dc.py", line 1, in <module>
+    import numpy as np, itertools
+  File "/usr/lib/python3/dist-packages/numpy/__init__.py", line 105, in <module>
+    from ._globals import _NoValue, _CopyMode
+  File "/usr/lib/python3/dist-packages/numpy/_globals.py", line 66, in <module>
+    class _CopyMode(enum.Enum):
+                    ^^^^^^^^^
+AttributeError: module 'enum' has no attribute 'Enum'
+[0m
+[0m$ [0mcat > /tmp/opencode/dc2.py << 'EOF'
+def gauss(A,b):
+    n=len(A)
+    M=[row[:]+[b[i]] for i,row in enumerate(A)]
+    for c in range(n):
+        p=max(range(c,n),key=lambda r:abs(M[r][c]))
+        M[c],M[p]=M[p],M[c]
+        pv=M[c][c]
+        for r in range(n):
+            if r==c: continue
+            f=M[r][c]/pv
+            for k in range(c,n+1):
+                M[r][k]-=f*M[c][k]
+    return [M[i][n]/M[i][i] for i in range(n)]
+
+buses=['b1','b2','b3','b4']; idx={b:i for i,b in enumerate(buses)}
+P=[100.,-20.,-50.,-30.]
+branches={
+'l12':('b1','b2',0.1,75.,True),
+'l13':('b1','b3',0.1,40.,False),
+'l23':('b2','b3',0.1,50.,True),
+'l24':('b2','b4',0.1,50.,True),
+'l34':('b3','b4',0.1,50.,True),
+'l14':('b1','b4',0.3,50.,False),
+}
+def solve(closed):
+    n=4;B=[[0.0]*n for _ in range(n)]
+    for bid in closed:
+        f,t,x,r,_=branches[bid];i,j=idx[f],idx[t];bb=1/x
+        B[i][i]+=bb;B[j][j]+=bb;B[i][j]-=bb;B[j][i]-=bb
+    A=[B[i][1:] for i in range(1,n)]
+    th=[0.0]+gauss(A,P[1:])
+    parent=list(range(n))
+    def find(a):
+        while parent[a]!=a: parent[a]=parent[parent[a]];a=parent[a]
+        return a
+    for bid in closed:
+        f,t,_,_,_=branches[bid];a,bb2=find(idx[f]),find(idx[t])
+        if a!=bb2: parent[a]=bb2
+    conn=len({find(i) for i in range(n)})==1
+    lf={bid:(th[idx[branches[bid][0]]]-th[idx[branches[bid][1]]])/branches[bid][2] for bid in closed}
+    ml=max(abs(v)/branches[b][3]*100 for b,v in lf.items())
+    return conn,ml,lf,th
+base={'l12','l23','l24','l34'}
+print("base",solve(base)[:2], {k:round(v,3) for k,v in solve(base)[2].items()})
+for c in ['l14','l23','l24','l34']:
+    closed=set(base)
+    if c=='l14': closed.add('l14')
+    else: closed.discard(c)
+    conn,ml,lf,th=solve(closed)
+    print(c,'close' if c=='l14' else 'open',conn,round(ml,4),{k:round(v,3) for k,v in lf.items()})
+EOF
+python3 /tmp/opencode/dc2.py
+base (True, 133.33333333333323) {'l24': 36.667, 'l23': 43.333, 'l12': 100.0, 'l34': -6.667}
+l14 close True 94.2857 {'l24': 17.143, 'l23': 33.571, 'l12': 70.714, 'l14': 29.286, 'l34': -16.429}
+l23 open True 160.0 {'l24': 80.0, 'l12': 100.0, 'l34': -50.0}
+l24 open True 160.0 {'l23': 80.0, 'l12': 100.0, 'l34': 30.0}
+l34 open True 133.3333 {'l24': 30.0, 'l23': 50.0, 'l12': 100.0}
+[0m
+[0m$ [0mls -d <packets>/corrective_transmission_switching__public__case_001 2>/dev/null || echo "expected dir absent"; pwd
+<packets>/corrective_transmission_switching__public__case_001
+<sandbox_a1>
+[0m
+[0m$ [0mstat -c '%i' <sandbox_a1>/task.json <packets>/corrective_transmission_switching__public__case_001/task.json 2>/dev/null; ls -la <packets>/corrective_transmission_switching__public__case_001/
+70220
+6346108
+total 28
+drwxr-xr-x  2 root root  4096 Oct 14 17:51 .
+drwxr-xr-x 84 root root 12288 Oct 14 17:51 ..
+-rw-r--r--  1 root root  1188 Oct 14 17:51 instructions.md
+-rw-r--r--  1 root root  6482 Oct 14 17:51 task.json
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/corrective_transmission_switching__public__case_001/*); auto-rejecting

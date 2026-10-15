@@ -1,5 +1,7 @@
 # Canonical evaluation round (2026-06)
 
+> Superseded in the paper by the repeated-run evaluation in `runs/round2/REPORT.md`.
+
 The single reference round used for the paper, scored by the corrected,
 optimum-normalized evaluators.
 
@@ -31,8 +33,8 @@ optimum so that an optimal solution scores 1.0 (`scripts/evaluate_submission.py`
 
 - **Public** results were rescored from the recorded public submissions against the
   corrected, normalized evaluators (the agent answers are unchanged; only the
-  evaluators were fixed and the score normalized). Raw logs, packets, and
-  per-case submissions are not committed; rerun the public split to reproduce them.
+  evaluators were fixed and the score normalized). Public per-case submissions,
+  results, and logs are committed in the `*-public/` directories; task packets are not.
 - **Held-out** results are from a fresh run on a new private seed (not recorded). Per
   the leak policy only the aggregate summaries are kept in the repo; per-case held-out
   submissions, results, and logs are not published (paper Section 4.4).

@@ -1,0 +1,41 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import json,statistics
+c={'permitting':80,'interconnection':95,'customer_acquisition':45,'engineering':60}
+S=2000;hard=760;crf=0.082;om=18;E=3200
+scen={
+'s_low':{'permitting':0.75,'interconnection':0.8,'customer_acquisition':0.85,'engineering':0.9},
+'s_base':{'permitting':1.0,'interconnection':1.0,'customer_acquisition':1.0,'engineering':1.0},
+'s_perm':{'permitting':1.35,'interconnection':1.05,'customer_acquisition':1.1,'engineering':1.0},
+'s_inter':{'permitting':1.05,'interconnection':1.45,'customer_acquisition':1.05,'engineering':1.1},
+'s_high':{'permitting':1.4,'interconnection':1.5,'customer_acquisition':1.25,'engineering':1.2}}
+res={}
+for k,m in scen.items():
+    capex=S*(hard+sum(c[i]*m[i] for i in c))
+    res[k]=(capex*crf+om*S)/E
+print(res)
+v=sorted(res.values())
+import numpy as np
+print('p10',np.percentile(v,10,method='linear'))
+print('p50',np.percentile(v,50,method='linear'))
+print('p90',np.percentile(v,90,method='linear'))
+print('mean',statistics.mean(v))
+"
+
+{'s_low': 61.8978125, 's_base': 64.55, 's_perm': 66.4590625, 's_inter': 67.36875, 's_high': 69.8159375}
+p10 62.958687499999996
+p50 66.4590625
+p90 68.8370625
+mean 66.01831250000001
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

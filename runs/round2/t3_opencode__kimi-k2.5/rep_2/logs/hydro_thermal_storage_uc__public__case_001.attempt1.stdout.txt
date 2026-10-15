@@ -1,0 +1,47 @@
+Now I understand the task. I need to solve a hydro/thermal/storage unit commitment problem with an emissions cap. Let me analyze the data:
+
+**Given:**
+- Emission cap: 200 tons
+- 3 hours of operation
+- 2 thermal units (coal, gas)
+
+**Hourly data:**
+| Hour | Load (MW) | Hydro (MW) | Storage Discharge (MW) | Residual Load (MW) |
+|------|-----------|------------|------------------------|-------------------|
+| h1   | 120       | 35         | 10                     | 75                |
+| h2   | 150       | 40         | 20                     | 90                |
+| h3   | 130       | 30         | 15                     | 85                |
+
+**Thermal units:**
+- Coal: pmin=40, pmax=100, cost=$22/MWh, emission=0.75 ton/MWh
+- Gas: pmin=20, pmax=80, cost=$38/MWh, emission=0.35 ton/MWh
+
+The residual load must be met by thermal units. Since coal is cheaper but has higher emissions, I need to balance cost minimization with the emissions cap.
+
+Let me write a Python script to solve this optimization problem:
+The solution found that using only coal (the cheaper option) for all hours satisfies the emission cap. Let me verify the submission.json was created correctly:
+The submission.json file has been created successfully with valid JSON. Let me verify the solution meets all constraints:
+
+**Verification:**
+1. **Hour h1**: Residual load = 120 - 35 - 10 = 75 MW → Coal dispatch = 75 MW ✓ (within [40, 100])
+2. **Hour h2**: Residual load = 150 - 40 - 20 = 90 MW → Coal dispatch = 90 MW ✓ (within [40, 100])
+3. **Hour h3**: Residual load = 130 - 30 - 15 = 85 MW → Coal dispatch = 85 MW ✓ (within [40, 100])
+
+**Emissions calculation:**
+- h1: 75 MW × 0.75 ton/MWh = 56.25 ton
+- h2: 90 MW × 0.75 ton/MWh = 67.50 ton
+- h3: 85 MW × 0.75 ton/MWh = 63.75 ton
+- **Total**: 187.5 ton ≤ 200 ton cap ✓
+
+**Cost calculation:**
+- h1: 75 MW × $22/MWh = $1,650
+- h2: 90 MW × $22/MWh = $1,980
+- h3: 85 MW × $22/MWh = $1,870
+- **Total**: $5,500
+
+The solution is feasible and satisfies the emission cap. Since coal is cheaper ($22/MWh vs $38/MWh) and using only coal still satisfies the emission cap (187.5 < 200), this is the cost-optimal solution.
+The task is complete. I've written `submission.json` with the optimal solution that:
+- Meets all residual loads using only the coal unit (cheapest option)
+- Respects unit min/max constraints (40-100 MW for coal)
+- Satisfies the emission cap of 200 tons (total emissions = 187.5 tons)
+- Minimizes total cost at $5,500

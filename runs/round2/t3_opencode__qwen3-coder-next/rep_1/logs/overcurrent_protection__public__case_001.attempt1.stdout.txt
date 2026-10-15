@@ -1,0 +1,25 @@
+I'll solve this overcurrent protection task based on the constraints.
+
+**Key constraints:**
+1. Pickup current ≥ max_load_current × load_margin = 420 × 1.2 = 504 A
+2. Sensitivity factor = min_fault_current / pickup_current ≥ 1.5, so pickup ≤ 1800 / 1.5 = 1200 A
+3. Time delay ≥ downstream_delay + selectivity_margin = 0.35 + 0.3 = 0.65 s
+4. Secondary pickup = primary_pickup / CT_ratio must be in [1.0, 10.0] A
+5. Time delay must be in [0.0, 2.0] s
+
+Let me pick the optimal values:
+- Pickup current: 1200 A (max allowed by sensitivity, gives sensitivity factor = 1.5)
+- Time delay: 0.65 s (minimum allowed)
+
+Secondary pickup = 1200 / 100 = 12 A - this exceeds the max of 10 A!
+
+So I need secondary pickup ≤ 10 A:
+- Primary pickup ≤ 10 × 100 = 1000 A
+- But also need pickup ≥ 504 A and sensitivity ≥ 1.5 (pickup ≤ 1200 A)
+- The secondary range constraint is tighter: pickup ≤ 1000 A
+
+Pick pickup = 1000 A:
+- Sensitivity factor = 1800/1000 = 1.8 ≥ 1.5 ✓
+- Secondary pickup = 10 A (at max range) ✓
+- Time delay = 0.65 s ✓
+Done.

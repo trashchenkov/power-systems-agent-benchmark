@@ -1,0 +1,45 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 -c "
+import math
+Ilim=1.2; ip_pre=0.92; db=0.9; k=2.0
+samples=[('t000',0.0,0.88),('t080',0.08,0.52),('t160',0.16,0.48),('t240',0.24,0.74)]
+prof={}
+for sid,t,v in samples:
+    iq=0.0
+    if v<db:
+        iq=min(k*(db-v),Ilim)
+    rem=math.sqrt(max(Ilim**2-iq**2,0))
+    ip=min(ip_pre,rem)
+    tot=math.sqrt(ip**2+iq**2)
+    prof[sid]={'id_pu':round(ip,6),'iq_pu':round(iq,6),'total_current_pu':round(tot,6)}
+    print(sid, v, iq, ip, tot)
+print(prof)
+"
+
+t000 0.88 0.040000000000000036 0.92 0.9208691546577071
+t080 0.52 0.76 0.92 1.1933147112141038
+t160 0.48 0.8400000000000001 0.8569714114251419 1.2
+t240 0.74 0.32000000000000006 0.92 0.9740636529508737
+{'t000': {'id_pu': 0.92, 'iq_pu': 0.04, 'total_current_pu': 0.920869}, 't080': {'id_pu': 0.92, 'iq_pu': 0.76, 'total_current_pu': 1.193315}, 't160': {'id_pu': 0.856971, 'iq_pu': 0.84, 'total_current_pu': 1.2}, 't240': {'id_pu': 0.92, 'iq_pu': 0.32, 'total_current_pu': 0.974064}}
+[0m
+[0m$ [0mls -la <packets>/ibr_short_circuit_frt__public__case_001/ 2>&1 | head; echo "---"; pwd
+total 24
+drwxr-xr-x  2 root root  4096 Oct 14 17:07 .
+drwxr-xr-x 84 root root 12288 Oct 14 17:07 ..
+-rw-r--r--  1 root root  1176 Oct 14 17:07 instructions.md
+-rw-r--r--  1 root root  3824 Oct 14 17:07 task.json
+---
+<sandbox_a1>
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/ibr_short_circuit_frt__public__case_001/*); auto-rejecting

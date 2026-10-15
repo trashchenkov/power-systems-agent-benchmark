@@ -1,0 +1,69 @@
+Now I understand the task. I need to find the least-cost generation commitment that:
+1. Covers demand (260 MW) + reserve (40 MW) = 300 MW total capacity needed
+2. Survives loss of the largest committed unit (N-1 security)
+
+Let me calculate this:
+
+**Unit data:**
+- g1: 120 MW, startup $400, no-load $80, total $480
+- g2: 160 MW, startup $550, no-load $100, total $650
+- g3: 180 MW, startup $700, no-load $120, total $820
+- g4: 90 MW, startup $220, no-load $60, total $280
+
+**Requirements:**
+- Demand: 260 MW
+- Reserve: 40 MW
+- Total needed: 300 MW
+- N-1 security: After losing the largest committed unit, remaining capacity must still cover demand + reserve
+
+Let me find the least-cost feasible combination:
+
+**Trying g1 + g2 (120 + 160 = 280 MW):**
+- Total capacity: 280 MW < 300 MW needed → Not feasible
+
+**Trying g1 + g3 (120 + 180 = 300 MW):**
+- Total capacity: 300 MW ≥ 300 MW needed
+- N-1 check: Lose g3 (180 MW), remaining = 120 MW < 300 MW → Not feasible
+
+**Trying g2 + g3 (160 + 180 = 340 MW):**
+- Total capacity: 340 MW ≥ 300 MW
+- N-1 check: Lose g3 (180 MW), remaining = 160 MW < 300 MW → Not feasible
+
+**Trying g1 + g2 + g4 (120 + 160 + 90 = 370 MW):**
+- Total capacity: 370 MW ≥ 300 MW
+- N-1 check: Lose g2 (160 MW), remaining = 210 MW < 300 MW → Not feasible
+
+**Trying g1 + g3 + g4 (120 + 180 + 90 = 390 MW):**
+- Total capacity: 390 MW ≥ 300 MW
+- N-1 check: Lose g3 (180 MW), remaining = 210 MW < 300 MW → Not feasible
+
+**Trying g2 + g3 + g4 (160 + 180 + 90 = 430 MW):**
+- Total capacity: 430 MW ≥ 300 MW
+- N-1 check: Lose g3 (180 MW), remaining = 250 MW < 300 MW → Not feasible
+
+**Trying g1 + g2 + g3 (120 + 160 + 180 = 460 MW):**
+- Total capacity: 460 MW ≥ 300 MW
+- N-1 check: Lose g3 (180 MW), remaining = 280 MW < 300 MW → Not feasible
+
+**Trying g1 + g2 + g3 + g4 (120 + 160 + 180 + 90 = 550 MW):**
+- Total capacity: 550 MW ≥ 300 MW
+- N-1 check: Lose g3 (180 MW), remaining = 370 MW ≥ 300 MW → Feasible!
+- Cost: $480 + $650 + $820 + $280 = $2,230
+
+Let me check if there's a cheaper combination with 3 units that works:
+
+**Trying g1 + g2 + g4 (120 + 160 + 90 = 370 MW):**
+- Already checked: N-1 fails (lose g2, 160 MW, remaining 210 < 300)
+
+**Trying g2 + g3 + g4 (160 + 180 + 90 = 430 MW):**
+- Already checked: N-1 fails (lose g3, 180 MW, remaining 250 < 300)
+
+**Trying g1 + g3 + g4 (120 + 180 + 90 = 390 MW):**
+- Already checked: N-1 fails (lose g3, 180 MW, remaining 210 < 300)
+
+So all 4 units are needed. Let me calculate the final values:
+The submission.json file has been written with the solution. The least-cost feasible commitment includes all four units (g1, g2, g3, g4) with:
+- Total available capacity: 550 MW
+- N-1 secure capacity: 370 MW (after losing the largest unit g3 at 180 MW)
+- Reserve: 290 MW (available capacity minus demand)
+- Total commitment cost: $2,230

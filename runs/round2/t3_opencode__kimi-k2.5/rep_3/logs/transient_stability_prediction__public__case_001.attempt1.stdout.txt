@@ -1,0 +1,92 @@
+Now I understand the task. I need to compute the transient stability outcomes for three cases (fault_a, fault_b, fault_c) based on the given formulas, then create a submission.json file.
+
+Let me calculate:
+
+**Parameters:**
+- angle_limit_deg = 180.0
+- voltage_floor_pu = 0.7
+- min_damping_pct = 3.0
+
+**Case fault_a:**
+- fault_clearing_time_s = 0.1
+- estimated_cct_s = 0.17
+- max_rotor_angle_deg = 142.0
+- min_voltage_pu = 0.76
+- damping_ratio_pct = 5.0
+
+Margins:
+- angle_margin = 180.0 - 142.0 = 38.0 (>= 0 ✓)
+- voltage_margin = 0.76 - 0.7 = 0.06 (>= 0 ✓)
+- clearing_margin_s = 0.17 - 0.1 = 0.07 (>= 0 ✓)
+- damping_margin = 5.0 - 3.0 = 2.0 (>= 0 ✓)
+- **Label: stable** (all margins >= 0)
+
+Risk score:
+- max(0, -38.0/60) = 0
+- max(0, -0.06/0.1) = 0
+- max(0, -0.07/0.1) = 0
+- max(0, -2.0/5) = 0
+- max(0, 1 - 0.07/0.2)*0.1 = max(0, 1 - 0.35)*0.1 = 0.65*0.1 = 0.065
+- Total: 0 + 0 + 0 + 0 + 0.065 = 0.065
+
+**Case fault_b:**
+- fault_clearing_time_s = 0.16
+- estimated_cct_s = 0.14
+- max_rotor_angle_deg = 188.0
+- min_voltage_pu = 0.68
+- damping_ratio_pct = 2.2
+
+Margins:
+- angle_margin = 180.0 - 188.0 = -8.0 (< 0 ✗)
+- voltage_margin = 0.68 - 0.7 = -0.02 (< 0 ✗)
+- clearing_margin_s = 0.14 - 0.16 = -0.02 (< 0 ✗)
+- damping_margin = 2.2 - 3.0 = -0.8 (< 0 ✗)
+- **Label: unstable** (not all margins >= 0)
+
+Risk score:
+- max(0, -(-8.0)/60) = max(0, 8/60) = 0.133333...
+- max(0, -(-0.02)/0.1) = max(0, 0.02/0.1) = 0.2
+- max(0, -(-0.02)/0.1) = max(0, 0.02/0.1) = 0.2
+- max(0, -(-0.8)/5) = max(0, 0.8/5) = 0.16
+- max(0, 1 - (-0.02)/0.2)*0.1 = max(0, 1 + 0.1)*0.1 = 1.1*0.1 = 0.11
+- Total: 0.133333 + 0.2 + 0.2 + 0.16 + 0.11 = 0.803333... → rounded to 3 decimals: **0.803**
+
+**Case fault_c:**
+- fault_clearing_time_s = 0.08
+- estimated_cct_s = 0.11
+- max_rotor_angle_deg = 171.0
+- min_voltage_pu = 0.72
+- damping_ratio_pct = 3.4
+
+Margins:
+- angle_margin = 180.0 - 171.0 = 9.0 (>= 0 ✓)
+- voltage_margin = 0.72 - 0.7 = 0.02 (>= 0 ✓)
+- clearing_margin_s = 0.11 - 0.08 = 0.03 (>= 0 ✓)
+- damping_margin = 3.4 - 3.0 = 0.4 (>= 0 ✓)
+- **Label: stable** (all margins >= 0)
+
+Risk score:
+- max(0, -9.0/60) = 0
+- max(0, -0.02/0.1) = 0
+- max(0, -0.03/0.1) = 0
+- max(0, -0.4/5) = 0
+- max(0, 1 - 0.03/0.2)*0.1 = max(0, 1 - 0.15)*0.1 = 0.85*0.1 = 0.085
+- Total: 0 + 0 + 0 + 0 + 0.085 = 0.085
+
+**Summary:**
+- fault_a: label=stable, risk_score=0.065, clearing_margin_s=0.07
+- fault_b: label=unstable, risk_score=0.803, clearing_margin_s=-0.02
+- fault_c: label=stable, risk_score=0.085, clearing_margin_s=0.03
+
+- stable_case_count: 2 (fault_a and fault_c)
+- highest_risk_case: fault_b (0.803 is the largest risk score)
+The task is complete. I've created the `submission.json` file with:
+
+1. **Case results** for all three faults:
+   - **fault_a**: stable (all margins ≥ 0), risk_score = 0.065, clearing_margin_s = 0.07
+   - **fault_b**: unstable (angle, voltage, clearing, and damping margins all negative), risk_score = 0.803, clearing_margin_s = -0.02
+   - **fault_c**: stable (all margins ≥ 0), risk_score = 0.085, clearing_margin_s = 0.03
+
+2. **stable_case_count**: 2 (fault_a and fault_c are stable)
+
+3. **highest_risk_case**: "fault_b" (has the highest risk score of 0.803)

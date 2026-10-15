@@ -1,0 +1,116 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+
+# Given parameters
+design_current_a = 180.0
+power_factor = 0.9
+cos_phi = power_factor
+sin_phi = (1 - power_factor**2)**0.5
+system_voltage_v = 400.0
+length_m = 250.0
+max_voltage_drop_pct = 5.0
+ambient_factor = 0.96
+grouping_factor = 0.8
+fault_current_ka = 12.0
+clearing_time_s = 0.4
+k_adiabatic = 143.0
+
+# Catalog data
+catalog = [
+    {"cross_section_mm2": 50, "base_ampacity_a": 192.0, "r_ohm_per_km": 0.387, "x_ohm_per_km": 0.085},
+    {"cross_section_mm2": 70, "base_ampacity_a": 246.0, "r_ohm_per_km": 0.268, "x_ohm_per_km": 0.082},
+    {"cross_section_mm2": 95, "base_ampacity_a": 298.0, "r_ohm_per_km": 0.193, "x_ohm_per_km": 0.082},
+    {"cross_section_mm2": 120, "base_ampacity_a": 346.0, "r_ohm_per_km": 0.153, "x_ohm_per_km": 0.08},
+    {"cross_section_mm2": 150, "base_ampacity_a": 399.0, "r_ohm_per_km": 0.124, "x_ohm_per_km": 0.08},
+    {"cross_section_mm2": 185, "base_ampacity_a": 456.0, "r_ohm_per_km": 0.0991, "x_ohm_per_km": 0.08}
+]
+
+# Minimum thermal section from adiabatic criterion
+min_thermal_section = (fault_current_ka * 1000) * (clearing_time_s**0.5) / k_adiabatic
+
+# Check each catalog entry
+results = []
+for cable in catalog:
+    cross_section = cable["cross_section_mm2"]
+    base_ampacity = cable["base_ampacity_a"]
+    r_per_km = cable["r_ohm_per_km"]
+    x_per_km = cable["x_ohm_per_km"]
+    
+    # Check 1: Derated ampacity
+    derated_ampacity = base_ampacity * ambient_factor * grouping_factor
+    ampacity_pass = derated_ampacity >= design_current_a
+    
+    # Check 2: Voltage drop
+    voltage_drop = (3**0.5) * design_current_a * (length_m / 1000) * (r_per_km * cos_phi + x_per_km * sin_phi)
+    voltage_drop_pct = (voltage_drop / system_voltage_v) * 100
+    voltage_drop_pass = voltage_drop_pct <= max_voltage_drop_pct
+    
+    # Check 3: Adiabatic criterion
+    thermal_pass = cross_section >= min_thermal_section
+    
+    passed = ampacity_pass and voltage_drop_pass and thermal_pass
+    results.append({
+        "section": cross_section,
+        "derated_ampacity": derated_ampacity,
+        "voltage_drop_pct": voltage_drop_pct,
+        "ampacity_pass": ampacity_pass,
+        "voltage_drop_pass": voltage_drop_pass,
+        "thermal_pass": thermal_pass,
+        "passed": passed
+    })
+
+# Find smallest passing section
+selected = None
+for r in results:
+    if r["passed"]:
+        selected = r
+        break
+
+print(f"Min thermal section: {min_thermal_section:.2f} mm2")
+print("\nResults:")
+for r in results:
+    print(f"  {r['section']} mm2: derated={r['derated_ampacity']:.1f}A, U_drop={r['voltage_drop_pct']:.2f}%, "
+          f"amp={r['ampacity_pass']}, volt={r['voltage_drop_pass']}, therm={r['thermal_pass']}, pass={r['passed']}")
+
+if selected:
+    submission = {
+        "selected_cross_section_mm2": selected["section"],
+        "selected_derated_ampacity_a": round(selected["derated_ampacity"], 1),
+        "selected_voltage_drop_pct": round(selected["voltage_drop_pct"], 2),
+        "min_thermal_section_mm2": round(min_thermal_section, 2)
+    }
+    
+    with open("<packets>/cable_ampacity_sizing__public__case_001/submission.json", "w") as f:
+        json.dump(submission, f, indent=2)
+    
+    print(f"\nSelected: {selected['section']} mm2")
+    print(json.dumps(submission, indent=2))
+EOF
+Min thermal section: 53.07 mm2
+
+Results:
+  50 mm2: derated=147.5A, U_drop=7.51%, amp=False, volt=False, therm=False, pass=False
+  70 mm2: derated=188.9A, U_drop=5.40%, amp=True, volt=False, therm=True, pass=False
+  95 mm2: derated=228.9A, U_drop=4.08%, amp=True, volt=True, therm=True, pass=True
+  120 mm2: derated=265.7A, U_drop=3.36%, amp=True, volt=True, therm=True, pass=True
+  150 mm2: derated=306.4A, U_drop=2.85%, amp=True, volt=True, therm=True, pass=True
+  185 mm2: derated=350.2A, U_drop=2.42%, amp=True, volt=True, therm=True, pass=True
+
+Selected: 95 mm2
+{
+  "selected_cross_section_mm2": 95,
+  "selected_derated_ampacity_a": 228.9,
+  "selected_voltage_drop_pct": 4.08,
+  "min_thermal_section_mm2": 53.07
+}
+[0m
+[93m[1m! [0mpermission requested: external_directory (<packets>/cable_ampacity_sizing__public__case_001/*); auto-rejecting

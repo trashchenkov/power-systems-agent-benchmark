@@ -1,0 +1,171 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import math
+import json
+
+# Input data
+scheduled_current_a = 520.0
+T_max = 75.0  # max_conductor_temperature_c
+
+# Conductor properties
+diameter_mm = 22.4
+resistance_ohm_per_km_at_20c = 0.118
+resistance_temp_coeff_per_c = 0.00403
+emissivity = 0.7
+solar_absorptivity = 0.7
+
+# Model constants
+convective_w_per_m_c_at_1ms = 0.72
+stefan_boltzmann = 5.670374419e-8
+
+# Weather series
+weather_series = [
+    {
+        "timestamp": "t00",
+        "ambient_temperature_c": 18.0,
+        "wind_speed_m_s": 2.8,
+        "solar_w_per_m2": 150.0
+    },
+    {
+        "timestamp": "t01",
+        "ambient_temperature_c": 31.0,
+        "wind_speed_m_s": 0.7,
+        "solar_w_per_m2": 850.0
+    },
+    {
+        "timestamp": "t02",
+        "ambient_temperature_c": 27.0,
+        "wind_speed_m_s": 1.4,
+        "solar_w_per_m2": 600.0
+    },
+    {
+        "timestamp": "t03",
+        "ambient_temperature_c": 22.0,
+        "wind_speed_m_s": 3.2,
+        "solar_w_per_m2": 100.0
+    }
+]
+
+# Calculate ampacity for each timestamp
+ampacity_by_timestamp = {}
+ampacities = []
+
+for weather in weather_series:
+    timestamp = weather["timestamp"]
+    ambient = weather["ambient_temperature_c"]
+    wind_speed = weather["wind_speed_m_s"]
+    solar = weather["solar_w_per_m2"]
+    
+    # Calculate R_hot (resistance at max temperature)
+    R_hot = (resistance_ohm_per_km_at_20c / 1000) * (1 + resistance_temp_coeff_per_c * (T_max - 20))
+    
+    # Calculate convection
+    convection = convective_w_per_m_c_at_1ms * max(wind_speed, 0.05) ** 0.6 * (T_max - ambient)
+    
+    # Calculate radiation (note: radiating surface is pi*D per metre)
+    radiation = emissivity * stefan_boltzmann * (math.pi * diameter_mm / 1000) * \
+                ((T_max + 273.15) ** 4 - (ambient + 273.15) ** 4)
+    
+    # Calculate solar gain (projected width D per metre)
+    solar_gain = solar_absorptivity * solar * (diameter_mm / 1000)
+    
+    # Calculate ampacity
+    numerator = max(convection + radiation - solar_gain, 0)
+    ampacity = math.sqrt(numerator / R_hot)
+    
+    ampacity_by_timestamp[timestamp] = ampacity
+    ampacities.append((timestamp, ampacity))
+    
+    print(f"{timestamp}:")
+    print(f"  R_hot: {R_hot}")
+    print(f"  convection: {convection}")
+    print(f"  radiation: {radiation}")
+    print(f"  solar_gain: {solar_gain}")
+    print(f"  numerator: {numerator}")
+    print(f"  ampacity: {ampacity}")
+
+# Find minimum ampacity
+minimum_ampacity = min(ampacities, key=lambda x: x[1])
+limiting_timestamp = minimum_ampacity[0]
+minimum_ampacity_value = minimum_ampacity[1]
+
+# Find overload timestamps
+overload_timestamps = []
+for timestamp, ampacity in ampacities:
+    if scheduled_current_a > ampacity:
+        overload_timestamps.append(timestamp)
+
+print(f"\nMinimum ampacity: {minimum_ampacity_value} A at {limiting_timestamp}")
+print(f"Scheduled current: {scheduled_current_a} A")
+print(f"Overload timestamps: {overload_timestamps}")
+
+# Create submission
+submission = {
+    "ampacity_by_timestamp_a": ampacity_by_timestamp,
+    "minimum_ampacity_a": minimum_ampacity_value,
+    "limiting_timestamp": limiting_timestamp,
+    "overload_timestamps": overload_timestamps
+}
+
+print("\n" + json.dumps(submission, indent=2))
+EOF
+
+t00:
+  R_hot: 0.00014415469999999998
+  convection: 76.12059440385774
+  radiation: 20.96550938289636
+  solar_gain: 2.352
+  numerator: 94.73410378675409
+  ampacity: 810.6600518469957
+t01:
+  R_hot: 0.00014415469999999998
+  convection: 25.576669814170373
+  radiation: 17.133419105688176
+  solar_gain: 13.328
+  numerator: 29.38208891985855
+  ampacity: 451.4679563881969
+t02:
+  R_hot: 0.00014415469999999998
+  convection: 42.2912532583685
+  radiation: 18.36628112616556
+  solar_gain: 9.408
+  numerator: 51.24953438453406
+  ampacity: 596.2529746623851
+t03:
+  R_hot: 0.00014415469999999998
+  convection: 76.68286898112447
+  radiation: 19.83956338914324
+  solar_gain: 1.568
+  numerator: 94.95443237026771
+  ampacity: 811.6022038417384
+
+Minimum ampacity: 451.4679563881969 A at t01
+Scheduled current: 520.0 A
+Overload timestamps: ['t01']
+
+{
+  "ampacity_by_timestamp_a": {
+    "t00": 810.6600518469957,
+    "t01": 451.4679563881969,
+    "t02": 596.2529746623851,
+    "t03": 811.6022038417384
+  },
+  "minimum_ampacity_a": 451.4679563881969,
+  "limiting_timestamp": "t01",
+  "overload_timestamps": [
+    "t01"
+  ]
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

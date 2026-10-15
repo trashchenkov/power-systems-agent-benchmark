@@ -1,0 +1,35 @@
+I need to solve the cable ampacity sizing task. Let me calculate the requirements:
+
+**Given inputs:**
+- `design_current_a`: 180.0 A
+- `power_factor`: 0.9
+- `system_voltage_v`: 400.0 V
+- `length_m`: 250.0 m
+- `max_voltage_drop_pct`: 5.0%
+- `ambient_factor`: 0.96
+- `grouping_factor`: 0.8
+- `fault_current_ka`: 12.0 kA
+- `clearing_time_s`: 0.4 s
+- `k_adiabatic_a_sqrt_s_per_mm2`: 143.0
+
+**Minimum thermal section (adiabatic criterion):**
+`I_fault * sqrt(t) / k = 12000 * sqrt(0.4) / 143 = 12000 * 0.6325 / 143 = 53.16 mm²`
+
+**Checking each catalog cable in order:**
+
+1. **50 mm²:** base=192A, derated=192*0.96*0.8=147.46A < 180A ✗ (fails ampacity)
+
+2. **70 mm²:** base=246A, derated=246*0.96*0.8=188.45A ≥ 180A ✓
+   - Voltage drop: √3 * 180 * (250/1000) * (0.268*0.9 + 0.082*sin(arccos(0.9))) / 400 * 100
+   - sin(phi) = sin(arccos(0.9)) = 0.4359
+   - dU = 1.732 * 180 * 0.25 * (0.2412 + 0.0357) / 400 * 100 = 6.72% > 5% ✗
+
+3. **95 mm²:** base=298A, derated=298*0.96*0.8=226.46A ≥ 180A ✓
+   - dU = 1.732 * 180 * 0.25 * (0.193*0.9 + 0.082*0.4359) / 400 * 100 = 5.29% > 5% ✗
+
+4. **120 mm²:** base=346A, derated=346*0.96*0.8=265.15A ≥ 180A ✓
+   - dU = 1.732 * 180 * 0.25 * (0.153*0.9 + 0.08*0.4359) / 400 * 100 = 4.78% ≤ 5% ✓
+   - Section 120 ≥ 53.16 mm² ✓
+
+**Selected: 120 mm², derated ampacity: 265.15A, voltage drop: 4.78%**
+Done.

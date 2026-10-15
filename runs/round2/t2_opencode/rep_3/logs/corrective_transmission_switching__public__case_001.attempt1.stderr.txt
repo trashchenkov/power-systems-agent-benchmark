@@ -1,0 +1,84 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · deepseek/deepseek-v4-flash
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcat << 'EOF' > /tmp/solve.py
+import numpy as np
+from itertools import combinations
+
+buses=["b1","b2","b3","b4"]
+idx={b:i for i,b in enumerate(buses)}
+p={"b1":100.0,"b2":-20.0,"b3":-50.0,"b4":-30.0}
+branches={
+ "l12":("b1","b2",0.1,75.0,True),
+ "l13":("b1","b3",0.1,40.0,False),
+ "l23":("b2","b3",0.1,50.0,True),
+ "l24":("b2","b4",0.1,50.0,True),
+ "l34":("b3","b4",0.1,50.0,True),
+ "l14":("b1","b4",0.3,50.0,False),
+}
+n=4
+slack=0
+def solve(closed):
+    B=np.zeros((n,n))
+    for bid,(f,t,x,r,c) in branches.items():
+        if bid in closed and c:
+            i,j=idx[f],idx[t]
+            b=1.0/x
+            B[i,i]+=b; B[j,j]+=b; B[i,j]-=b; B[j,i]-=b
+    # check connectivity
+    active=[bid for bid,(f,t,x,r,c) in branches.items() if bid in closed and c]
+    adj={i:set() for i in range(n)}
+    for bid in active:
+        f,t,_,_,_=branches[bid]
+        adj[idx[f]].add(idx[t]); adj[idx[t]].add(idx[f])
+    seen={slack}; stack=[slack]
+    while stack:
+        u=stack.pop()
+        for v in adj[u]:
+            if v not in seen: seen.add(v); stack.append(v)
+    connected = len(seen)==n
+    P=np.array([p[b] for b in buses])
+    Bred=np.delete(np.delete(B,slack,axis=0),slack,axis=1)
+    Pred=np.delete(P,slack)
+    th_red=np.linalg.solve(Bred,Pred)
+    th=np.zeros(n)
+    k=0
+    for i in range(n):
+        if i==slack: continue
+        th[i]=th_red[k]; k+=1
+    flows={}
+    for bid in active:
+        f,t,x,r,c=branches[bid]
+        fl=(th[idx[f]]-th[idx[t]])/x
+        flows[bid]=fl
+    load=max(abs(fl)/branches[bid][3] for bid,fl in flows.items()) if flows else 0
+    return connected,flows,load
+
+base=set(["l12","l23","l24","l34"])
+print("base",solve(base))
+opts={
+ "close l14": base|{"l14"},
+ "open l23": base-{"l23"},
+ "open l24": base-{"l24"},
+ "open l34": base-{"l34"},
+ "none": base,
+}
+for name,s in opts.items():
+    conn,flows,load=solve(s)
+    print(name,"conn",conn,"load %.4f"%load, {k:round(v,2) for k,v in flows.items()})
+EOF
+python3 /tmp/solve.py
+base (True, {'l12': 99.99999999999996, 'l23': 43.333333333333286, 'l24': 36.66666666666662, 'l34': -6.666666666666661}, 1.3333333333333328)
+close l14 conn True load 1.3333 {'l12': 100.0, 'l23': 43.33, 'l24': 36.67, 'l34': -6.67}
+open l23 conn True load 1.6000 {'l12': 100.0, 'l24': 80.0, 'l34': -50.0}
+open l24 conn True load 1.6000 {'l12': 100.0, 'l23': 80.0, 'l34': 30.0}
+open l34 conn True load 1.3333 {'l12': 100.0, 'l23': 50.0, 'l24': 30.0}
+none conn True load 1.3333 {'l12': 100.0, 'l23': 43.33, 'l24': 36.67, 'l34': -6.67}
+[0m
+[93m[1m! [0mpermission requested: external_directory (/tmp/*); auto-rejecting

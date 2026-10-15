@@ -1,0 +1,50 @@
+I'll read the instructions and task files to understand what needs to be done.
+Now let me read both files:
+Now I understand the task. Let me analyze the inputs and derive the answer:
+
+**Analysis:**
+
+1. **Frequency State Classification:**
+   - Nominal frequency: 50 Hz
+   - Current frequency: 49.82 Hz
+   - Absolute deviation: |49.82 - 50| = 0.18 Hz
+   - Alert threshold: 0.1 Hz
+   - Emergency threshold: 0.3 Hz
+   - Since 0.18 Hz > 0.1 Hz but < 0.3 Hz → state is **"alert"**
+
+2. **Handover Decision (for low frequency scenario):**
+   - Current lead: plant_a
+   - Since frequency is low (49.82 < 50), we need upward power regulation
+   - Need to find available agent with sufficient upward headroom and best latency
+   
+   Available agents:
+   - plant_a: available=true, current=88, pmax=100, headroom=12 MW, latency=45ms
+   - plant_b: available=true, current=70, pmax=120, headroom=50 MW, latency=55ms
+   - battery_c: available=true, current=5, pmax=40, headroom=35 MW, latency=20ms
+   - plant_d: available=false (excluded)
+   
+   Min headroom required: 20 MW
+   Max latency allowed: 80 ms
+   
+   Candidates with sufficient headroom (≥20 MW):
+   - plant_b: 50 MW headroom, 55ms latency ✓
+   - battery_c: 35 MW headroom, 20ms latency ✓
+   - plant_a: 12 MW headroom (insufficient - below 20 MW) ✗
+   
+   Optimizing by: maximize headroom → minimize latency
+   - plant_b: 50 MW (higher)
+   - battery_c: 35 MW (lower)
+   
+   Best choice: **plant_b** (50 MW headroom)
+
+3. **Handover Required:**
+   - Current lead: plant_a
+   - Selected lead: plant_b
+   - They differ → **true**
+
+Let me write the submission:
+Done. The submission has been written to `submission.json` with:
+- **frequency_state**: "alert" (deviation 0.18 Hz is between thresholds)
+- **lead_agent**: "plant_b" (50 MW upward headroom, meets 20 MW minimum, optimizes headroom > latency)
+- **handover_required**: true (switching from plant_a to plant_b)
+- **lead_headroom_mw**: 50 (plant_b's available upward capacity)

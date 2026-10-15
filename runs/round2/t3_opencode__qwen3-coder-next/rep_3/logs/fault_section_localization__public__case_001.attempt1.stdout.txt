@@ -1,0 +1,27 @@
+I need to solve a fault section localization problem for a power system. Let me analyze the task:
+
+**Given:**
+- Radial feeder with nodes: n0, n1, n2, n3, n4, n5
+- Sections: s01 (n0→n1), s12 (n1→n2), s23 (n2→n3), s24 (n2→n4), s45 (n4→n5)
+- FCI locations at: n1, n2, n4
+- Observed FCI states: all three are true (n1=true, n2=true, n4=true)
+- Outage complaints: n5
+
+**Goal:** Find the faulted section that minimizes mismatch between expected and observed FCI states and complaints.
+
+**Analysis:**
+For a fault on a section, the FCI downstream of the fault should detect current (true), and FCIs upstream should not (unless the fault is between source and that FCI). All customer nodes downstream of the faulted section should be affected.
+
+Let me check each candidate section:
+
+1. **s01 (n0→n1):** Downstream = all nodes (n1,n2,n3,n4,n5). FCIs downstream: n1,n2,n4 → all should be true. Computed affected: n2,n3,n4,n5. This matches observed FCI states (all true) and n5 complaint. **Feasible.**
+
+2. **s12 (n1→n2):** Downstream = n2,n3,n4,n5. FCIs downstream: n2,n4 → should be true. FCI at n1 is upstream → should be false. But observed n1=true. **Mismatch.**
+
+3. **s23 (n2→n3):** Downstream = n3. FCIs downstream: n2 is upstream of n2? Actually n2 is the from-node, so it's upstream of the fault. FCI at n4 would be downstream? Need to trace: n2→n3, so downstream from n3. FCI at n2 is upstream (should be false), FCI at n4 is downstream (should be true). But observed n1=true, n2=true. Mismatch at n1,n2.
+
+4. **s24 (n2→n4):** Downstream = n4,n5. FCIs downstream: n4 should be true, n2 is upstream should be false, n1 is upstream should be false. Observed all true. Mismatch.
+
+5. **s45 (n4→n5):** Downstream = n5. FCIs downstream: n4 should be true, n2 upstream should be false, n1 upstream should be false. Observed all true. Mismatch.
+
+Only s01 is feasible - it explains all FCIs being true (all are downstream of fault) and only n5 being complained.

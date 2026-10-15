@@ -1,0 +1,17 @@
+**Solution:** A monotonic piecewise-linear Volt-VAR curve was derived from the public timesteps and voltage limits.
+
+| Timestep | Base V (pu) | Q command | Corrected V (pu) |
+|----------|-------------|-----------|------------------|
+| t_low    | 0.94        | +14.3 kvar (inject) | ~0.950 |
+| t_nom    | 1.00        | 0 kvar | 1.000 |
+| t_high   | 1.07        | −28.6 kvar (absorb) | ~1.050 |
+
+**Curve breakpoints** (strictly increasing voltage, non-increasing `q_fraction`):
+- 0.92 pu → +0.268 (inject)
+- 0.98 pu → 0 (deadband start)
+- 1.02 pu → 0 (deadband end)
+- 1.08 pu → −0.429 (absorb)
+
+`q_fraction` is applied to available reactive headroom `√(kVA² − kW²)`. Interpolation at each timestep uses `V_corrected = V_base + sensitivity × Q_kvar`.
+
+Valid JSON is in `submission.json` in the packet directory.

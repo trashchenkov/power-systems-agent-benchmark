@@ -1,0 +1,12 @@
+# Round-2 repeated runs (pass@k) — operator log
+- 2026-10-14 ~15:13 MSK: launched t2_codex and t2_opencode (82 packets = 41 public case_001 + 41 hidden case_501, k=5, parallel 3, timeout 600 s, max-attempts 2).
+- 2026-10-14 ~15:27 MSK: t2_codex stopped after 10 cases solely to raise parallelism from 3 to 5 (throughput); its partial output is kept untouched in aborted_t2_codex_parallel3/ and excluded wholesale, independent of scores. Relaunched t2_codex with parallel 5.
+- Routes: Codex CLI 0.139.0 -> TagMe openai/gpt-5.5 (Responses API), OpenCode 1.15.13 -> TagMe deepseek/deepseek-v4-flash, via <workdir>/tagme_stream_proxy.py. Fresh agent home/state per case.
+- 2026-10-14 15:40 MSK: launched t2_cursor (Cursor CLI 2026.06.12-01-15-52-7244546, composer-2.5, native Cursor route via hermes-vpn netns; k=5, parallel 3).
+- 2026-10-14 16:57 MSK: STOPPED all runs: found agent-written submission.json in 6 source packets (cross-repeat contamination risk).
+- 2026-10-14 17:06 MSK: all three t2 runs moved to aborted_contaminated_20261014/ and excluded wholesale. Fix: runner copies only task.json+instructions.md; each repeat gets its own pristine packet copy (instructions point at it); files written into packets are reported. Stray files from packets_r2 moved to private/stray_packet_files/. Relaunching all three from scratch.
+- 2026-10-14 17:07 MSK: relaunched t2_codex (17:07), t2_cursor and t2_opencode (now) under the fixed protocol.
+- 2026-10-14 20:02 MSK: Table III grid started (OpenCode 1.15.13 / Aider 0.86.2 via TagMe; public; k=3).
+- 2026-10-15 00:02 MSK: STOPPED grid wave 2 (qwen3-coder-next): VM memory exhausted by orphaned agent processes left after per-case timeouts (runner killed only the sh wrapper). Killed all agent processes.
+- 2026-10-15 00:05 MSK: qwen3-coder-next cells moved to aborted_qwen_tagme503/: TagMe returned HTTP 503 for every qwen request (638/638); not a model-quality result. Runner fixed to kill the agent process group on timeout.
+- 2026-10-15 00:18 MSK: Qwen3-Coder-Next cells relaunched via OpenRouter (user personal key, provider Parasail bf16), agents in hermes-vpn netns (OpenRouter denies host IP). Runner with process-group timeout fix.

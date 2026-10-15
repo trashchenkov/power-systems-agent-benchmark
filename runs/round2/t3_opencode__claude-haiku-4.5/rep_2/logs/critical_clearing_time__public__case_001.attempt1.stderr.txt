@@ -1,0 +1,76 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead task.json
+[0m→ [0mRead instructions.md
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+import math
+
+# Case data from task.json
+f0 = 50.0  # nominal_frequency_hz
+H = 4.0  # inertia_h_s
+Pm = 0.9  # mechanical_power_pu
+prefault_pmax = 2.0  # prefault_pmax_pu
+during_fault_pmax = 0.0  # during_fault_pmax_pu
+postfault_pmax = 1.5  # postfault_pmax_pu
+
+# Compute delta0 = asin(Pm/prefault_pmax)
+delta0_rad = math.asin(Pm / prefault_pmax)
+delta0_deg = math.degrees(delta0_rad)
+
+# Compute delta_max = pi - asin(Pm/postfault_pmax)
+delta_max_rad = math.pi - math.asin(Pm / postfault_pmax)
+delta_max_deg = math.degrees(delta_max_rad)
+
+# Compute critical clearing angle from equal-area criterion
+# cos(delta_cr) = (Pm*(delta_max - delta0) + postfault_pmax*cos(delta_max)) / postfault_pmax
+numerator = Pm * (delta_max_rad - delta0_rad) + postfault_pmax * math.cos(delta_max_rad)
+cos_delta_cr = numerator / postfault_pmax
+delta_cr_rad = math.acos(cos_delta_cr)
+delta_cr_deg = math.degrees(delta_cr_rad)
+
+# Compute critical clearing time
+# t_cr = sqrt(4*H*(delta_cr - delta0) / (2*pi*f0*Pm))
+t_cr = math.sqrt(4 * H * (delta_cr_rad - delta0_rad) / (2 * math.pi * f0 * Pm))
+
+print(f"delta0 (degrees): {delta0_deg:.6f}")
+print(f"delta_max (degrees): {delta_max_deg:.6f}")
+print(f"delta_critical (degrees): {delta_cr_deg:.6f}")
+print(f"critical_clearing_time (seconds): {t_cr:.6f}")
+
+# Create submission
+submission = {
+    "delta0_deg": round(delta0_deg, 2),
+    "delta_max_deg": round(delta_max_deg, 2),
+    "delta_critical_deg": round(delta_cr_deg, 2),
+    "critical_clearing_time_s": round(t_cr, 3),
+    "rationale": "Computed using equal-area criterion from SMIB case parameters: delta0 from prefault operating point, delta_max from postfault stability limit, delta_critical from energy balance equation, and t_cr from swing equation integration."
+}
+
+print("\nSubmission:")
+print(json.dumps(submission, indent=2))
+EOF
+
+delta0 (degrees): 26.743684
+delta_max (degrees): 143.130102
+delta_critical (degrees): 65.241420
+critical_clearing_time (seconds): 0.194993
+
+Submission:
+{
+  "delta0_deg": 26.74,
+  "delta_max_deg": 143.13,
+  "delta_critical_deg": 65.24,
+  "critical_clearing_time_s": 0.195,
+  "rationale": "Computed using equal-area criterion from SMIB case parameters: delta0 from prefault operating point, delta_max from postfault stability limit, delta_critical from energy balance equation, and t_cr from swing equation integration."
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

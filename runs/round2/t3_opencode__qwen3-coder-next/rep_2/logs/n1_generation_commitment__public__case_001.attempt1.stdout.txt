@@ -1,0 +1,61 @@
+I'll read the instructions and task files to understand what needs to be done.
+I need to solve this N-1 generation commitment problem. Let me analyze:
+
+**Given:**
+- Demand: 260 MW
+- Reserve: 40 MW
+- Units: g1(120MW, $400/$80), g2(160MW, $550/$100), g3(180MW, $700/$120), g4(90MW, $220/$60)
+- Need N-1 security: after losing largest committed unit, must still cover demand + reserve
+
+**Objective:** Minimize cost (startup + no-load)
+
+Let me check feasible combinations:
+- Need 300 MW capacity (260+40 reserve)
+- N-1: after losing largest committed unit, need 300 MW remaining
+
+Possible combinations:
+- g2+g3 = 340 MW, cost = 550+100+700+120 = 1470
+  - Lose g3 (180): left with g2=160 < 300 ❌
+  
+- g1+g2+g4 = 370 MW, cost = 400+80+550+100+220+60 = 1410
+  - Lose g2 (160): left with 210 < 300 ❌
+
+- g1+g2+g3 = 460 MW, cost = 400+80+550+100+700+120 = 1950
+  - Lose g3 (180): left with 280 < 300 ❌
+
+- g2+g3+g4 = 430 MW, cost = 550+100+700+120+220+60 = 1750
+  - Lose g3 (180): left with 250 < 300 ❌
+
+- g1+g3+g4 = 390 MW, cost = 400+80+700+120+220+60 = 1580
+  - Lose g3 (180): left with 210 < 300 ❌
+
+All 4 units = 550 MW, cost = 400+80+550+100+700+120+220+60 = 2230
+- Lose g3 (180): left with 370 >= 300 ✓
+
+But wait - let me reconsider. The constraint says "survives loss of the largest committed unit" and "covers demand and reserve". After loss, we need: demand(260) + reserve(40) = 300 MW.
+
+Let me check g1+g2+g3+g4 again:
+- Total: 550 MW
+- After losing g3 (180): 370 >= 300 ✓
+
+Actually, I need to verify: the reserve requirement may be met differently. Let me reconsider.
+
+The key insight: after N-1 contingency (largest unit lost), remaining committed units must still cover demand + reserve.
+
+The only 4-unit combination works. But maybe there's a cheaper 3-unit solution I missed.
+
+Actually, since we need 300 MW after losing the largest unit, we need all units's max power + remaining >= 300.
+For 3 units where one is largest: sum of smaller two >= 300.
+
+ checking pairs:
+- g1+g2 = 280 < 300
+- g1+g3 = 300 = 300 ✓ (but need 300, exactly meets)
+- g1+g4 = 210 < 300
+- g2+g3 = 340 >= 300 ✓
+- g2+g4 = 250 < 300
+- g3+g4 = 270 < 300
+
+g1+g3 = 300 exactly. But g3 is largest. After losing g3, only g1=120 < 300 ❌
+g2+g3 = 340. After losing g3, only g2=160 < 300 ❌
+
+So 3 units won't work. Need all 4.

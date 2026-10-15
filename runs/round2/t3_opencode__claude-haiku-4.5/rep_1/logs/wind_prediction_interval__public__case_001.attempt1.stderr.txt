@@ -1,0 +1,130 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mcd <sandbox_a1> && python3 << 'EOF'
+import json
+import math
+
+# Load task data
+with open('task.json', 'r') as f:
+    task = json.load(f)
+
+case = task['wind_interval_case']
+reference_air_density = case['reference_air_density_kg_m3']
+turbine_count = case['turbine']['count']
+rated_mw_each = case['turbine']['rated_mw_each']
+cut_in = case['power_curve']['cut_in_m_s']
+rated_speed = case['power_curve']['rated_m_s']
+cut_out = case['power_curve']['cut_out_m_s']
+
+def calculate_power(wind_speed_m_s, air_density_kg_m3):
+    """Calculate power using the specified power curve convention."""
+    # Corrected speed
+    v_c = wind_speed_m_s * ((air_density_kg_m3 / reference_air_density) ** (1/3))
+    
+    # Power curve logic
+    if v_c < cut_in or v_c >= cut_out:
+        power = 0
+    elif v_c >= rated_speed:
+        power = turbine_count * rated_mw_each
+    else:
+        # Linear interpolation in cubic form
+        normalized = (v_c - cut_in) / (rated_speed - cut_in)
+        power = turbine_count * rated_mw_each * (normalized ** 3)
+    
+    return power
+
+def calculate_quantile(sorted_values, q):
+    """Calculate quantile using linear interpolation."""
+    n = len(sorted_values)
+    pos = q * (n - 1)
+    
+    lower_idx = math.floor(pos)
+    upper_idx = math.ceil(pos)
+    
+    if lower_idx == upper_idx:
+        return sorted_values[lower_idx]
+    
+    # Linear interpolation
+    frac = pos - lower_idx
+    return sorted_values[lower_idx] * (1 - frac) + sorted_values[upper_idx] * frac
+
+# Process each horizon
+prediction_intervals = {}
+interval_widths = []
+
+for horizon in case['horizons']:
+    timestamp = horizon['timestamp']
+    scenarios = horizon['scenarios']
+    
+    # Calculate power for each scenario
+    powers = []
+    for scenario in scenarios:
+        power = calculate_power(scenario['wind_speed_m_s'], scenario['air_density_kg_m3'])
+        powers.append(power)
+    
+    # Sort powers for quantile calculation
+    sorted_powers = sorted(powers)
+    
+    # Calculate quantiles
+    p10 = calculate_quantile(sorted_powers, 0.1)
+    p50 = calculate_quantile(sorted_powers, 0.5)
+    p90 = calculate_quantile(sorted_powers, 0.9)
+    
+    prediction_intervals[timestamp] = {
+        'p10': round(p10, 2),
+        'p50': round(p50, 2),
+        'p90': round(p90, 2)
+    }
+    
+    interval_widths.append(p90 - p10)
+
+# Calculate average interval width
+average_interval_width = sum(interval_widths) / len(interval_widths)
+
+# Create submission
+submission = {
+    'prediction_interval_mw_by_timestamp': prediction_intervals,
+    'average_interval_width_mw': round(average_interval_width, 2)
+}
+
+print(json.dumps(submission, indent=2))
+
+# Save to submission.json
+with open('submission.json', 'w') as f:
+    json.dump(submission, f, indent=2)
+
+print("\nSubmission saved to submission.json")
+EOF
+
+{
+  "prediction_interval_mw_by_timestamp": {
+    "t01": {
+      "p10": 1.84,
+      "p50": 4.07,
+      "p90": 7.99
+    },
+    "t02": {
+      "p10": 4.93,
+      "p50": 10.0,
+      "p90": 17.21
+    },
+    "t03": {
+      "p10": 0.6,
+      "p50": 1.67,
+      "p90": 4.9
+    }
+  },
+  "average_interval_width_mw": 7.58
+}
+
+Submission saved to submission.json
+[0m
+[0m→ [0mRead submission.json

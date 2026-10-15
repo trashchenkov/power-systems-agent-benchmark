@@ -1,0 +1,32 @@
+I'll start by reading the instructions and task files to understand what needs to be done.
+Now I understand the task. I need to compute an IBR (Inverter-Based Resource) short-circuit response under FRT (Fault Ride-Through) control. Let me break down the requirements:
+
+1. **Current limit**: 1.2 pu
+2. **Prefault active current**: 0.92 pu
+3. **Reactive deadband**: 0.9 pu
+4. **Reactive current gain**: 2.0 pu/pu
+5. **FRT voltage floor**: 0.45 pu
+6. **Max low voltage duration**: 0.2 s
+
+For each sample, I need to calculate:
+- **Reactive current (iq_pu)**: If voltage < reactive_deadband, then iq = min(k * (reactive_deadband - voltage), current_limit)
+- **Active current (id_pu)**: Limited by remaining apparent-current capability after reactive priority
+- **Total current**: sqrt(id² + iq²)
+
+Let me create a helper script to compute this:
+Perfect! Let me verify the submission file was created correctly:
+## Task Complete
+
+I have successfully computed the IBR short-circuit response under FRT control and written `submission.json`. 
+
+**Key calculations:**
+- **Reactive current (iq)**: Calculated using `iq = min(k * (deadband - voltage), current_limit)` when voltage falls below the 0.9 pu deadband
+- **Active current (id)**: Limited by remaining apparent-current capability after reactive priority, constrained by the 1.2 pu current limit
+- **Total current**: Computed as the magnitude √(id² + iq²) for each sample
+- **FRT compliance**: Verified that all samples satisfy the fault ride-through requirements
+
+The submission contains:
+- Current profile with id_pu, iq_pu, and total_current_pu for each sample
+- Minimum reactive current: 0.04 pu (at t000 with highest voltage)
+- Maximum total current: 1.2 pu (at t160, hitting the current limit due to high reactive demand)
+- FRT compliance: true (all voltage samples remain viable within timing constraints)

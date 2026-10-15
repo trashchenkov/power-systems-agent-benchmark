@@ -1,0 +1,105 @@
+I'll start by reading the instructions and task files to understand what needs to be done.
+Now I understand the task. This is a FLISR (Fault Location, Isolation, and Service Restoration) problem. Let me break down what needs to be solved:
+
+**Problem Analysis:**
+- Network has 5 buses: s (source), b1, b2, b3, b4
+- Faulted branch: l23 (between b2-b3)
+- Goal: Isolate fault, keep network radial, restore high-priority load via tie switches
+- Tie switch available: tie_24 (b2-b4, normally open)
+- Constraint: Must restore minimum priority of 10.0
+
+**Network structure:**
+- s → b1 (l_s1)
+- b1 → b2 (l12)
+- b2 → b3 (l23) **[FAULTED]**
+- b3 → b4 (l34)
+- b2 ⇄ b4 (tie_24, normally open)
+
+**Load & Priority:**
+- b2: 50 kW, priority 3
+- b3: 80 kW, priority 5
+- b4: 40 kW, priority 2
+
+**Solution Strategy:**
+1. Open the faulted branch l23 (required)
+2. Close tie_24 to restore b4 through an alternate path
+3. This restores b4 (priority 2) + keeps b2 (priority 3) = priority 5 < 10
+4. Actually, we need to also consider what happens to b3. Since l23 is faulted and open, b3 is disconnected.
+
+Let me reconsider: If I open l23 and close tie_24, the network becomes:
+- s → b1 → b2 (with b4 connected via tie_24)
+- b3 is isolated (no path from source)
+
+Restored loads: b2 (priority 3) + b4 (priority 2) = priority 5, which is less than 10.
+
+Actually, I need to reconsider the network. Let me check if there's another way. The only tie switch is tie_24. To restore b3, we'd need another path, but there's none available if l23 is open.
+
+Wait - could we keep l23 closed and isolate differently? No, l23 is faulted, it MUST be open.
+
+Let me reconsider if we can restore more: We must open l23. The question is which other switches to open/close. If we:
+- Open l23 (isolate fault)
+- Close tie_24 (restore b4)
+- Keep l_s1, l12, l34 closed
+
+Then: s → b1 → b2 → (tie_24) → b4, and b3 is unreachable.
+Priority restored: 3 (b2) + 2 (b4) = 5. Still < 10.
+
+Alternative: what if we open l34 instead of tie_24?
+- Open l23 (isolate fault) 
+- Keep everything else as is
+- Result: s → b1 → b2, b3 and b4 disconnected
+- Priority: 3 (b2). Still < 10.
+
+It seems no valid solution restores priority ≥ 10 while keeping network radial. But let me check the minimum constraint again... it says `min_priority_restored: 10.0` but maybe the task is still solvable if we maximize what we can.
+
+Actually, let me reconsider: maybe open l34 as well?
+- Open l23, l34
+- Close tie_24
+- Network: s → b1 → b2 ← tie_24 → b4, and b3 isolated
+- Priority: 3 + 2 = 5
+
+Still not enough. Let me think if there's a configuration where we can get priority ≥ 10...
+
+The maximum possible would be all loads: 3 + 5 + 2 = 10. To get b3 we'd need l23 closed, but it's faulted. This is impossible with the constraint.
+
+However, re-reading: maybe b3's priority alone (5) + b2's priority (3) = 8, still short. 
+
+Let me write a helper script to systematically check all possibilities:
+Wait, this result shows b3 is reachable when only l23 is open. That doesn't make sense given the network topology. Let me debug my radiality checker:
+Ah! I see now. When l23 is open but l34 and tie_24 are active, we can reach b3 via the path: s → b1 → b2 → tie_24 → b4 → l34 → b3. This creates a cycle! Let me check radiality:
+
+The network with just l23 open has:
+- s-b1 (l_s1)
+- b1-b2 (l12)
+- b2-b4 (tie_24)
+- b4-b3 (l34)
+
+This forms a path/tree: s → b1 → b2 ↔ b4 → b3 (not a cycle from the source). Actually wait, b2-b4 is bidirectional (can traverse both ways), and b4-b3 is also bidirectional. So we have:
+- 5 nodes: s, b1, b2, b4, b3
+- 4 edges: l_s1, l12, tie_24, l34
+- This is indeed a tree (4 edges, 5 nodes, connected)
+
+So it IS radial! And the solution is simply to open l23 (isolate the fault) and everything else stays closed. The restored priority is:
+- b2: priority 3
+- b3: priority 5
+- b4: priority 2
+- Total: 10 ✓
+
+This meets the minimum of 10, and uses only 1 switch operation. Perfect!
+
+Now let me create the submission.json:
+Perfect! The task is complete. 
+
+**Summary:**
+
+The FLISR restoration task required isolating a faulted distribution feeder section (l23), maintaining a radial network, and restoring priority-weighted loads.
+
+**Solution:** Open only the faulted branch `l23`. This isolates the fault while keeping the network radial. The remaining topology (s→b1→b2→{b4→b3 via tie_24 or l34}) connects all buses, restoring:
+- b2 (50 kW, priority 3)
+- b3 (80 kW, priority 5)  
+- b4 (40 kW, priority 2)
+- **Total priority: 10** ✓ (meets minimum constraint)
+- **Total load: 170 kW**
+- **Switch count: 1** (only one operation)
+
+The submission.json has been written with the optimal switching plan.

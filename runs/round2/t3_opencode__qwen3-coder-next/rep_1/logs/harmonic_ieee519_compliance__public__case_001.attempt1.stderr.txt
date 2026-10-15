@@ -1,0 +1,134 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · qwen/qwen3-coder-next
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+
+# Given data
+max_demand_current_a = 480.0
+short_circuit_current_ka = 12.0
+short_circuit_current_a = 12000.0
+
+# Compute Isc/IL ratio
+isc_il = short_circuit_current_a / max_demand_current_a
+print(f"Isc/IL = {isc_il}")
+
+# Select current_limit_table row (first where isc_il_below > ratio)
+current_limit_table = [
+    {"isc_il_below": 20, "tdd_pct": 5.0, "h_below_11_pct": 4.0, "h_11_to_17_pct": 2.0, "h_17_to_23_pct": 1.5, "h_23_to_35_pct": 0.6, "h_35_up_pct": 0.3},
+    {"isc_il_below": 50, "tdd_pct": 8.0, "h_below_11_pct": 7.0, "h_11_to_17_pct": 3.5, "h_17_to_23_pct": 2.5, "h_23_to_35_pct": 1.0, "h_35_up_pct": 0.5},
+    {"isc_il_below": 100, "tdd_pct": 12.0, "h_below_11_pct": 10.0, "h_11_to_17_pct": 4.5, "h_17_to_23_pct": 4.0, "h_23_to_35_pct": 1.5, "h_35_up_pct": 0.7},
+    {"isc_il_below": 1000, "tdd_pct": 15.0, "h_below_11_pct": 12.0, "h_11_to_17_pct": 5.5, "h_17_to_23_pct": 5.0, "h_23_to_35_pct": 2.0, "h_35_up_pct": 1.0},
+    {"isc_il_below": 1000000000.0, "tdd_pct": 20.0, "h_below_11_pct": 15.0, "h_11_to_17_pct": 7.0, "h_17_to_23_pct": 6.0, "h_23_to_35_pct": 2.5, "h_35_up_pct": 1.4}
+]
+
+selected_row = None
+for row in current_limit_table:
+    if row["isc_il_below"] > isc_il:
+        selected_row = row
+        break
+
+print(f"Selected row: {selected_row}")
+
+# Compute TDD
+harmonic_currents_a = {"5": 28.0, "7": 19.0, "11": 9.0, "13": 7.0, "17": 4.0, "19": 3.0, "23": 1.5}
+sum_sq = sum(v**2 for v in harmonic_currents_a.values())
+tdd_pct = (sum_sq**0.5 / max_demand_current_a) * 100
+print(f"TDD = {tdd_pct}")
+
+# Current violations
+violations=[]
+if tdd_pct > selected_row["tdd_pct"]:
+    violations.append("tdd")
+
+# Individual harmonic checks
+for h_order, h_current in harmonic_currents_a.items():
+    h_pct = (h_current / max_demand_current_a) * 100
+    h_order_int = int(h_order)
+    if h_order_int < 11:
+        limit = selected_row["h_below_11_pct"]
+    elif h_order_int <= 17:
+        limit = selected_row["h_11_to_17_pct"]
+    elif h_order_int <= 23:
+        limit = selected_row["h_17_to_23_pct"]
+    elif h_order_int <= 35:
+        limit = selected_row["h_23_to_35_pct"]
+    else:
+        limit = selected_row["h_35_up_pct"]
+    if h_pct > limit:
+        violations.append(h_order)
+    print(f"Harm {h_order}: {h_pct:.2f}% vs limit {limit}%")
+
+print(f"Current violations: {violations}")
+
+# Voltage THD
+harmonic_voltages_pct = {"5": 2.1, "7": 1.6, "11": 0.9}
+sum_sq_v = sum(v**2 for v in harmonic_voltages_pct.values())
+voltage_thd_pct = sum_sq_v**0.5
+print(f"Voltage THD = {voltage_thd_pct}")
+
+# Voltage violations
+voltage_violations=[]
+if voltage_thd_pct > 5.0:
+    voltage_violations.append("thd")
+
+for h_order, h_volt in harmonic_voltages_pct.items():
+    if h_volt > 3.0:
+        voltage_violations.append(h_order)
+    print(f"Volt harm {h_order}: {h_volt}% vs limit 3.0%")
+
+print(f"Voltage violations: {voltage_violations}")
+
+# Overall verdict
+compliant = len(violations) == 0 and len(voltage_violations) == 0
+print(f"Compliant: {compliant}")
+
+# Build submission
+submission = {
+    "isc_over_il": round(isc_il, 2),
+    "tdd_pct": round(tdd_pct, 2),
+    "current_violations": violations,
+    "voltage_thd_pct": round(voltage_thd_pct, 2),
+    "voltage_violations": voltage_violations,
+    "compliant": compliant
+}
+
+print(json.dumps(submission, indent=2))
+
+with open("<sandbox_a1>/submission.json", "w") as f:
+    json.dump(submission, f, indent=2)
+EOF
+
+Isc/IL = 25.0
+Selected row: {'isc_il_below': 50, 'tdd_pct': 8.0, 'h_below_11_pct': 7.0, 'h_11_to_17_pct': 3.5, 'h_17_to_23_pct': 2.5, 'h_23_to_35_pct': 1.0, 'h_35_up_pct': 0.5}
+TDD = 7.518062739902555
+Harm 5: 5.83% vs limit 7.0%
+Harm 7: 3.96% vs limit 7.0%
+Harm 11: 1.88% vs limit 3.5%
+Harm 13: 1.46% vs limit 3.5%
+Harm 17: 0.83% vs limit 3.5%
+Harm 19: 0.62% vs limit 2.5%
+Harm 23: 0.31% vs limit 2.5%
+Current violations: []
+Voltage THD = 2.7892651361962706
+Volt harm 5: 2.1% vs limit 3.0%
+Volt harm 7: 1.6% vs limit 3.0%
+Volt harm 11: 0.9% vs limit 3.0%
+Voltage violations: []
+Compliant: True
+{
+  "isc_over_il": 25.0,
+  "tdd_pct": 7.52,
+  "current_violations": [],
+  "voltage_thd_pct": 2.79,
+  "voltage_violations": [],
+  "compliant": true
+}
+[0m
+[0m→ [0mRead submission.json

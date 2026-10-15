@@ -1,0 +1,35 @@
+Now I understand the task. I need to compute a wind power forecast based on the given inputs. Let me break down the calculation:
+
+1. **Power curve calculation:**
+   - Corrected speed: $v_c = wind\_speed \times (\frac{air\_density}{reference\_air\_density})^{1/3}$
+   - Power = 0 if $v_c < cut\_in$ or $v_c \geq cut\_out$
+   - Power = count × rated_mw_each if $v_c \geq rated\_m\_s$
+   - Otherwise: Power = count × rated_mw_each × $((v_c - cut\_in) / (rated\_m\_s - cut\_in))^3$
+
+2. **Bias correction:**
+   - Calculate bias from history (mean of actual_power - power_curve_estimate for each history record)
+   - Apply bias correction to forecasts: clip(power_curve_estimate + bias, 0, farm_capacity)
+
+3. **Farm capacity:**
+   - count × rated_mw_each = 8 × 2.5 = 20 MW
+
+Let me write a Python script to calculate this:
+Now I have the calculated values. Let me write the submission.json file:
+Let me verify the JSON is valid:
+The submission.json file has been written successfully. The solution:
+
+1. **Calculated corrected wind speed** for each history and forecast record using: $v_c = v \times (\rho / \rho_{ref})^{1/3}$
+
+2. **Applied power curve**:
+   - Power = 0 if $v_c <$ cut-in (3.0 m/s) or $v_c \geq$ cut-out (25.0 m/s)
+   - Power = rated power (20 MW) if $v_c \geq$ rated (12.0 m/s)
+   - Otherwise: Power = $20 \times ((v_c - 3) / (12 - 3))^3$ MW
+
+3. **Calculated bias** from 4 history records: mean of (actual_power - power_curve_estimate) = 0.0248 MW
+
+4. **Applied bias correction** to forecasts and clipped to [0, 20 MW]
+
+5. **Results**:
+   - Forecasts: t01=3.2983 MW, t02=7.1569 MW, t03=13.2093 MW, t04=20.0 MW
+   - Total: 43.6645 MWh
+   - Peak timestamp: t04

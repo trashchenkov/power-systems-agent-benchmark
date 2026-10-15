@@ -1,0 +1,17 @@
+Completed the DC WLS state estimation with the iterative largest-normalized-residual (LNR) test and wrote the result to `submission.json`.
+
+**Approach**
+- Built the measurement Jacobian **H** with bus `b1` as the angle reference (state: `theta_2`, `theta_3`).
+- Branch flows: \(P_{ij} = (\theta_i - \theta_j)/x_{ij}\).
+- Injections: rows of the DC **B-bus** (\(P_{\mathrm{inj}} = B\theta\)).
+- Weights \(W_i = 1/\sigma_i^2\), estimate \(\hat{x} = (H^T W H)^{-1} H^T W z\).
+- Normalized residuals \(r_i = |z_i - h_i\hat{x}| / \sqrt{\sigma_i^2 - h_i G^{-1} h_i^T}\) with \(G = H^T W H\).
+
+**Result**
+- **`inj_b2`** exceeded the threshold (9.37 > 3.0) and was removed.
+- After re-estimation, all remaining residuals were below 3.0.
+- **`inj_b3`** is consistent with the flow measurements (it matches the attacked `inj_b2` scenario).
+
+**`submission.json`**
+- `attacked_measurements`: `["inj_b2"]`
+- `corrected_state`: `theta_2` ≈ −0.04006 rad, `theta_3` ≈ −0.07010 rad

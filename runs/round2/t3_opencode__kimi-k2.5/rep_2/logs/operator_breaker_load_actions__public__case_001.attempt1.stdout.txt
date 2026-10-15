@@ -1,0 +1,79 @@
+Let me analyze this task. I need to:
+
+1. Select operator breaker/load actions that remove overloads with minimal shedding
+2. Max 2 actions
+3. Max 25 MW shedding
+4. Ensure all branch flows are within limits after actions
+
+Initial state:
+- l12: 118 MW (limit 100) - OVERLOAD by 18 MW
+- l23: 72 MW (limit 90) - OK
+- l13: 65 MW (limit 80) - OK
+
+Candidate actions:
+1. open_tie_13: open breaker on l13, flow changes: l12 -8, l23 +12
+2. shed_bus3_15: shed 15 MW, flow changes: l12 -14, l23 -6
+3. shed_bus2_10: shed 10 MW, flow changes: l12 -9, l23 -2
+
+Let me evaluate combinations:
+
+**Option 1: open_tie_13 alone**
+- l12: 118 - 8 = 110 MW (limit 100) - STILL OVERLOAD
+- l23: 72 + 12 = 84 MW (limit 90) - OK
+- l13: 65 MW → 0 (breaker open) - OK
+- Shed: 0 MW
+- Not feasible (l12 still overloaded)
+
+**Option 2: shed_bus3_15 alone**
+- l12: 118 - 14 = 104 MW (limit 100) - STILL OVERLOAD
+- l23: 72 - 6 = 66 MW (limit 90) - OK
+- l13: 65 MW - OK
+- Shed: 15 MW
+- Not feasible (l12 still overloaded)
+
+**Option 3: shed_bus2_10 alone**
+- l12: 118 - 9 = 109 MW (limit 100) - STILL OVERLOAD
+- l23: 72 - 2 = 70 MW (limit 90) - OK
+- l13: 65 MW - OK
+- Shed: 10 MW
+- Not feasible (l12 still overloaded)
+
+**Option 4: open_tie_13 + shed_bus3_15**
+- l12: 118 - 8 - 14 = 96 MW (limit 100) - OK
+- l23: 72 + 12 - 6 = 78 MW (limit 90) - OK
+- l13: 65 MW → 0 (breaker open) - OK
+- Shed: 15 MW
+- Feasible! 2 actions, 15 MW shed
+
+**Option 5: open_tie_13 + shed_bus2_10**
+- l12: 118 - 8 - 9 = 101 MW (limit 100) - STILL OVERLOAD
+- l23: 72 + 12 - 2 = 82 MW (limit 90) - OK
+- l13: 65 MW → 0 (breaker open) - OK
+- Shed: 10 MW
+- Not feasible (l12 still overloaded)
+
+**Option 6: shed_bus3_15 + shed_bus2_10**
+- l12: 118 - 14 - 9 = 95 MW (limit 100) - OK
+- l23: 72 - 6 - 2 = 64 MW (limit 90) - OK
+- l13: 65 MW - OK
+- Shed: 25 MW
+- Feasible! 2 actions, 25 MW shed
+
+Comparing feasible options:
+- Option 4: 15 MW shed, 2 actions
+- Option 6: 25 MW shed, 2 actions
+
+Option 4 is better (minimize load shedding first).
+
+Best solution: open_tie_13 + shed_bus3_15
+- Total shed: 15 MW
+- Post-action flows: l12=96, l23=78, l13=0
+- All limits satisfied: true
+The task is complete. I've written the `submission.json` file with the optimal solution that:
+- Uses 2 actions (within the max_actions limit of 2)
+- Sheds 15 MW load (within the max_shed_mw limit of 25)
+- Brings all branch flows within their limits:
+  - l12: 96 MW (was 118 MW, limit 100) ✓
+  - l23: 78 MW (was 72 MW + 12 - 6, limit 90) ✓
+  - l13: 0 MW (breaker opened, limit 80) ✓
+- Minimizes load shedding (15 MW is the minimum feasible)

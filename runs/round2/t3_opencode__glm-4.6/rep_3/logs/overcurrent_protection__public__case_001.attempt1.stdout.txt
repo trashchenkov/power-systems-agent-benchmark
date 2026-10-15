@@ -1,0 +1,30 @@
+I'll read the instructions.md and task.json files to understand the benchmark task, then solve it and write the solution to submission.json.
+Now I understand the task. I need to calculate the optimal pickup current and time delay for an overcurrent relay based on the given constraints. Let me analyze the requirements:
+
+1. **Pickup current constraints:**
+   - Must be at least max_load_current_a × load_margin_multiplier = 420.0 × 1.2 = 504.0 A
+   - Must ensure min_fault_current_a / pickup_current_a ≥ min_sensitivity_factor = 1.5
+   - This means pickup_current_a ≤ min_fault_current_a / 1.5 = 1800.0 / 1.5 = 1200.0 A
+   
+2. **Time delay constraints:**
+   - Must be at least downstream_time_delay_s + selectivity_margin_s = 0.35 + 0.3 = 0.65 s
+   - Must be within time_delay_range_s [0.0, 2.0] seconds
+
+3. **CT ratio constraint:**
+   - The secondary pickup current = pickup_current_a / ct_ratio_primary_per_secondary
+   - Must be within relay_secondary_pickup_range_a [1.0, 10.0] A
+
+Let me calculate the optimal values:
+I've successfully solved the overcurrent protection coordination task. The solution selects:
+
+1. **Pickup current**: 504.0 A (minimum value that satisfies the load constraint of 504.0 A and keeps the secondary pickup at 5.04 A, which is within the relay's range of [1.0, 10.0] A)
+
+2. **Time delay**: 0.65 s (minimum value that satisfies coordination with the downstream relay, which requires at least 0.65 s)
+
+This solution maximizes sensitivity (achieving a factor of 3.57) while meeting all constraints:
+- Load constraint: 504.0 A ≥ 420.0 × 1.2 = 504.0 A ✓
+- Sensitivity constraint: 1800.0 / 504.0 = 3.57 ≥ 1.5 ✓
+- Coordination constraint: 0.65 s ≥ 0.35 + 0.3 = 0.65 s ✓
+- Relay range constraint: 5.04 A is within [1.0, 10.0] A ✓
+
+The submission has been written to `submission.json` as required.

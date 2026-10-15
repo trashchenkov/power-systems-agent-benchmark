@@ -1,0 +1,243 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · anthropic/claude-haiku-4.5
+[0m
+[0m→ [0mRead .
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+import numpy as np
+from scipy.linalg import solve
+
+# Load task data
+task_data = {
+    "buses": [
+        {"id": "b1", "p_mw": 100.0},
+        {"id": "b2", "p_mw": -20.0},
+        {"id": "b3", "p_mw": -50.0},
+        {"id": "b4", "p_mw": -30.0}
+    ],
+    "branches": [
+        {"id": "l12", "from_bus": "b1", "to_bus": "b2", "x_pu": 0.1, "rating_mw": 75.0, "closed": True},
+        {"id": "l13", "from_bus": "b1", "to_bus": "b3", "x_pu": 0.1, "rating_mw": 40.0, "closed": False},  # Out
+        {"id": "l23", "from_bus": "b2", "to_bus": "b3", "x_pu": 0.1, "rating_mw": 50.0, "closed": True},
+        {"id": "l24", "from_bus": "b2", "to_bus": "b4", "x_pu": 0.1, "rating_mw": 50.0, "closed": True},
+        {"id": "l34", "from_bus": "b3", "to_bus": "b4", "x_pu": 0.1, "rating_mw": 50.0, "closed": True},
+        {"id": "l14", "from_bus": "b1", "to_bus": "b4", "x_pu": 0.3, "rating_mw": 50.0, "closed": False}
+    ]
+}
+
+# Create bus index
+bus_ids = [b["id"] for b in task_data["buses"]]
+bus_idx = {bid: i for i, bid in enumerate(bus_ids)}
+n_buses = len(bus_ids)
+
+# DC power flow solver
+def solve_dc_pf(branches_active, buses):
+    """Solve DC power flow for given active branches"""
+    # Build admittance matrix (B matrix)
+    B = np.zeros((n_buses, n_buses))
+    
+    for branch in branches_active:
+        i = bus_idx[branch["from_bus"]]
+        j = bus_idx[branch["to_bus"]]
+        b_ij = 1.0 / branch["x_pu"]
+        B[i, i] += b_ij
+        B[j, j] += b_ij
+        B[i, j] -= b_ij
+        B[j, i] -= b_ij
+    
+    # Power injections (slack bus is first)
+    p_inj = np.array([b["p_mw"] for b in buses])
+    
+    # Remove slack bus row/column
+    B_reduced = B[1:, 1:]
+    p_reduced = p_inj[1:]
+    
+    # Solve for voltage angles (slack is at 0)
+    try:
+        theta_reduced = solve(B_reduced, -p_reduced)
+        theta = np.concatenate([[0.0], theta_reduced])
+    except np.linalg.LinAlgError:
+        return None  # Singular matrix, network not connected
+    
+    # Calculate flows
+    flows = {}
+    for branch in branches_active:
+        i = bus_idx[branch["from_bus"]]
+        j = bus_idx[branch["to_bus"]]
+        flow = (theta[i] - theta[j]) / branch["x_pu"]
+        flows[branch["id"]] = flow
+    
+    return theta, flows
+
+# Test all candidate switches
+candidate_switches = [
+    {"branch_id": "l14", "action": "close", "cost": 1.0},
+    {"branch_id": "l23", "action": "open", "cost": 1.0},
+    {"branch_id": "l24", "action": "open", "cost": 1.0},
+    {"branch_id": "l34", "action": "open", "cost": 1.0}
+]
+
+def test_scenario(close_branches, open_branches):
+    """Test a switching scenario"""
+    # Create branch state
+    branches_state = {}
+    for b in task_data["branches"]:
+        branches_state[b["id"]] = b["closed"]
+    
+    # Apply switches
+    for bid in close_branches:
+        branches_state[bid] = True
+    for bid in open_branches:
+        branches_state[bid] = False
+    
+    # Get active branches
+    active_branches = [b for b in task_data["branches"] if branches_state[b["id"]]]
+    
+    # Solve power flow
+    result = solve_dc_pf(active_branches, task_data["buses"])
+    if result is None:
+        return None, None, False, "Network not connected"
+    
+    theta, flows = result
+    
+    # Check loading constraints
+    max_loading = 0.0
+    violations = []
+    for branch in active_branches:
+        flow_mw = abs(flows[branch["id"]])
+        loading_pct = (flow_mw / branch["rating_mw"]) * 100
+        if loading_pct > 100:
+            violations.append(f"{branch['id']}: {loading_pct:.2f}%")
+        max_loading = max(max_loading, loading_pct)
+    
+    connected = True  # If solve didn't fail, network is connected
+    
+    return flows, max_loading, len(violations) == 0 and connected, violations
+
+# Test baseline (no switches)
+print("Testing baseline (post-contingency, no corrective switches):")
+flows, max_loading, feasible, msg = test_scenario([], [])
+print(f"  Max loading: {max_loading:.2f}%")
+print(f"  Feasible: {feasible}")
+if isinstance(msg, list):
+    print(f"  Violations: {msg}")
+else:
+    print(f"  Status: {msg}")
+
+print("\nTesting candidate switches:")
+
+best_solution = None
+best_max_loading = float('inf')
+
+# Test each single switch
+test_cases = [
+    {"close": [], "open": []},  # Baseline
+    {"close": ["l14"], "open": []},  # Close l14
+    {"close": [], "open": ["l23"]},  # Open l23
+    {"close": [], "open": ["l24"]},  # Open l24
+    {"close": [], "open": ["l34"]},  # Open l34
+]
+
+for i, test_case in enumerate(test_cases):
+    close = test_case["close"]
+    open_b = test_case["open"]
+    switch_desc = f"Close {close} Open {open_b}" if close or open_b else "No switches"
+    
+    flows, max_loading, feasible, violations = test_scenario(close, open_b)
+    
+    if flows is not None:
+        print(f"\n  Case {i}: {switch_desc}")
+        print(f"    Max loading: {max_loading:.2f}%")
+        print(f"    Feasible: {feasible}")
+        if isinstance(violations, list) and violations:
+            print(f"    Violations: {violations}")
+        
+        if feasible and max_loading < best_max_loading:
+            best_max_loading = max_loading
+            best_solution = {
+                "close_branches": close,
+                "open_branches": open_b,
+                "reported_flows_mw": flows,
+                "rationale": f"Feasible solution with max loading {max_loading:.2f}%"
+            }
+    else:
+        print(f"\n  Case {i}: {switch_desc}")
+        print(f"    Network not connected (infeasible)")
+
+if best_solution:
+    print(f"\nBest solution found:")
+    print(f"  Close: {best_solution['close_branches']}")
+    print(f"  Open: {best_solution['open_branches']}")
+    print(f"  Max loading: {best_max_loading:.2f}%")
+else:
+    print("\nNo feasible solution found")
+    best_solution = {
+        "close_branches": [],
+        "open_branches": [],
+        "rationale": "No feasible corrective action found"
+    }
+
+print(f"\nFinal submission: {json.dumps(best_solution, indent=2)}")
+
+EOF
+
+Testing baseline (post-contingency, no corrective switches):
+  Max loading: 133.33%
+  Feasible: False
+  Violations: ['l12: 133.33%']
+
+Testing candidate switches:
+
+  Case 0: No switches
+    Max loading: 133.33%
+    Feasible: False
+    Violations: ['l12: 133.33%']
+
+  Case 1: Close ['l14'] Open []
+    Max loading: 94.29%
+    Feasible: True
+
+  Case 2: Close [] Open ['l23']
+    Max loading: 160.00%
+    Feasible: False
+    Violations: ['l12: 133.33%', 'l24: 160.00%']
+
+  Case 3: Close [] Open ['l24']
+    Max loading: 160.00%
+    Feasible: False
+    Violations: ['l12: 133.33%', 'l23: 160.00%']
+
+  Case 4: Close [] Open ['l34']
+    Max loading: 133.33%
+    Feasible: False
+    Violations: ['l12: 133.33%']
+
+Best solution found:
+  Close: ['l14']
+  Open: []
+  Max loading: 94.29%
+
+Final submission: {
+  "close_branches": [
+    "l14"
+  ],
+  "open_branches": [],
+  "reported_flows_mw": {
+    "l12": -70.7142857142857,
+    "l23": -33.571428571428555,
+    "l24": -17.142857142857135,
+    "l34": 16.428571428571423,
+    "l14": -29.285714285714278
+  },
+  "rationale": "Feasible solution with max loading 94.29%"
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m

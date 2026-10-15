@@ -1,0 +1,161 @@
+Performing one time database migration, may take a few minutes...
+sqlite-migration:done
+Database migration complete.
+[0m
+> build · moonshotai/kimi-k2.5
+[0m
+[0m→ [0mRead instructions.md
+[0m→ [0mRead task.json
+[0m
+[0m$ [0mpython3 << 'EOF'
+import json
+
+# Input data
+total_customers = 320
+min_restoration = 25
+
+fault_sections = {
+    "s12": {"annual_fault_rate": 0.18, "customers_interrupted": 120, "base_restoration_minutes": 95},
+    "s23": {"annual_fault_rate": 0.14, "customers_interrupted": 70, "base_restoration_minutes": 80},
+    "s24": {"annual_fault_rate": 0.12, "customers_interrupted": 90, "base_restoration_minutes": 85},
+    "s45": {"annual_fault_rate": 0.09, "customers_interrupted": 40, "base_restoration_minutes": 75}
+}
+
+fci_locations = {
+    "n2": {"restoration_time_reduction_min": {"s12": 6, "s23": 28, "s24": 26, "s45": 23}},
+    "n4": {"restoration_time_reduction_min": {"s12": 0, "s23": 4, "s24": 18, "s45": 34}}
+}
+
+deployed_fci = ["n2", "n4"]
+
+# Calculate baseline customer-minutes and customer-interruptions
+baseline_customer_minutes = 0
+customer_interruptions = 0
+
+for section, data in fault_sections.items():
+    annual_faults = data["annual_fault_rate"]
+    customers = data["customers_interrupted"]
+    base_minutes = data["base_restoration_minutes"]
+    
+    customer_minutes = annual_faults * customers * base_minutes
+    baseline_customer_minutes += customer_minutes
+    
+    interruptions = annual_faults * customers
+    customer_interruptions += interruptions
+
+print(f"Baseline customer-minutes/year: {baseline_customer_minutes}")
+print(f"Customer-interruptions/year: {customer_interruptions}")
+
+# Calculate with-FCI customer-minutes
+# For each section, find the best reduction from deployed FCI locations
+with_fci_customer_minutes = 0
+
+for section, data in fault_sections.items():
+    annual_faults = data["annual_fault_rate"]
+    customers = data["customers_interrupted"]
+    base_minutes = data["base_restoration_minutes"]
+    
+    # Find best (maximum) reduction from deployed FCI locations
+    best_reduction = 0
+    for fci_loc in deployed_fci:
+        reduction = fci_locations[fci_loc]["restoration_time_reduction_min"][section]
+        if reduction > best_reduction:
+            best_reduction = reduction
+    
+    # Apply reduction, bounded by minimum restoration time
+    new_minutes = max(base_minutes - best_reduction, min_restoration)
+    
+    customer_minutes = annual_faults * customers * new_minutes
+    with_fci_customer_minutes += customer_minutes
+    
+    print(f"Section {section}: base={base_minutes}, reduction={best_reduction}, new={new_minutes}")
+
+print(f"With-FCI customer-minutes/year: {with_fci_customer_minutes}")
+
+# Calculate reliability indices
+# SAIDI = customer-minutes / total_customers
+# CAIDI = customer-minutes / customer-interruptions
+# SAIFI = customer-interruptions / total_customers
+
+baseline_saidi = baseline_customer_minutes / total_customers
+baseline_caidi = baseline_customer_minutes / customer_interruptions
+baseline_saifi = customer_interruptions / total_customers
+
+with_fci_saidi = with_fci_customer_minutes / total_customers
+with_fci_caidi = with_fci_customer_minutes / customer_interruptions
+with_fci_saifi = customer_interruptions / total_customers  # SAIFI doesn't change with FCI
+
+print(f"\nBaseline SAIDI: {baseline_saidi}")
+print(f"Baseline CAIDI: {baseline_caidi}")
+print(f"Baseline SAIFI: {baseline_saifi}")
+
+print(f"\nWith-FCI SAIDI: {with_fci_saidi}")
+print(f"With-FCI CAIDI: {with_fci_caidi}")
+print(f"With-FCI SAIFI: {with_fci_saifi}")
+
+saidi_improvement = baseline_saidi - with_fci_saidi
+caidi_improvement = baseline_caidi - with_fci_caidi
+
+print(f"\nSAIDI improvement: {saidi_improvement}")
+print(f"CAIDI improvement: {caidi_improvement}")
+
+# Create submission
+submission = {
+    "baseline": {
+        "saidi_min_per_customer_year": baseline_saidi,
+        "caidi_min_per_interruption": baseline_caidi,
+        "saifi_interruptions_per_customer_year": baseline_saifi
+    },
+    "with_fci": {
+        "saidi_min_per_customer_year": with_fci_saidi,
+        "caidi_min_per_interruption": with_fci_caidi,
+        "saifi_interruptions_per_customer_year": with_fci_saifi
+    },
+    "saidi_improvement_min_per_customer_year": saidi_improvement,
+    "caidi_improvement_min_per_interruption": caidi_improvement,
+    "rationale": "Calculated baseline and with-FCI reliability indices using the provided fault section data and FCI restoration time reductions. For each section, applied the maximum reduction from deployed FCI locations (n2, n4), respecting the minimum restoration time floor of 25 minutes."
+}
+
+print("\nSubmission JSON:")
+print(json.dumps(submission, indent=2))
+EOF
+Baseline customer-minutes/year: 4024.0
+Customer-interruptions/year: 45.8
+Section s12: base=95, reduction=6, new=89
+Section s23: base=80, reduction=28, new=52
+Section s24: base=85, reduction=26, new=59
+Section s45: base=75, reduction=34, new=41
+With-FCI customer-minutes/year: 3216.7999999999997
+
+Baseline SAIDI: 12.575
+Baseline CAIDI: 87.86026200873363
+Baseline SAIFI: 0.143125
+
+With-FCI SAIDI: 10.052499999999998
+With-FCI CAIDI: 70.23580786026201
+With-FCI SAIFI: 0.143125
+
+SAIDI improvement: 2.522500000000001
+CAIDI improvement: 17.624454148471614
+
+Submission JSON:
+{
+  "baseline": {
+    "saidi_min_per_customer_year": 12.575,
+    "caidi_min_per_interruption": 87.86026200873363,
+    "saifi_interruptions_per_customer_year": 0.143125
+  },
+  "with_fci": {
+    "saidi_min_per_customer_year": 10.052499999999998,
+    "caidi_min_per_interruption": 70.23580786026201,
+    "saifi_interruptions_per_customer_year": 0.143125
+  },
+  "saidi_improvement_min_per_customer_year": 2.522500000000001,
+  "caidi_improvement_min_per_interruption": 17.624454148471614,
+  "rationale": "Calculated baseline and with-FCI reliability indices using the provided fault section data and FCI restoration time reductions. For each section, applied the maximum reduction from deployed FCI locations (n2, n4), respecting the minimum restoration time floor of 25 minutes."
+}
+[0m
+[0m← [0mWrite submission.json
+Wrote file successfully.
+[0m
+[0m→ [0mRead submission.json

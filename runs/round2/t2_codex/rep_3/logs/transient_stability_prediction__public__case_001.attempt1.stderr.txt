@@ -1,0 +1,297 @@
+Reading additional input from stdin...
+OpenAI Codex v0.139.0
+--------
+workdir: <sandbox_a1>
+model: openai/gpt-5.5
+provider: tagme
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: medium
+reasoning summaries: none
+session id: 01a13af3-de59-70b0-b4db-1f210f4dd7f3
+--------
+user
+Read instructions.md and task.json. Solve the executable benchmark task. Write valid JSON exactly to submission.json in the current directory. Do not modify other files. Do not output Markdown.
+codex
+I’ll read the task files first, then compute the required result and write only `submission.json`.
+exec
+/bin/bash -lc "pwd && rg --files -g 'instructions.md' -g 'task.json' -g 'submission.json'" in <sandbox_a1>
+ succeeded in 0ms:
+<sandbox_a1>
+task.json
+instructions.md
+
+exec
+/bin/bash -lc "sed -n '1,220p' instructions.md" in <sandbox_a1>
+ succeeded in 0ms:
+# Agent task packet
+
+You are solving one executable power-systems benchmark task.
+
+## Goal
+
+Read `task.json` in this directory. Use the public inputs/specification to compute the answer. Write exactly one JSON file named `submission.json` in this same directory.
+
+## Rules
+
+- Treat this as an executable agent task, not a copy task: derive the answer from `public_inputs`, `objective`, `hard_constraints`, and `submission_schema`.
+- Do not modify `task.json`.
+- Do not inspect files outside this packet directory. The packet intentionally omits hidden expected answers and evaluator internals.
+- Do not search for benchmark evaluator code, baseline submissions, sample submissions, or hidden answers.
+- You may create and run a short helper script/scratch calculation inside this packet directory if useful.
+- Output must be valid JSON, not Markdown.
+- Include only fields compatible with the task's `submission_schema`; optional `rationale` is free text and is not required to match any hidden string.
+- After writing `submission.json`, stop.
+
+## Expected output path
+
+`<packets>/transient_stability_prediction__public__case_001/submission.json`
+
+exec
+/bin/bash -lc "sed -n '1,260p' task.json" in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "task_id": "transient_stability_prediction_public_001",
+  "family": "transient_stability_prediction",
+  "candidate_id": "REL-TASK-008",
+  "substrate": "executable_transient_stability_classification_case",
+  "objective": "Classify transient-stability outcomes for high-renewable contingencies",
+  "bilingual": {
+    "title": {
+      "en": "REL-TASK-008 — Classify transient-stability outcomes for high-renewable contingencies",
+      "ru": "REL-TASK-008 — Классификация исходов переходной устойчивости для аварий при высокой доле ВИЭ"
+    },
+    "objective": {
+      "en": "Classify transient-stability outcomes for high-renewable contingencies",
+      "ru": "Классификация исходов переходной устойчивости для аварий при высокой доле ВИЭ"
+    },
+    "instructions": {
+      "en": "Use transient_stability_cases. For each case compute the margins: angle_margin = angle_limit_deg - max_rotor_angle_deg; voltage_margin = min_voltage_pu - voltage_floor_pu; clearing_margin_s = estimated_cct_s - fault_clearing_time_s; damping_margin = damping_ratio_pct - min_damping_pct. A case is 'stable' only if all four margins are >= 0. Risk score (use exactly this formula): risk_score = max(0, -angle_margin/60) + max(0, -voltage_margin/0.1) + max(0, -clearing_margin_s/0.1) + max(0, -damping_margin/5) + max(0, 1 - clearing_margin_s/0.2)*0.1, rounded to 3 decimals. Report per-case label, risk_score, and clearing_margin_s; stable_case_count; and highest_risk_case (the largest risk_score, ties broken by the lexicographically larger case_id).",
+      "ru": "Используйте transient_stability_cases. Для каждого кейса вычислите запасы: angle_margin = angle_limit_deg - max_rotor_angle_deg; voltage_margin = min_voltage_pu - voltage_floor_pu; clearing_margin_s = estimated_cct_s - fault_clearing_time_s; damping_margin = damping_ratio_pct - min_damping_pct. Кейс 'stable', только если все четыре запаса >= 0. Индекс риска (используйте ровно эту формулу): risk_score = max(0, -angle_margin/60) + max(0, -voltage_margin/0.1) + max(0, -clearing_margin_s/0.1) + max(0, -damping_margin/5) + max(0, 1 - clearing_margin_s/0.2)*0.1, округление до 3 знаков. Укажите по каждому кейсу label, risk_score и clearing_margin_s; stable_case_count; highest_risk_case (максимальный risk_score, при равенстве — лексикографически больший case_id)."
+    }
+  },
+  "subdomain": "stability & dynamics",
+  "public_inputs": {
+    "transient_stability_cases": {
+      "angle_limit_deg": 180.0,
+      "voltage_floor_pu": 0.7,
+      "min_damping_pct": 3.0,
+      "cases": [
+        {
+          "case_id": "fault_a",
+          "fault_clearing_time_s": 0.1,
+          "estimated_cct_s": 0.17,
+          "max_rotor_angle_deg": 142.0,
+          "min_voltage_pu": 0.76,
+          "damping_ratio_pct": 5.0
+        },
+        {
+          "case_id": "fault_b",
+          "fault_clearing_time_s": 0.16,
+          "estimated_cct_s": 0.14,
+          "max_rotor_angle_deg": 188.0,
+          "min_voltage_pu": 0.68,
+          "damping_ratio_pct": 2.2
+        },
+        {
+          "case_id": "fault_c",
+          "fault_clearing_time_s": 0.08,
+          "estimated_cct_s": 0.11,
+          "max_rotor_angle_deg": 171.0,
+          "min_voltage_pu": 0.72,
+          "damping_ratio_pct": 3.4
+        }
+      ]
+    }
+  },
+  "submission_schema": {
+    "case_results": "object mapping case_id to {label, risk_score, clearing_margin_s}; risk_score per the normalized-margin formula given in the instructions",
+    "stable_case_count": "number of stable cases",
+    "highest_risk_case": "case_id with largest risk_score",
+    "rationale": "optional string"
+  },
+  "hard_constraints": [
+    "A case is stable only if angle, voltage, clearing-time margin, and damping thresholds all pass.",
+    "Report per-case label, risk_score, and clearing_margin_s computed from public inputs.",
+    "Unknown extra answer keys are infeasible.",
+    "Optional rationale text is ignored by the deterministic evaluator."
+  ],
+  "metrics": [
+    {
+      "name": "feasible",
+      "direction": "boolean",
+      "description": "Whether all hard constraints and computed values are satisfied."
+    },
+    {
+      "name": "score",
+      "direction": "maximize",
+      "description": "1.0 if feasible, else 0.0."
+    }
+  ],
+  "source_evidence": [
+    "primary:DOI:10.1109/TPWRS.2020.2989725",
+    "source_card:docs/source_cards/transient_stability_prediction.md"
+  ],
+  "source_provenance": [
+    {
+      "title": "Yuchuan Chen, Seyed Mahdi Mazhari, C. Y. Chung, Sherif O. Faried, Bikash C. Pal, Rotor Angle Stability Prediction of Power Systems With High Wind Power Penetration Using a Stability Index Vector, IEEE Transactions on Power Systems, 2020",
+      "locator": "DOI:10.1109/TPWRS.2020.2989725",
+      "confidence": "medium",
+      "notes": "Replaces vague slide-section locator with DOI-resolved IEEE TPWRS source for rotor-angle stability prediction under high wind penetration."
+    }
+  ]
+}
+
+codex
+I computed the margins from the public cases. I’m writing the submission with only the schema fields required by the task.
+apply patch
+patch: completed
+<sandbox_a1>/submission.json
+diff --git a/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json b/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..9e1328a5f6cbbf25c1daf8f56b85bcf5b2eb83a4
+--- /dev/null
++++ b/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json
+@@ -0,0 +1,21 @@
++{
++  "case_results": {
++    "fault_a": {
++      "label": "stable",
++      "risk_score": 0.065,
++      "clearing_margin_s": 0.07
++    },
++    "fault_b": {
++      "label": "unstable",
++      "risk_score": 0.803,
++      "clearing_margin_s": -0.02
++    },
++    "fault_c": {
++      "label": "stable",
++      "risk_score": 0.085,
++      "clearing_margin_s": 0.03
++    }
++  },
++  "stable_case_count": 2,
++  "highest_risk_case": "fault_b"
++}
+
+diff --git a/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json b/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..9e1328a5f6cbbf25c1daf8f56b85bcf5b2eb83a4
+--- /dev/null
++++ b/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json
+@@ -0,0 +1,21 @@
++{
++  "case_results": {
++    "fault_a": {
++      "label": "stable",
++      "risk_score": 0.065,
++      "clearing_margin_s": 0.07
++    },
++    "fault_b": {
++      "label": "unstable",
++      "risk_score": 0.803,
++      "clearing_margin_s": -0.02
++    },
++    "fault_c": {
++      "label": "stable",
++      "risk_score": 0.085,
++      "clearing_margin_s": 0.03
++    }
++  },
++  "stable_case_count": 2,
++  "highest_risk_case": "fault_b"
++}
+
+codex
+I’ll validate the JSON and check that the working tree only has the intended output file changed.
+exec
+/bin/bash -lc 'jq . submission.json' in <sandbox_a1>
+ succeeded in 0ms:
+{
+  "case_results": {
+    "fault_a": {
+      "label": "stable",
+      "risk_score": 0.065,
+      "clearing_margin_s": 0.07
+    },
+    "fault_b": {
+      "label": "unstable",
+      "risk_score": 0.803,
+      "clearing_margin_s": -0.02
+    },
+    "fault_c": {
+      "label": "stable",
+      "risk_score": 0.085,
+      "clearing_margin_s": 0.03
+    }
+  },
+  "stable_case_count": 2,
+  "highest_risk_case": "fault_b"
+}
+
+exec
+/bin/bash -lc 'git status --short' in <sandbox_a1>
+ exited 128 in 0ms:
+fatal: not a git repository (or any of the parent directories): .git
+
+diff --git a/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json b/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..9e1328a5f6cbbf25c1daf8f56b85bcf5b2eb83a4
+--- /dev/null
++++ b/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json
+@@ -0,0 +1,21 @@
++{
++  "case_results": {
++    "fault_a": {
++      "label": "stable",
++      "risk_score": 0.065,
++      "clearing_margin_s": 0.07
++    },
++    "fault_b": {
++      "label": "unstable",
++      "risk_score": 0.803,
++      "clearing_margin_s": -0.02
++    },
++    "fault_c": {
++      "label": "stable",
++      "risk_score": 0.085,
++      "clearing_margin_s": 0.03
++    }
++  },
++  "stable_case_count": 2,
++  "highest_risk_case": "fault_b"
++}
+
+codex
+{"status":"done","output_path":"submission.json"}
+diff --git a/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json b/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..9e1328a5f6cbbf25c1daf8f56b85bcf5b2eb83a4
+--- /dev/null
++++ b/bench_transient_stability_prediction__public__case_001_a1_77hl96rk/submission.json
+@@ -0,0 +1,21 @@
++{
++  "case_results": {
++    "fault_a": {
++      "label": "stable",
++      "risk_score": 0.065,
++      "clearing_margin_s": 0.07
++    },
++    "fault_b": {
++      "label": "unstable",
++      "risk_score": 0.803,
++      "clearing_margin_s": -0.02
++    },
++    "fault_c": {
++      "label": "stable",
++      "risk_score": 0.085,
++      "clearing_margin_s": 0.03
++    }
++  },
++  "stable_case_count": 2,
++  "highest_risk_case": "fault_b"
++}
+
+tokens used
+11,414

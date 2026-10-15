@@ -1,0 +1,49 @@
+Now I understand the task. I need to calculate the overcurrent relay settings based on the given constraints. Let me analyze the requirements:
+
+**Given parameters:**
+- max_load_current_a = 420.0 A
+- min_fault_current_a = 1800.0 A
+- ct_ratio_primary_per_secondary = 100.0
+- load_margin_multiplier = 1.2
+- min_sensitivity_factor = 1.5
+- downstream_time_delay_s = 0.35 s
+- selectivity_margin_s = 0.3 s
+- relay_secondary_pickup_range_a: [1.0, 10.0]
+- time_delay_range_s: [0.0, 2.0]
+
+**Hard constraints:**
+1. Pickup current ≥ max_load_current_a × load_margin_multiplier = 420 × 1.2 = 504 A
+2. min_fault_current_a / pickup_current_a ≥ min_sensitivity_factor → pickup_current_a ≤ 1800 / 1.5 = 1200 A
+3. Time delay ≥ downstream_time_delay_s + selectivity_margin_s = 0.35 + 0.3 = 0.65 s
+4. Secondary relay pickup must be in [1.0, 10.0] A
+5. Time delay must be in [0.0, 2.0] s
+
+**Feasibility check:**
+- Primary pickup range: [504, 1200] A
+- Secondary pickup = Primary pickup / CT ratio = Primary pickup / 100
+- So secondary pickup range: [5.04, 12.0] A
+- But relay secondary pickup range is [1.0, 10.0] A
+- Intersection: [5.04, 10.0] A → feasible!
+
+**Optimal selection:**
+To maximize sensitivity (minimize pickup current), I should choose the minimum feasible pickup current.
+
+- Minimum primary pickup = 504 A (from load constraint)
+- Check: 504 / 100 = 5.04 A secondary (within [1.0, 10.0]) ✓
+- Sensitivity factor = 1800 / 504 = 3.57 ≥ 1.5 ✓
+
+- Time delay = 0.65 s (minimum from selectivity)
+- Check: 0.65 s is within [0.0, 2.0] ✓
+
+Let me write the submission:
+The task is complete. I've calculated the overcurrent relay settings based on the constraints:
+
+- **pickup_current_a**: 504.0 A (minimum to satisfy load margin: 420 × 1.2)
+- **time_delay_s**: 0.65 s (downstream delay + selectivity margin: 0.35 + 0.3)
+
+These values satisfy all hard constraints:
+1. ✓ Pickup ≥ 504 A (load margin)
+2. ✓ Sensitivity factor = 1800/504 = 3.57 ≥ 1.5
+3. ✓ Time delay ≥ 0.65 s (selectivity)
+4. ✓ Secondary pickup = 5.04 A ∈ [1.0, 10.0] A
+5. ✓ Time delay = 0.65 s ∈ [0.0, 2.0] s

@@ -1,0 +1,30 @@
+I need to solve an overcurrent relay coordination problem. Let me calculate the required values:
+
+**Given constraints:**
+- max_load_current_a = 420.0 A
+- min_fault_current_a = 1800.0 A
+- ct_ratio_primary_per_secondary = 100.0
+- load_margin_multiplier = 1.2
+- min_sensitivity_factor = 1.5
+- downstream_time_delay_s = 0.35 s
+- selectivity_margin_s = 0.3 s
+
+**Hard constraints:**
+1. Pickup current ≥ 420 × 1.2 = 504 A (primary)
+2. Sensitivity factor = 1800 / pickup ≥ 1.5, so pickup ≤ 1800 / 1.5 = 1200 A
+3. Time delay ≥ 0.35 + 0.3 = 0.65 s
+4. Secondary pickup range: 1.0-10.0 A, so primary pickup = secondary × CT ratio = 100-1000 A
+5. Time delay range: 0.0-2.0 s
+
+**Balancing constraints:**
+- Pickup must be ≥ 504 A AND ≤ 1200 A AND ≤ 1000 A (from CT ratio)
+- So pickup is in range [504, 1000] A
+
+To maximize sensitivity factor (minfault/pickup), I should choose the minimum valid pickup: 504 A.
+
+Check: 
+- Sensitivity = 1800/504 = 3.57 ≥ 1.5 ✓
+- Secondary pickup = 504/100 = 5.04 A, within [1,10] ✓
+
+Time delay: minimum is 0.65 s, which is within [0,2] ✓
+Done.
