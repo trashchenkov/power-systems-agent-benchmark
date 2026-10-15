@@ -189,8 +189,9 @@ Inventory / реестр: `docs/bilingual_task_inventory.md`.
 ## Citation
 
 If you use this benchmark or its experiment artifacts, cite the archived software
-release. The version DOI for the paper artifact release is
-[`10.5281/zenodo.20753046`](https://doi.org/10.5281/zenodo.20753046); the DOI badge
+release. The version DOI for the revised-paper artifact release is
+[`10.5281/zenodo.23389085`](https://doi.org/10.5281/zenodo.23389085) (the earlier v0.1 release is
+[`10.5281/zenodo.20753046`](https://doi.org/10.5281/zenodo.20753046)); the DOI badge
 above resolves through the Zenodo concept DOI for the repository.
 
 ```bibtex
@@ -198,8 +199,8 @@ above resolves through the Zenodo concept DOI for the repository.
   author = {Trashchenkov, Sergei},
   title = {Power Systems Agent Benchmark: Executable Evaluation of AI Agents in Electric Power Engineering},
   year = {2026},
-  version = {v0.1-paper-artifacts},
-  doi = {10.5281/zenodo.20753046},
+  version = {v0.2-paper-revision},
+  doi = {10.5281/zenodo.23389085},
   url = {https://github.com/trashchenkov/power-systems-agent-benchmark}
 }
 ```
